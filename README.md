@@ -1,5 +1,11 @@
 # Speech to Text Analysis Whitepaper
 
+Test combinations:
+1. Whisper-v3-large + TensorRT-LLM + Linux
+1. Whisper-v3-large + vLLM + Linux
+1. Canary-1b + TensorRT-LLM + Kubernetes
+1. Canary-1b + vLLM + Kubernetes
+
 ## Related resources
 
 - https://github.com/pmichaillat/latex-paper
