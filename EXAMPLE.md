@@ -23,7 +23,6 @@ when it comes to [Markdown][1] processing.
 It also supports linked references. **[Click here](#tab:fsttable)** to jump to a page with a
 table.
 
-
 ## How it works
 
 It works out of the box:
@@ -39,7 +38,7 @@ It works out of the box:
     or
 
     ```` {.bash}
-     pandoc --from=markdown --output=my.pdf my.md                                   \
+     pandoc --from=markdown --output=my.pdf my.md \
             --variable=geometry:"margin=0.5cm, paperheight=421pt, paperwidth=595pt" \
             --highlight-style=espresso
     ````

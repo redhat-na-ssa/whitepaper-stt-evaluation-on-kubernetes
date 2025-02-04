@@ -2,12 +2,26 @@
 
 [Example Document](EXAMPLE.md)
 
+RHEL / Fedora
+
+```sh
+dnf install -y pandoc pdflatex texlive-ec
+```
+
 ```sh
 pandoc \
+  EXAMPLE.md \
   --from=markdown \
-  --output=example.pdf EXAMPLE.md \
-  --variable=geometry:"margin=0.5cm, paperheight=421pt, paperwidth=595pt" \
-  --highlight-style=espresso
+  --output=example.tex \
+  --to=latex \
+  --standalone
+```
+
+```sh
+pandoc \
+  EXAMPLE.md \
+  --from=markdown \
+  --output=example.pdf
 ```
 
 ## Reference
