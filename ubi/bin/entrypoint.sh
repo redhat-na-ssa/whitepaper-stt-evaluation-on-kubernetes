@@ -21,13 +21,13 @@ usage(){
       WHISPER_MODEL: $WHISPER_MODEL
 
     Example (interactive): 
-      podman run -it --rm -v \$(pwd)/scratch:/data:z whisper /bin/sh
+      podman run -it --rm -v \$(pwd)/scratch:/data:z whisper:ubi /bin/sh
 
     Example (batch):
-      podman run -it --rm -v \$(pwd)/scratch:/data:z whisper process_audio
+      podman run -it --rm -v \$(pwd)/scratch:/data:z whisper:ubi process_audio
   
     Print model list:
-      podman run -it --rm -v \$(pwd)/scratch:/data:z whisper list_models
+      podman run -it --rm -v \$(pwd)/scratch:/data:z whisper:ubi list_models
 
       python3 -c 'import whisper,pprint; pprint.pprint(whisper._MODELS)'
   "
