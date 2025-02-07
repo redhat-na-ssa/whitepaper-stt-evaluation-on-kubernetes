@@ -15,7 +15,7 @@ This tests Whisper in a Ubuntu container
 podman search ubuntu --list-tags
 
 # pull and run an ubuntu image
-podman run -it docker.io/library/ubuntu
+podman run -it --name ubuntu-whisper docker.io/library/ubuntu
 
 # as root, update apt, install python3-venv
 sudo apt update
@@ -92,48 +92,90 @@ CMD ["sh", "-c", "venv/bin/whisper $AUDIO_FILE --model tiny.en"]
 podman run --rm -v /path/to/local/audio:/app/audio:Z -e AUDIO_FILE=/app/audio/your_audio.mp4 ubuntu-whisper-container
 ```
 
-### Whisper - Test on RHEL with UBI container
+### Performance
+
+Time the execution
+Real: Total elapsed time
+User: CPU time spent in user mode
+Sys: CPU time spent in kernel mode
+```sh
+time podman run --rm -v /path/to/local/audio:/app/audio:Z ubuntu-whisper-container venv/bin/whisper /app/audio/your_audio.mp4 --model tiny.en
+```
+
+Measure GPU Utilization (if applicable)
+```sh
+podman run --rm --runtime=nvidia --gpus all ubuntu-whisper-container nvidia-smi
+
+watch -n 1 nvidia-smi
+```
+
+Measure CPU & Memory Usage
+Max Resident Set Size (memory usage)
+CPU Time (user/sys)
+Elapsed Time (real)
+```sh
+podman run --rm -v /path/to/local/audio:/app/audio:Z ubuntu-whisper-container /usr/bin/time -v venv/bin/whisper /app/audio/your_audio.mp4 --model tiny.en
+```
+
+Measure Word Error Rate (WER) for Accuracy
+To evaluate transcription accuracy, compare the model’s output with a ground truth transcript:
+
+Profiling with cProfile (Python)
+For deeper performance insights, profile function calls:
+```sh
+
+```
+
+### Whisper - Test on RHEL with UBI8 container
 
 This tests pip installs Whisper in a virtual environment and runs it from the command line with a local .mp4 file
 
+Step 1: Write a Whisper UBI8 Image
+
+```sh
+FROM registry.redhat.io/ubi8/python-39
+
+# Switch to root user
+USER root
+
+# Install dependencies in a single step to reduce layers
+RUN yum -y install \
+    gcc gcc-c++ make automake autoconf libtool git \
+    && yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
+    && yum clean all \
+    && rm -rf /var/cache/yum
+
+# Clone and build FFmpeg in one step
+RUN git clone --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg && \
+    cd ffmpeg && \
+    ./configure --disable-x86asm && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && rm -rf ffmpeg
+
+# Install whisper
+RUN pip install openai-whisper
+
+# Switch back to default user
+USER default
+
+# Default command to process the audio file using ffmpeg & whisper
+CMD ["/bin/bash", "-c", "if [ -n \"$AUDIO_FILE\" ]; then ffmpeg -i \"$AUDIO_FILE\" -ar 16000 -ac 1 -c:a pcm_s16le /app/processed.wav && whisper /app/processed.wav; else exec /bin/bash; fi"]
 ```
-# create virtual env
-python -m venv venv
 
-# activate that virtual env
-. venv/bin/activate
+Build the Whisper Image
+```sh
+podman login registry.redhat.io
 
-# pip install whisper
-pip install -U openai-whisper
+podman build --format=docker -t ubi8-whisper ubi8/.
+```
 
-sudo yum update
-
-sudo yum groupinstall "Development Tools"
-
-sudo yum install glibc gcc gcc-c++ autoconf automake libtool git make nasm pkgconfig SDL-devel \
-a52dec a52dec-devel alsa-lib-devel faac faac-devel faad2 faad2-devel freetype-devel giflib gsm gsm-devel \
-imlib2 imlib2-devel lame lame-devel libICE-devel libSM-devel libX11-devel libXau-devel libXdmcp-devel \
-libXext-devel libXrandr-devel libXrender-devel libXt-devel libogg libvorbis vorbis-tools mesa-libGL-devel \
-mesa-libGLU-devel xorg-x11-proto-devel zlib-devel libtheora theora-tools ncurses-devel libdc1394 libdc1394-devel \
-amrnb-devel amrwb-devel opencore-amr-devel
-
-# install ffmpeg
-git clone https://github.com/FFmpeg/FFmpeg.git
-cd FFmpeg
-./configure --enable-gpl --enable-libx264 --enable-libfdk-aac --enable-nonfree --disable-x86asm
-make
-sudo make install
-ffmpeg -version
-
-# download audio file - we used "Address at Rice University in Houston, Texas on the Nation's Space Effort, 12 September 1962"
-https://www.jfklibrary.org/asset-viewer/archives/jfkwha
-
-# install rust tools
-pip install setuptools-rust
-
-# run whisper turbo model - don't start with turbo
-# Available models https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages 
-whisper kennedy_rice_1962_speech.mp4 --model tiny.en
+Run the image
+```sh
+podman run --name whisper --rm -it \
+    -v $(pwd)/sample.wav:/app/sample.wav \
+    -e AUDIO_FILE=/app/sample.wav \
+    my_ffmpeg_whisper_image
 ```
 
 ### Whisper - Test on OpenShift with a UBI container
