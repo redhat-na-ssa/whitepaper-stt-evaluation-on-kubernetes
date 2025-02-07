@@ -10,7 +10,7 @@
 
 This tests Whisper in a Ubuntu container
 
-```
+```sh
 # search for an ubuntu container base image
 podman search ubuntu --list-tags
 
@@ -38,20 +38,27 @@ python3 -m venv venv
 
 # install openai-whisper
 pip install openai-whisper
+```
 
-# download an audio file https://www.jfklibrary.org/asset-viewer/archives/jfkwha
-# wget -O filename url
+```sh
+# download an audio file 
+# https://www.jfklibrary.org/asset-viewer/archives/jfkwha
+# https://www.jfklibrary.org/asset-viewer/archives/JFKWHA-127-002
+# wget -O filename "url"
 
 # inference
 whisper kennedy_1962.mp4 --model tiny.en
 
+```sh
 # output
 /venv/lib/python3.12/site-packages/whisper/transcribe.py:126: UserWarning: FP16 is not supported on CPU; using FP32 instead
   warnings.warn("FP16 is not supported on CPU; using FP32 instead")
 [00:00.000 --> 00:07.000]  The present remarks at Rice Stadium in Houston, Texas, September 12, 1962.
 [00:07.000 --> 00:17.700]  President Pipsis, Mr. Vice President, Governor, Congressman Thomas, Senator
 [00:17.700 --> 00:27.100]  Wiley and Congressman Miller, Mr. Webb, Val, scientists, distinguished guests, ladies and gentlemen.
+```
 
+```sh
 # restarting the stopped container
 podman start --interactive --attach upbeat_khorana
 
@@ -71,30 +78,31 @@ Use Cases:
 
 Bind Mount a Local Directory
 You can mount a local directory containing your audio file to the container using the -v flag:
+
 ```sh
-podman run --rm -v /path/to/local/audio:/app/audio:Z ubuntu-whisper-container venv/bin/whisper /app/audio/your_audio.mp4 --model tiny.en
+podman run --rm -v /path/to/local/audio:/data/audio:Z ubuntu-whisper-container venv/bin/whisper /data/audio/your_audio.mp4 --model tiny.en
 ```
 
 Copy the File Into a Running Container
 If the container is already running, you can copy the file into it using:
+
 ```sh
 # copy
-podman cp your_audio.mp4 <container_id>:/app/audio/
+podman cp your_audio.mp4 <container_id>:/data/audio/
 
 # inference
-podman exec <container_id> venv/bin/whisper /app/audio/your_audio.mp4 --model tiny.en
+podman exec <container_id> venv/bin/whisper /data/audio/your_audio.mp4 --model tiny.en
 ```
 
  Use --env for Dynamic File Passing
  Modify the Containerfile to use an environment variable for the file path:
 
 ```sh
-
 # dockerfile modification
 CMD ["sh", "-c", "venv/bin/whisper $AUDIO_FILE --model tiny.en"]
 
 # pass file as env
-podman run --rm -v /path/to/local/audio:/app/audio:Z -e AUDIO_FILE=/app/audio/your_audio.mp4 ubuntu-whisper-container
+podman run --rm -v /path/to/local/audio:/data/audio:Z -e AUDIO_FILE=/data/audio/your_audio.mp4 ubuntu-whisper-container
 ```
 
 ### Performance
@@ -103,11 +111,13 @@ Time the execution
 Real: Total elapsed time
 User: CPU time spent in user mode
 Sys: CPU time spent in kernel mode
+
 ```sh
-time podman run --rm -v /path/to/local/audio:/app/audio:Z ubuntu-whisper-container venv/bin/whisper /app/audio/your_audio.mp4 --model tiny.en
+time podman run --rm -v /path/to/local/audio:/data/audio:Z ubuntu-whisper-container venv/bin/whisper /data/audio/your_audio.mp4 --model tiny.en
 ```
 
 Measure GPU Utilization (if applicable)
+
 ```sh
 podman run --rm --runtime=nvidia --gpus all ubuntu-whisper-container nvidia-smi
 
@@ -118,8 +128,9 @@ Measure CPU & Memory Usage
 Max Resident Set Size (memory usage)
 CPU Time (user/sys)
 Elapsed Time (real)
+
 ```sh
-podman run --rm -v /path/to/local/audio:/app/audio:Z ubuntu-whisper-container /usr/bin/time -v venv/bin/whisper /app/audio/your_audio.mp4 --model tiny.en
+podman run --rm -v /path/to/local/audio:/data/audio:Z ubuntu-whisper-container /usr/bin/time -v venv/bin/whisper /data/audio/your_audio.mp4 --model tiny.en
 ```
 
 Measure Word Error Rate (WER) for Accuracy
@@ -127,6 +138,7 @@ To evaluate transcription accuracy, compare the model’s output with a ground t
 
 Profiling with cProfile (Python)
 For deeper performance insights, profile function calls:
+
 ```sh
 
 ```
@@ -169,6 +181,7 @@ CMD ["/bin/bash", "-c", "if [ -n \"$AUDIO_FILE\" ]; then ffmpeg -i \"$AUDIO_FILE
 ```
 
 Build the Whisper Image
+
 ```sh
 podman login registry.redhat.io
 
@@ -176,6 +189,7 @@ podman build --format=docker -t ubi8-whisper ubi8/.
 ```
 
 Run the image
+
 ```sh
 podman run --name whisper --rm -it \
     -v $(pwd)/sample.wav:/app/sample.wav \
@@ -187,11 +201,11 @@ podman run --name whisper --rm -it \
 
 This tests Whisper in a UBI container on OpenShift
 
-```
+```sh
 ```
 
 ## Reference
 
 - [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages)
-- https://tex.stackexchange.com/questions/101717/converting-markdown-to-latex-in-latex#246871
+- <https://tex.stackexchange.com/questions/101717/converting-markdown-to-latex-in-latex#246871>
 - [ffmpeg install](https://github.com/FFmpeg/FFmpeg/blob/master/INSTALL.md3)
