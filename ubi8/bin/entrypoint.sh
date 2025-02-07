@@ -2,6 +2,7 @@
 
 AUDIO_FILES=${1:-/audio}
 WHISPER_MODEL=${2:-tiny.en}
+MODEL_CACHE=${MODEL_CACHE:-/models}
 
 usage(){
   echo "
@@ -11,7 +12,7 @@ usage(){
       AUDIO_FILES: $AUDIO_FILES
       WHISPER_MODEL: $WHISPER_MODEL
 
-    Example: podman run -it --rm -v $(pwd)/audio:/audio whisper
+    Example: podman run -it --rm -v $(pwd)/audio:/audio whisper /audio tiny.en
   "
 }
 
