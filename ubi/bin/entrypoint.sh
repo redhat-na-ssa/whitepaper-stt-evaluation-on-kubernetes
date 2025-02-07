@@ -27,8 +27,17 @@ usage(){
       podman run -it --rm -v \$(pwd)/scratch:/data:z whisper process_audio
   
     Print model list:
+      podman run -it --rm -v \$(pwd)/scratch:/data:z whisper list_models
+
       python3 -c 'import whisper,pprint; pprint.pprint(whisper._MODELS)'
   "
+}
+
+list_models(){
+  echo "
+    Model List:
+  "
+  python3 -c 'import whisper,pprint; pprint.pprint(whisper._MODELS)'
 }
 
 # take the first parameter or default to /audio, then default the model to tiny.en if none passed
@@ -52,6 +61,7 @@ init
 if [ "$1" != "" ]; then
   case "$1" in
     process_audio) process_audio "$2" "$3";;
+    list_models) list_models ;;
     *) exec "$@";;
   esac
 else
