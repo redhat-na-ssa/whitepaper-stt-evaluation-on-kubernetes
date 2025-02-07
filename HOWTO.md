@@ -64,6 +64,11 @@ whisper kennedy_1962.mp4 --model base.en
 
 #### Inference
 
+Use Cases:
+
+1. Real-time dictation
+1. Offline file dictation (can you fastforward?)
+
 Bind Mount a Local Directory
 You can mount a local directory containing your audio file to the container using the -v flag:
 ```sh
