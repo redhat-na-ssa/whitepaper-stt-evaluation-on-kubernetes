@@ -13,13 +13,16 @@ RUN yum -y install \
 # Clone and build FFmpeg in one step
 RUN git clone --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg && \
     cd ffmpeg && \
+    ./configure --help && \
     ./configure --disable-x86asm && \
     make -j$(nproc) && \
     make install && \
-    cd .. && rm -rf ffmpeg
+    cd .. && \
+    rm -rf ffmpeg
 
 # Install whisper
-RUN pip install openai-whisper
+RUN pip install -U pip && \
+    pip install openai-whisper
 
 # Setup: entrypoint and other scripts over 
 COPY bin /usr/local/bin
@@ -29,3 +32,12 @@ USER 1001
 
 # Default command to process the audio file using ffmpeg & whisper
 ENTRYPOINT ["entrypoint.sh"]
+
+# Labels for container catalog
+LABEL \
+      summary="Python 3.9 image w/ whisper + ffmpeg" \
+      description="Python 3.9 image w/ whisper + ffmpeg" \
+      io.k8s.display-name="python-3.9-whisper" \
+      org.opencontainers.image.description.vendor="whisper" \
+      org.opencontainers.image.description="A container for speech to text" \
+      org.opencontainers.image.source="https://github.com/redhat-na-ssa"

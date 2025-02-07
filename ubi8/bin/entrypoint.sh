@@ -11,7 +11,7 @@ usage(){
       AUDIO_FILES: $AUDIO_FILES
       WHISPER_MODEL: $WHISPER_MODEL
 
-    Example command: podman run -it --rm -v $(pwd)/audio:/audio whisper
+    Example: podman run -it --rm -v $(pwd)/audio:/audio whisper
   "
 }
 
@@ -20,7 +20,7 @@ process_audio(){
   AUDIO_FILES=${1:-/audio}
   WHISPER_MODEL=${2:-tiny.en}
 
-  whisper $AUDIO_FILES --model $WHISPER_MODEL
+  whisper $AUDIO_FILES/* --model $WHISPER_MODEL
 }
 
 # if you pass parameter, it will execute as is, else run whisper --help
