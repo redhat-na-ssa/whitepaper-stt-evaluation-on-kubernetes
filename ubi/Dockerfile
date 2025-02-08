@@ -39,7 +39,7 @@ RUN pip install --no-cache-dir -U pip==25.* && \
 COPY --chmod=0755 bin /usr/local/bin
 
 # Setup: working dir
-WORKDIR /data
+WORKDIR --chmod=0775 /data
 
 # Switch back to default user
 USER 1001
