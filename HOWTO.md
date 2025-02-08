@@ -233,7 +233,7 @@ oc run \
   -it --rm \
   --image whisper \
   --restart=Never \
-  whisper -- list_models
+  whisper -- /bin/bash
 ```
 
 ## Reference
