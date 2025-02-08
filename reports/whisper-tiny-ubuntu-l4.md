@@ -1,8 +1,33 @@
 # Performance Evaluation Report
 
 ## Test Setup Procedure
-1. ssh into env
-1. git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
+
+```sh
+# connect to env
+ssh into env
+
+# clone the repo
+git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git && cd whitepaper-stt-evaluation-on-kubernetes
+
+# build the container
+podman build -t whisper:ubuntu .
+
+# run the container image
+podman run -it --rm whisper:ubuntu /bin/bash
+
+# create a scratch dir and download audio file
+# https://www.jfklibrary.org/asset-viewer/archives/jfkwha
+# Address at Rice University in Houston, Texas on the Nation's Space Effort, 12 September 1962
+wget -O kennedy.mp4 "<insert web addr>"
+
+# run inference
+whisper kennedy.mp4 --model tiny.en
+
+# time inference
+time whisper kennedy.mp4 --model tiny.en
+
+
+```
 
 ## Test Configuration
 
@@ -17,7 +42,7 @@
 ## Performance Metrics
 
 1. Execution Time:
-    - Total Inference Time: `X seconds`
+    - Total Inference Time: `0m54.636s`
     - Real-time Processing Capability: `Yes/No`(for real-time use cases)
     - Latency Breakdown:
         - Model Loading: `X seconds`
@@ -30,6 +55,7 @@
         Moderate Noise: `X% WER`
         High Noise: `X% WER`
 3. Resource Utilization:
+    - Image Size: `6.66 GB`
     - CPU Usage: `X% (Peak: X%)`
     - Memory Usage: `X GB (Peak: X GB)`
     - GPU Utilization: `X% (Peak: X%)`
