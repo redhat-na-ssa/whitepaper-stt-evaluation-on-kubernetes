@@ -28,7 +28,7 @@ usage(){
       podman run -it --rm -v \$(pwd)/scratch:/data:z whisper:ubi process_audio
 
     Example (download file):
-      podman run -it --rm whisper process_url <url>
+      podman run -it --rm whisper:ubi process_url <url>
   
     Print model list:
       podman run -it --rm -v \$(pwd)/scratch:/data:z whisper:ubi list_models
