@@ -31,8 +31,8 @@ RUN git clone https://git.ffmpeg.org/ffmpeg.git \
     cd .. && \
       rm -rf ffmpeg
 
-# Install whisper
-RUN pip install --no-cache-dir openai-whisper==20240930
+# Install whisper; jiwer==3.1.0
+RUN pip install --no-cache-dir openai-whisper==20240930 jiwer
 
 # Setup: entrypoint and other scripts over 
 COPY --chmod=0755 bin /usr/local/bin
