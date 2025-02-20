@@ -1,4 +1,4 @@
-ARG RHEL_VER=8
+# Updating Image to point to Unauthenticated version
 ARG IMAGE=registry.access.redhat.com/ubi8/python-39@sha256:24be696023cf97eca8da81112ca917de1e2e1ed6e57b285b8d0f2cd1ff91b1f9
 
 FROM ${IMAGE}
@@ -36,7 +36,7 @@ RUN pip install --no-cache-dir -U pip==25.* && \
     pip install --no-cache-dir openai-whisper==20240930 jiwer==3.1.*
 
 # Setup: entrypoint and other scripts over 
-COPY --chmod=0755 bin /usr/local/bin
+COPY --chmod=0755 ./bin /usr/local/bin
 
 # Setup: working dir
 WORKDIR --chmod=0775 /data
