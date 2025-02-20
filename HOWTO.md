@@ -273,7 +273,7 @@ curl $WHISPER_ENDPOINT/v1/models
 Smoke test API
 
 ```sh
-curl -X POST $WHISPER_ENDPOINT/audio/transcriptions \                           
+curl -X POST $WHISPER_ENDPOINT/v1/audio/transcriptions \                           
 -H 'accept: application/json' \ 
 -H 'Content-Type: multipart/form-data' \
 -F 'file=@test.mp4;type=audio/mpeg' \
