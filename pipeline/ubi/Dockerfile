@@ -1,5 +1,5 @@
 ARG RHEL_VER=8
-ARG IMAGE=python:3.9-ubi9
+ARG IMAGE=registry.access.redhat.com/ubi8/python-39@sha256:24be696023cf97eca8da81112ca917de1e2e1ed6e57b285b8d0f2cd1ff91b1f9
 
 FROM ${IMAGE}
 
