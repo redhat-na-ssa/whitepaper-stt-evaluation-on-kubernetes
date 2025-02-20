@@ -238,6 +238,39 @@ oc run \
 
 ### - Test on OpenShift with vLLM
 
+New project
+
+```sh
+oc new-project whisper-tiny
+```
+
+Create a Persistent Volume for model
+
+```sh
+oc create -f ocp/vllm/pv.yaml
+```
+
+Create a vLLM deployment with whisper
+
+```sh
+oc create -f ocp/vllm/deployment.yaml
+```
+
+Expose API
+
+```sh
+oc expose deploy whisper-tiny
+oc expose svc whisper-tiny --target-port 8000
+```
+
+Smoke test
+
+```sh
+WHISPER_ENDPOINT=$(oc get route whisper-tiny --template='http://{{.spec.host}}')
+curl $WHISPER_ENDPOINT/v1/models
+```
+
+
 ### - Test on OpenShift with Triton
 
 ### - Test on OpenShift with NIM
