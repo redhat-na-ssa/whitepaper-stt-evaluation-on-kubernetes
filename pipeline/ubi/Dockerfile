@@ -1,5 +1,5 @@
 ARG RHEL_VER=8
-ARG IMAGE=ubi${RHEL_VER}/python-39:latest
+ARG IMAGE=python:3.9-ubi9
 
 FROM ${IMAGE}
 
