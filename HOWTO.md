@@ -236,6 +236,13 @@ oc run \
   whisper -- /bin/bash
 ```
 
+### - Test on OpenShift with vLLM
+
+### - Test on OpenShift with Triton
+
+### - Test on OpenShift with NIM
+
+
 ## Reference
 
 - [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages)
