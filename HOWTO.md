@@ -270,6 +270,17 @@ WHISPER_ENDPOINT=$(oc get route whisper-tiny --template='http://{{.spec.host}}')
 curl $WHISPER_ENDPOINT/v1/models
 ```
 
+Smoke test API
+
+```sh
+curl -X POST $WHISPER_ENDPOINT/audio/transcriptions \                           
+-H 'accept: application/json' \ 
+-H 'Content-Type: multipart/form-data' \
+-F 'file=@test.mp4;type=audio/mpeg' \
+-F 'model=openai/whisper-tiny' \
+-F 'response_format=json' \
+-F 'stream=true'
+```
 
 ### - Test on OpenShift with Triton
 
