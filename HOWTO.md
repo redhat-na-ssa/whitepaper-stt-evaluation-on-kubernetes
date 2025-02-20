@@ -272,6 +272,8 @@ curl $WHISPER_ENDPOINT/v1/models
 
 Smoke test API
 
+> Note this will throw an Internal Server Error at the moment: https://github.com/vllm-project/vllm/pull/12909
+
 ```sh
 curl -X POST $WHISPER_ENDPOINT/v1/audio/transcriptions \                           
 -H 'accept: application/json' \ 
