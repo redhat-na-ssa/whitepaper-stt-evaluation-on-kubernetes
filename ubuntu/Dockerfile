@@ -11,6 +11,9 @@ RUN apt update && \
     apt install -y python3-venv python3-pip ffmpeg wget curl && \
     rm -rf /var/lib/apt/lists/*
 
+# Install GPU version of PyTorch
+RUN pip  --no-cache-dir install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
 # Setup: entrypoint and other scripts over 
 COPY --chmod=0755 bin /usr/local/bin
 
