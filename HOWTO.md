@@ -284,10 +284,44 @@ curl -X POST $WHISPER_ENDPOINT/v1/audio/transcriptions \
 -F 'stream=true'
 ```
 
-### - Test on OpenShift with Triton
+### Test on OpenShift with Triton
+> TODO
 
-### - Test on OpenShift with NIM
+### Test on OpenShift with NIM
+> TODO
 
+## Faster Whisper
+
+### Test on RHEL with Ubuntu container
+
+```sh
+podman run \
+  --rm \
+  --detach \
+  --publish 8000:8000 \
+  --name speaches \
+  --volume hf-hub-cache:/home/ubuntu/.cache/huggingface/hub \
+  ghcr.io/speaches-ai/speaches:latest-cpu
+```
+
+Smoke test
+
+> Note: You can also access the server's web browser using a UI and upload an audio file there
+
+```sh
+ENDPOINT_URL='http://localhost:8000'  # replace with VM endpoint
+curl $ENDPOINT_URL/v1/models
+```
+
+Smoke test audio file
+
+```sh
+curl -X POST $ENDPOINT_URL/v1/audio/transcriptions -H 'accept: application/json' -F 'model=Systran/faster-whisper-tiny.en' -F 'stream=true' -F 'file=@test.mp4'
+``` 
+
+### Test on OpenShift with Ubuntu container 
+
+> TODO
 
 ## Reference
 
