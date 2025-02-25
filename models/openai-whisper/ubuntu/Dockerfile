@@ -12,7 +12,7 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install GPU version of PyTorch
-RUN pip  --no-cache-dir install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+RUN pip  --no-cache-dir install torch torchvision torchapoudio --index-url https://download.pytorch.org/whl/cu118
 
 # Setup: entrypoint and other scripts over 
 COPY --chmod=0755 bin /usr/local/bin

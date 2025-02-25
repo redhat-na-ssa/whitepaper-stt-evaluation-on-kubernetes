@@ -1,6 +1,6 @@
 #!/bin/sh
 
-AUDIO_FILES=${AUDIO_FILES:-/data/audio}
+AUDIO_FILES=${AUDIO_FILES:-/data/audio-samples}
 WHISPER_MODEL=${WHISPER_MODEL:-tiny.en}
 MODEL_CACHE=${MODEL_CACHE:-/data/models}
 XDG_CACHE_HOME=${MODEL_CACHE}

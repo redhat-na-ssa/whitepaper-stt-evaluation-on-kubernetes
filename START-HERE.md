@@ -27,12 +27,13 @@
 1. Move to Ubuntu folder: `cd models/openai-whisper/ubuntu/`
 1. Build the Dockerfile: `podman build --format=docker -t whisper:ubuntu models/openai-whisper/ubuntu/.`
 1. List images: `podman image list`
-1. Run the whisper image: `podman run -d --name whisper-ubuntu localhost/whisper:ubuntu sleep infinity`
+1. Run the whisper image: `podman run -it --rm localhost/whisper:ubuntu /bin/bash`
 
 #### Transcribe provided audio file
 
-1. podman run --rm -v /path/to/local/audio:/data/audio:Z ubuntu-whisper-container venv/bin/whisper /data/audio/your_audio.mp4 --model tiny.en
-1. `podman run -it -v $(pwd)/data/audio-samples:/data:Z localhost/whisper:ubuntu /bin/bash`
+1. copy files over to running container: `podman cp data/audio-samples/jfk-audio-inaugural-address-20-january-1961.mp3 whisper-ubuntu:/data/audio/`
+1. `podman run -it --rm -v $(pwd)/data:/data:Z localhost/whisper:ubuntu /bin/bash`
+`podman run -it --rm --mount type=bind,source="$(pwd)"/data,target=/data localhost/whisper:ubuntu /bin/bash` 
 1. `podman run --rm -v $(pwd)/data/audio-samples:/data:Z localhost/whisper:ubuntu whisper audio/rice_university_12_september_1962.mp4 --model tiny.en > /data/transcriptions/transcribe_rice_university_12_september_1964.txt`
 
 1. Copy files from scratch to the container /data/audio directory `podman cp scratch/rice_university_12_september_1962.mp4 ubuntu-whisper:/data/audio/`
