@@ -294,6 +294,8 @@ curl -X POST $WHISPER_ENDPOINT/v1/audio/transcriptions \
 
 ### Test on RHEL with Ubuntu container
 
+> Note: This test does not require GPUs
+
 ```sh
 podman run \
   --rm \
@@ -321,7 +323,57 @@ curl -X POST $ENDPOINT_URL/v1/audio/transcriptions -H 'accept: application/json'
 
 ### Test on OpenShift with Ubuntu container 
 
-> TODO
+New project
+
+```sh
+oc new-project faster-whisper
+```
+
+Build the Faster Whisper server
+
+```sh
+oc create -f ocp/faster-whisper/imagestream.yaml
+oc create -f ocp/faster-whisper/buildconfig.yaml
+```
+
+Follow the build and wait for completion
+
+```sh
+oc logs -f faster-whisper-1-build 
+```
+
+Create a SA and assign `anyuid` permissions
+
+```sh
+oc create sa sa-with-anyuid
+oc adm policy add-scc-to-user anyuid -z sa-with-anyuid
+```
+
+Create Faster Whisper model server
+
+```sh
+oc create -f ocp/faster-whisper/deployment.yaml
+```
+
+Expose API
+
+```sh
+oc expose deploy faster-whisper-server
+oc expose svc faster-whisper-server --target-port 8000
+```
+
+Smoke test
+
+```sh
+FASTER_WHISPER_ENDPOINT=$(oc get route faster-whisper-server --template='http://{{.spec.host}}')
+curl $FASTER_WHISPER_ENDPOINT/v1/models
+```
+
+Smoke test audio file
+
+```sh
+curl -X POST $FASTER_WHISPER_ENDPOINT/v1/audio/transcriptions -H 'accept: application/json' -F 'model=Systran/faster-whisper-tiny.en' -F 'stream=true' -F 'file=@test.mp4'
+```
 
 ## Reference
 
