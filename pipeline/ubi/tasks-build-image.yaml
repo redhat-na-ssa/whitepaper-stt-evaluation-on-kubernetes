@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: build-image-sbom-upload
+  name: build-image
   namespace: stt
 spec:
   description: |-
@@ -183,7 +183,7 @@ spec:
       image: 'quay.io/redhat-appstudio/syft:v0.94.0'
       name: sbom-syft-generate
       script: |
-        syft dir:$(cat /workspace/container_path) --output cyclonedx-json=$(workspaces.source.path)/sbom-image.json
+        syft dir:$(cat /workspace/container_path) --output cyclonedx-json=$(workspaces.source.path)/sbom-image-cyclonedx.json
       volumeMounts:
         - mountPath: /var/lib/containers
           name: varlibcontainers
@@ -197,7 +197,7 @@ spec:
         base_image_name=$(buildah inspect --format '{{ index .ImageAnnotations "org.opencontainers.image.base.name"}}' $IMAGE | cut -f1 -d'@')
         base_image_digest=$(buildah inspect --format '{{ index .ImageAnnotations "org.opencontainers.image.base.digest"}}' $IMAGE)
         container=$(buildah from --pull-never $IMAGE)
-        buildah copy $container sbom-image.json /root/buildinfo/content_manifests/
+        buildah copy $container sbom-image-cyclonedx.json /root/buildinfo/content_manifests/
         buildah config -a org.opencontainers.image.base.name=${base_image_name} -a org.opencontainers.image.base.digest=${base_image_digest} $container
         buildah commit $container $IMAGE
 
@@ -233,7 +233,7 @@ spec:
         - attach
         - sbom
         - '--sbom'
-        - sbom-image.json
+        - sbom-image-cyclonedx.json
         - '--type'
         - cyclonedx
         - $(params.IMAGE)
