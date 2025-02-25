@@ -32,8 +32,8 @@
 #### Transcribe provided audio file
 
 1. podman run --rm -v /path/to/local/audio:/data/audio:Z ubuntu-whisper-container venv/bin/whisper /data/audio/your_audio.mp4 --model tiny.en
-1. `podman run -it -v $(pwd)/data/audio-samples:/data/audio:Z localhost/whisper:ubuntu /bin/bash`
-1. `podman run --rm -v $(pwd)/data/audio-samples:/data/audio:Z localhost/whisper:ubuntu whisper audio/rice_university_12_september_1962.mp4 --model tiny.en > /data/transcriptions/transcribe_rice_university_12_september_1964.txt`
+1. `podman run -it -v $(pwd)/data/audio-samples:/data:Z localhost/whisper:ubuntu /bin/bash`
+1. `podman run --rm -v $(pwd)/data/audio-samples:/data:Z localhost/whisper:ubuntu whisper audio/rice_university_12_september_1962.mp4 --model tiny.en > /data/transcriptions/transcribe_rice_university_12_september_1964.txt`
 
 1. Copy files from scratch to the container /data/audio directory `podman cp scratch/rice_university_12_september_1962.mp4 ubuntu-whisper:/data/audio/`
 1. Interactive terminal on the container `podman exec -it ubuntu-whisper /bin/bash`
