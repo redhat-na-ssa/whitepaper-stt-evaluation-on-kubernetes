@@ -11,13 +11,13 @@ spec:
     - default: ./pipeline/ubi/Dockerfile
       name: DOCKERFILE_LOCATION
       type: string
-    - default: 'central-stackrox.apps.cluster-lngm8.lngm8.sandbox1046.opentlc.com:443'
+    - default: 'central-stackrox.apps.cluster-qk89t.qk89t.sandbox40.opentlc.com:443'
       name: stackrox-endpoint
       type: string
     - default: stt-stackrox-token
       name: stackrox-secret
       type: string
-    - default: 'quay.io/redhat_na_ssa/sttubi:latest'
+    - default: quay.io/redhat_na_ssa/sttubi
       name: OUTPUT_IMAGE
       type: string
   results:
@@ -65,33 +65,17 @@ spec:
       workspaces:
         - name: output
           workspace: source_dir
-    - name: build-image
+    - name: build-image-with-sbom
       params:
         - name: IMAGE
-          value: 'quay.io/redhat_na_ssa/sttubi:latest'
-        - name: BUILDER_IMAGE
-          value: 'registry.redhat.io/rhel8/buildah@sha256:5c7cd7c9a3d49e8905fc98693f6da605aeafae36bde5622dc78e12f31db3cd59'
-        - name: STORAGE_DRIVER
-          value: vfs
+          value: $(params.OUTPUT_IMAGE)
         - name: DOCKERFILE
           value: $(params.DOCKERFILE_LOCATION)
-        - name: CONTEXT
-          value: .
-        - name: TLSVERIFY
-          value: 'true'
-        - name: FORMAT
-          value: oci
-        - name: BUILD_EXTRA_ARGS
-          value: ''
-        - name: PUSH_EXTRA_ARGS
-          value: ''
-        - name: SKIP_PUSH
-          value: 'false'
       runAfter:
         - git-clone
       taskRef:
-        kind: ClusterTask
-        name: buildah
+        kind: Task
+        name: build-image-sbom-upload
       workspaces:
         - name: source
           workspace: source_dir
@@ -106,7 +90,7 @@ spec:
         - name: insecure-skip-tls-verify
           value: 'true'
       runAfter:
-        - build-image
+        - build-image-with-sbom
       taskRef:
         kind: Task
         name: acs-image-scan-with-vulnerability
@@ -124,7 +108,7 @@ spec:
         - name: insecure-skip-tls-verify
           value: 'true'
       runAfter:
-        - build-image
+        - build-image-with-sbom
       taskRef:
         kind: Task
         name: acs-image-check
