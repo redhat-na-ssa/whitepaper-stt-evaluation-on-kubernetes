@@ -37,13 +37,13 @@ Tracking the deployment and integration status of different speech-to-text (ASR)
 
 ## Performance Metrics Evaluated:
 
-Each inference test outputs a transcription file using the following pattern: 
-
-MODEL-SIZE-BASE_IMAGE-AUDIO_FILE-GPU/CPU-QTY-DATE.txt
+Each inference test outputs a transcription file using the following pattern:  `model-size-baseImage-audioFile-cpuOrGpu-qty-date.txt`
 
 **Cost:** How much does it cost to infer?
 
 **Resources:** How many resources does it consume to infer?
+
+1. Container size
 1. GPU
 1. CPU
 
@@ -55,22 +55,11 @@ MODEL-SIZE-BASE_IMAGE-AUDIO_FILE-GPU/CPU-QTY-DATE.txt
 
 **Accuracy:** How accurate is the model? JiWER is a simple and fast python package to evaluate an automatic speech recognition system. It supports the following measures:
 
-1. `word error rate (WER)`
-1. `match error rate (MER)`
-1. `word information lost (WIL)`
-1. `word information preserved (WIP)`
-1. `character error rate (CER)`
-
-1. [STT Benchmark from Picovoice](https://github.com/Picovoice/speech-to-text-benchmark?tab=readme-ov-file)
-1. Execution Time: Measure total inference time per transcription.
-1. Accuracy (Word Error Rate - WER): Evaluate transcription correctness.
-1. Resource Utilization:
-    - CPU & Memory consumption
-    - GPU utilization and cost analysis
-1. Power Consumption: Measure energy usage for each setup.
-1. Inference Architecture Comparison:
-    - Embedded Model Inference Microservice vs. Decoupled Model Serving with External Storage.
-1. Profiling Insights: Analyze execution bottlenecks using cProfile (Python).
+1. `Word Error Rate (WER)` – Measures the percentage of words that were incorrectly predicted compared to the reference text. It accounts for substitutions, deletions, and insertions.
+1. `Match Error Rate (MER)` – Represents the fraction of words that need to be transformed (inserted, deleted, or substituted) to match the reference text. Unlike WER, it considers the total number of words in both the reference and hypothesis.
+1. `Word Information Lost (WIL)` – Estimates how much word-level information is lost due to errors. It penalizes deletions and substitutions while being less sensitive to insertions.
+1. `Word Information Preserved (WIP)` – The inverse of WIL, this measures how much word-level information is correctly preserved in the hypothesis relative to the reference.
+1. `Character Error Rate (CER)` – Similar to WER but at the character level, CER measures the percentage of incorrectly predicted characters compared to the reference text, making it useful for evaluating text with short words or heavy misspellings.
 
 ## Observations
 
