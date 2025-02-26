@@ -18,12 +18,6 @@ RUN apt update && \
 # Install GPU version of PyTorch
 RUN pip --no-cache-dir install ${PIP_ARGS}
 
-# Create and set working directory
-WORKDIR /data
-
-# Give group write permissions
-RUN chmod 0775 /data
-
 # Create and activate virtual environment
 RUN python3 -m venv venv && \
     . venv/bin/activate && \
@@ -32,6 +26,13 @@ RUN python3 -m venv venv && \
 ENV BASH_ENV="/data/venv/bin/activate" \
     ENV="/data/venv/bin/activate" \
     PROMPT_COMMAND=". /data/venv/bin/activate"
+
+
+# Create and set working directory
+WORKDIR /data
+
+# Give group write permissions
+RUN chmod 0775 /data
 
 # Default command to process the audio file using ffmpeg & whisper
 CMD ["/bin/bash"]
