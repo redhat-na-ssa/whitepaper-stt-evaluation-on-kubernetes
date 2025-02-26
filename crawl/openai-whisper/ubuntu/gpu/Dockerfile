@@ -1,9 +1,11 @@
 ARG UBUNTU_VER=22.04
 ARG CUDA_VER=12.8.0
 ARG IMAGE=docker.io/nvidia/cuda:${CUDA_VER}-cudnn-devel-ubuntu${UBUNTU_VER}
-ARG PIP_ARGS="torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
 
 FROM ${IMAGE}
+
+# Set below FROM because it resets env
+ARG PIP_ARGS="torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
 
 # Set non-interactive mode for apt
 ENV DEBIAN_FRONTEND=noninteractive
@@ -14,7 +16,7 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install GPU version of PyTorch
-RUN pip  --no-cache-dir install ${PIP_ARGS}
+RUN pip --no-cache-dir install ${PIP_ARGS}
 
 # Create and set working directory
 WORKDIR /data

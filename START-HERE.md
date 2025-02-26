@@ -24,7 +24,8 @@
 
 ### Ubuntu Dockerfile
 
-1. Build the Dockerfile: `podman build --format=docker -t whisper:ubuntu models/openai-whisper/ubuntu/.`
+1. Build the CPU Dockerfile: `podman build -t whisper:ubuntu crawl/openai-whisper/ubuntu/.`
+1. Build the GPU Docker: `podman build -t gpu-whisper crawl/openai-whisper/ubuntu/gpu/.`
 1. Run whisper in the background: `podman run -d --name whisper-ubuntu localhost/whisper:ubuntu sleep infinity`
 
 #### Transcribe provided audio file
