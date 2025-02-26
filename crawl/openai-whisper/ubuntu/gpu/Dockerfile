@@ -23,10 +23,9 @@ RUN python3 -m venv venv && \
     . venv/bin/activate && \
     pip install --no-cache-dir openai-whisper jiwer
 
-ENV BASH_ENV="/data/venv/bin/activate" \
-    ENV="/data/venv/bin/activate" \
-    PROMPT_COMMAND=". /data/venv/bin/activate"
-
+ENV BASH_ENV="/root/venv/bin/activate" \
+    ENV="/root/venv/bin/activate" \
+    PROMPT_COMMAND=". /root/venv/bin/activate"
 
 # Create and set working directory
 WORKDIR /data
