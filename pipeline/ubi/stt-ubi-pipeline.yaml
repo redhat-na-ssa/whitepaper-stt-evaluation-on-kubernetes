@@ -20,6 +20,9 @@ spec:
     - default: quay.io/redhat_na_ssa/sttubi
       name: OUTPUT_IMAGE
       type: string
+    - default: 'http://rekor-server.trusted-artifact-signer.svc'
+      name: rekor-url
+      type: string
   results:
     - description: The common vulnerabilities and exposures (CVE) result
       name: ACS_SCAN_OUTPUT
@@ -75,7 +78,7 @@ spec:
         - git-clone
       taskRef:
         kind: Task
-        name: build-image-sbom-upload
+        name: build-image
       workspaces:
         - name: source
           workspace: source_dir
@@ -115,6 +118,30 @@ spec:
       workspaces:
         - name: reports
           workspace: reports
+    - name: upload-sbom-to-tpa
+      params:
+        - name: COMPONENT_ID
+          value: stt-ubi
+      runAfter:
+        - acs-image-check
+        - acs-image-scan
+      taskRef:
+        kind: Task
+        name: upload-sbom-to-tpa
+      workspaces:
+        - name: sboms
+          workspace: source_dir
+    - name: query-rekor-signed-provenance
+      params:
+        - name: imageDigest
+          value: $(tasks.build-image-with-sbom.results.IMAGE_DIGEST)
+        - name: rekorUrl
+          value: $(params.rekor-url)
+      runAfter:
+        - upload-sbom-to-tpa
+      taskRef:
+        kind: Task
+        name: rekor-signed-provenance
   workspaces:
     - name: source_dir
     - name: reports
