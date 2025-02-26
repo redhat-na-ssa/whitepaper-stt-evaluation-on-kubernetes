@@ -37,6 +37,30 @@ Tracking the deployment and integration status of different speech-to-text (ASR)
 
 ## Performance Metrics Evaluated:
 
+Each inference test outputs a transcription file using the following pattern: 
+
+MODEL-SIZE-BASE_IMAGE-AUDIO_FILE-GPU/CPU-QTY-DATE.txt
+
+**Cost:** How much does it cost to infer?
+
+**Resources:** How many resources does it consume to infer?
+1. GPU
+1. CPU
+
+**Speed:** How fast is the model at transcribing using the `time` command which prints
+
+1. `real` - wall-clock time (actual elapsed time) from when the command started to when it finished.
+1. `user` - total amount of CPU time spent in user mode, meaning the time the CPU spent executing the process's code (excluding kernel operations).
+1. `sys` - total amount of CPU time spent in kernel mode, meaning time spent executing system calls on behalf of the process (e.g., file I/O, memory allocation). If you are using a GPU, it's likely that much of the work gets offloaded resulting in a lower number.
+
+**Accuracy:** How accurate is the model? JiWER is a simple and fast python package to evaluate an automatic speech recognition system. It supports the following measures:
+
+1. `word error rate (WER)`
+1. `match error rate (MER)`
+1. `word information lost (WIL)`
+1. `word information preserved (WIP)`
+1. `character error rate (CER)`
+
 1. [STT Benchmark from Picovoice](https://github.com/Picovoice/speech-to-text-benchmark?tab=readme-ov-file)
 1. Execution Time: Measure total inference time per transcription.
 1. Accuracy (Word Error Rate - WER): Evaluate transcription correctness.
