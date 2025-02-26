@@ -10,6 +10,7 @@ export XDG_CACHE_HOME
 init(){
   [ -e "${MODEL_CACHE}" ] || mkdir -p "${MODEL_CACHE}"
   [ -e "${AUDIO_FILES}" ] || mkdir -p "${AUDIO_FILES}"
+  . /data/venv/bin/activate
 }
 
 usage(){
