@@ -22,12 +22,10 @@
 1. Clone the git repo `git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git`
 1. Move to your cloned git folder `cd whitepaper-stt-evaluation-on-kubernetes/`
 
-### Run Ubuntu Dockerfile
+### Ubuntu Dockerfile
 
-1. Move to Ubuntu folder: `cd models/openai-whisper/ubuntu/`
 1. Build the Dockerfile: `podman build --format=docker -t whisper:ubuntu models/openai-whisper/ubuntu/.`
-1. List images: `podman image list`
-1. Run the whisper image: `podman run -it --rm localhost/whisper:ubuntu /bin/bash`
+1. Run whisper in the background: `podman run -d --name whisper-ubuntu localhost/whisper:ubuntu sleep infinity`
 
 #### Transcribe provided audio file
 
