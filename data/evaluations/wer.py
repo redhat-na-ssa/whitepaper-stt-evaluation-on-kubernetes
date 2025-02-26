@@ -1,5 +1,6 @@
 # USAGE 
-# python3 evaluations/wer.py ground-truth/jfk-transcript-inaugural-address-20-january-1961.txt output/whisper-tiny-ubuntu-jfk-transcript-inaugural-address-20-january-1961-1-gpu-2025-02-26_20-37-29.txt
+# python3 evaluations/wer.py <reference_file> <hypothesis_file> <output_dir>
+# python3 evaluations/wer.py ground-truth/jfk-transcript-inaugural-address-20-january-1961.txt output/whisper-tiny-ubuntu-jfk-transcript-inaugural-address-20-january-1961-1-gpu-2025-02-26_20-37-29.txt evaluations
 
 import jiwer
 import argparse
@@ -26,18 +27,21 @@ def calculate_wer(reference_file, hypothesis_file, output_dir):
     print(f"Word Information Lost (WIL): {wil:.2%}") 
     print(f"Word Information Preserved (WIP): {wip:.2%}") 
     print(f"Character Error Rate (CER): {cer:.2%}")    
-    
+
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
     output_csv = os.path.join(output_dir, "wer_results.csv")
-    
-    # Write results to CSV (metrics in columns)
-    with open(output_csv, 'w', newline='', encoding='utf-8') as csvfile:
+
+    # Append results to CSV if file exists, otherwise create and write header
+    file_exists = os.path.isfile(output_csv)
+
+    with open(output_csv, 'a', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(["Hypothesis File", "WER", "MER", "WIL", "WIP", "CER"])
+        if not file_exists:
+            csv_writer.writerow(["Hypothesis File", "WER", "MER", "WIL", "WIP", "CER"])  # Write header only if new file
         csv_writer.writerow([os.path.basename(hypothesis_file), wer, mer, wil, wip, cer])
-    
-    print(f"Results written to {output_csv}")
+
+    print(f"Results appended to {output_csv}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calculate error rates between two text files using jiwer and save to CSV.")

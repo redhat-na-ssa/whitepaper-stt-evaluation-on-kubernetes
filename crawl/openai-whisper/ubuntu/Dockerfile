@@ -17,7 +17,7 @@ RUN chmod 0775 /data
 # Create and activate virtual environment
 RUN python3 -m venv venv && \
     . venv/bin/activate && \
-    pip install --no-cache-dir openai-whisper jiwer
+    pip install --no-cache-dir openai-whisper jiwer psutil
 
 ENV BASH_ENV="/data/venv/bin/activate" \
     ENV="/data/venv/bin/activate" \

@@ -13,7 +13,7 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/*
 
 # Create and activate virtual environment
-RUN pip install --no-cache-dir openai-whisper jiwer
+RUN pip install --no-cache-dir openai-whisper jiwer psutil
 
 # Set below FROM because it resets env
 ARG TORCH_ARGS="torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"

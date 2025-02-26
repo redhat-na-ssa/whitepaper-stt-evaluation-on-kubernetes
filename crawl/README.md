@@ -9,15 +9,17 @@ OpenAI Whisper interactive session with local audio files on a laptop/server:
     - [ ] CPU
     - [ ] GPU
 
-## Build CPU image
+## Ubuntu
 
-`podman build -t cpu-whisper crawl/openai-whisper/ubuntu/.`
+### Build CPU image
 
-## Build GPU image
+`podman build -t whisper-cpu:ubuntu crawl/openai-whisper/ubuntu/.`
 
-`podman build -t gpu-whisper crawl/openai-whisper/ubuntu/gpu/.`
+### Build GPU image
 
-## Run on single GPU
+`podman build -t whisper-gpu:ubuntu crawl/openai-whisper/ubuntu/gpu/.`
+
+### Run on single GPU
 
 ```sh
 podman run --rm -it \
@@ -27,7 +29,7 @@ podman run --rm -it \
     localhost/gpu-whisper:latest
 ```
 
-## Run on multiple GPU
+### Run on multiple GPU
 
 ```sh
 podman run --rm -it \
@@ -37,24 +39,46 @@ podman run --rm -it \
     localhost/gpu-whisper:latest
 ```
 
-## Evaluations
+### Run the STT model against .mp3 files
 
-### Duration
+MODEL options:
+- tiny.en, tiny, base.en, base, small.en, small, medium.en, medium, large, turbo
+
+INPUT options:
+
+1. jfk-audio-inaugural-address-20-january-1961
+1. jfk-audio-rice-university-12-september-1962
 
 ```sh
-time whisper audio-samples/jfk-audio-inaugural-address-20-january-1961.mp3 --model tiny.en > output/whisper-tiny-ubuntu-jfk-transcript-inaugural-address-20-january-1961-1-gpu-$(date +"%Y-%m-%d_%H-%M-%S").txt
+MODEL=tiny.en
+INPUT=jfk-audio-inaugural-address-20-january-1961
 
-real    0m27.260s
-user    0m36.689s
-sys     0m2.135s
+echo "Running: time whisper audio-samples/$INPUT.mp3 --model $MODEL > output/whisper-$MODEL-ubuntu-$INPUT-gpu-1-$(date +"%Y-%m-%d").txt"
+
+time whisper audio-samples/$INPUT.mp3 --model $MODEL > output/whisper-$MODEL-ubuntu-$INPUT-gpu-1-$(date +"%Y-%m-%d").txt
 ```
 
-### Accuracy
+### Evalaute the accuracy
 
-JiWER Metrics
+MODEL options:
+- tiny.en, tiny, base.en, base, small.en, small, medium.en, medium, large, turbo
+
+GROUND options:
+
+1. jfk-transcript-inaugural-address-20-january-1961
+1. jfk-transcript-rice-university-12-september-1962
+
+INPUT options:
+
+1. jfk-audio-inaugural-address-20-january-1961
+1. jfk-audio-rice-university-12-september-1962
 
 ```sh
-python3 evaluations/wer.py ground-truth/jfk-transcript-inaugural-address-20-january-1961.txt output/whisper-tiny-ubuntu-jfk-transcript-inaugural-address-20-january-1961-1-gpu-2025-02-26_20-37-29.txt
+GROUND=jfk-transcript-inaugural-address-20-january-1961
+MODEL=tiny.en
+INPUT=jfk-audio-inaugural-address-20-january-1961
+
+python3 evaluations/wer.py ground-truth/$GROUND.txt output/whisper-$MODEL-ubuntu-$INPUT-gpu-1-$(date +"%Y-%m-%d_%H-%M-%S").txt evaluations`
 ```
 
 Resources:
