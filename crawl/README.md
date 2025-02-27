@@ -26,7 +26,7 @@ podman run --rm -it \
     -v $(pwd)/data:/data:z \
     --security-opt=label=disable \
     --device nvidia.com/gpu=all \
-    localhost/gpu-whisper:latest
+    localhost/whisper-gpu:ubuntu
 ```
 
 ### Run on multiple GPU
@@ -36,7 +36,7 @@ podman run --rm -it \
     -v $(pwd)/data:/data:z \
     --security-opt=label=disable \
     --gpus 2 \
-    localhost/gpu-whisper:latest
+    localhost/whisper-gpu:ubuntu
 ```
 
 ### Run the STT model against .mp3 files
@@ -53,28 +53,6 @@ AUDIO options:
 bash transcribe.sh medium.en jfk-audio-rice-university-12-september-1962
 ```
 
-### Evalaute the accuracy
-
-MODEL options:
-- tiny.en, tiny, base.en, base, small.en, small, medium.en, medium, large, turbo
-
-GROUND options:
-
-1. jfk-transcript-inaugural-address-20-january-1961
-1. jfk-transcript-rice-university-12-september-1962
-
-INPUT options:
-
-1. jfk-audio-inaugural-address-20-january-1961
-1. jfk-audio-rice-university-12-september-1962
-
-```sh
-GROUND=jfk-transcript-inaugural-address-20-january-1961
-MODEL=tiny.en
-INPUT=jfk-audio-inaugural-address-20-january-1961
-
-python3 evaluations/wer.py ground-truth/$GROUND.txt output/whisper-$MODEL-ubuntu-$INPUT-gpu-1-$(date +"%Y-%m-%d_%H-%M-%S").txt evaluations`
-```
 
 Resources:
 
