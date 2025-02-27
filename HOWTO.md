@@ -375,6 +375,67 @@ Smoke test audio file
 curl -X POST $FASTER_WHISPER_ENDPOINT/v1/audio/transcriptions -H 'accept: application/json' -F 'model=Systran/faster-whisper-tiny.en' -F 'stream=true' -F 'file=@test.mp4'
 ```
 
+## Riva
+
+Export NGC credentials
+
+```sh
+export NGC_API_KEY="<YOUR NGC API KEY>"
+```
+
+Download helm chart
+
+```sh
+helm fetch https://helm.ngc.nvidia.com/nvidia/riva/charts/riva-api-2.18.0.tgz \
+        --username=\$oauthtoken --password=$NGC_API_KEY --untar
+```
+
+Edit the `values.yaml` with
+
+1. `ngcCredentials` put in your `NGC_API_KEY` and `email`
+1. `persistentVolumeClaim` - change `usePVC` to `true` and set `storageClassName` (e.g. `gp3-csi` in AWS) and set `storageAccessMode` to `ReadWriteOnce`
+
+
+Create project
+
+```sh
+oc new-project riva
+```
+
+Deploy
+
+
+```sh
+helm install riva-api riva-api
+```
+
+Fix secret
+
+> There is a bug in the helm chart and requires to manually create the model pull secret
+
+```sh
+oc create secret generic modelpullsecret --from-literal=apikey=$NGC_API_KEY
+```
+
+Riva exposes a gRPC API instead of HTTP, so it needs a client
+
+```sh
+oc create -f ocp/riva/client.yaml
+```
+
+Exec into pod
+
+```sh
+export cpod=`oc get pods | cut -d " " -f 1 | grep riva-client`
+oc exec --stdin --tty $cpod /bin/bash
+```
+
+From inside the shell
+
+```sh
+riva_streaming_asr_client --print_transcripts    --audio_file=/opt/riva/wav/en-US_sample.wav    --automatic_punctuation=true    --riva_uri=riva-api:50051
+```
+
 ## Reference
 
 - [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages)
