@@ -30,9 +30,11 @@ Tracking the deployment and integration status of different speech-to-text (ASR)
 |Ray Serve|TODO|TODO|TODO|TODO|
 |Batch|TODO|TODO|TODO|TODO|
 |Streaming|TODO|TODO|TODO|TODO|
-|STT Benchmark WER|TODO|TODO|TODO|TODO|
-|STT Benchmark Core-Hour|TODO|TODO|TODO|TODO|
-|Model Size|tiny|TODO|TODO|TODO|
+|Word Error Rate (WER)|TODO|TODO|TODO|TODO|
+|Match Error Rate (MER)|TODO|TODO|TODO|TODO|
+|Word Information Lost (WIL)|TODO|TODO|TODO|TODO|
+|Word Information Preserved (WIP)|TODO|TODO|TODO|TODO|
+|Character Error Rate (CER)|TODO|TODO|TODO|TODO|
 |Summary|TODO|TODO|TODO|TODO|
 
 ## Performance Metrics Evaluated:

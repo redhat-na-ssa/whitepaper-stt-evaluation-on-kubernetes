@@ -8,20 +8,14 @@ RUN apt update && \
     apt install -y python3-venv python3-pip ffmpeg wget curl && \
     rm -rf /var/lib/apt/lists/*
 
+# Install python packages
+RUN pip install --no-cache-dir openai-whisper jiwer
+
 # Create and set working directory
 WORKDIR /data
 
 # Give group write permissions
 RUN chmod 0775 /data
-
-# Create and activate virtual environment
-RUN python3 -m venv venv && \
-    . venv/bin/activate && \
-    pip install --no-cache-dir openai-whisper jiwer psutil
-
-ENV BASH_ENV="/data/venv/bin/activate" \
-    ENV="/data/venv/bin/activate" \
-    PROMPT_COMMAND=". /data/venv/bin/activate"
 
 # Default command to process the audio file using ffmpeg & whisper
 CMD ["/bin/bash"]
