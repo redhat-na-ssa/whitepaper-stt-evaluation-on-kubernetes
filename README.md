@@ -4,7 +4,7 @@ This project evaluates various Speech-to-Text (STT) configurations for both stre
 
 OpenAI Whisper, Faster-Whisper, NVIDIA NeMo ASR, and Wav2Vec are all speech-to-text (ASR) models, but they differ in terms of architecture, performance, hardware requirements, and use cases. Here’s how they compare:
 
-||OpenAI Whisper|Faster-Whisper|NeMo|Wav2Vec 2.0|
+||OpenAI Whisper|Faster-Whisper|Nvidia Conformer CTC|Wav2Vec 2.0|
 |-|-|-|-|-|
 |Developer|OpenAI|OpenAI (optimized by Faster-Whisper)|NVIDIA|Meta (Facebook)|
 |Model Type|Transformer-based|Transformer-based|Conformer-based|Self-supervised Transformer|
@@ -15,27 +15,59 @@ OpenAI Whisper, Faster-Whisper, NVIDIA NeMo ASR, and Wav2Vec are all speech-to-t
 
 Tracking the deployment and integration status of different speech-to-text (ASR) models (OpenAI Whisper, Faster-Whisper, NVIDIA NeMo ASR, and Wav2Vec 2.0) across various environments, model servers, and performance metrics.
 
-||OpenAI Whisper|Faster-Whisper|NeMo|Wav2Vec 2.0|
+## Crawl
+
+Models in a Containerfile deployed on RHEL
+
+||Ubuntu|UBI|ModelKit
+|-|-|-|-|
+|OpenAI Whisper|X|X|TODO|
+|Faster Whisper|TODO|TODO|TODO|
+|Nvidia Conformer CTC|TODO|TODO|TODO|
+|Wav2Vec|TODO|TODO|TODO|
+
+## Walk
+
+Models in a Containerfile deployed on OCP 
+
+### Embedded Deployments
+
+||Ubuntu|Ubuntu TSSC|UBI|UBI TSSC|
 |-|-|-|-|-|
-|Ubuntu Dockerfile|X|TODO|TODO|TODO|TODO|
-|UBI Dockerfile|X|TODO|TODO|TODO|
-|ModelKit|TODO|TODO|TODO|TODO|
-|RHEL OS|X|TODO|TODO|TODO|
-|OCP|X|TODO|TODO|TODO|
-|Embedded Server|X|TODO|TODO|TODO|
-|Built-in Server|X|TODO|TODO|TODO|
-|Decoupled Server|TODO|TODO|TODO|TODO|
-|NVIDIA Triton|TODO|TODO|TODO|TODO|
-|vLLM|TODO|TODO|TODO|TODO|
+|OpenAI Whisper|X|X|X|TODO
+|Faster Whisper|TODO|TODO|TODO|TODO|
+|Nvidia Conformer CTC|TODO|TODO|TODO|TODO|
+|Wav2Vec|TODO|TODO|TODO|TODO|
+
+### Embedded Deployments - STT Model Performance Evaluation
+
+||Ubuntu|Ubuntu TSSC|UBI|UBI TSSC|
+|-|-|-|-|-|
+|OpenAI Whisper|TODO|TODO|TODO|TODO
+|Faster Whisper|TODO|TODO|TODO|TODO|
+|Nvidia Conformer CTC|TODO|TODO|TODO|TODO|
+|Wav2Vec|TODO|TODO|TODO|TODO|
+
+## Run
+
+Model servers deployed on OCP with models loaded dynamically from external storage
+
+### Model Server Deployments
+
+||vLLM|Speeches.ai (formerly Faster-Whisper Server)|Nvidia RIVA|Ray Serve|
+|-|-|-|-|-|
+|OCP|X|X|X|TODO|
+|OCP TSSC|TODO|TODO|TODO|TODO|
 |Ray Serve|TODO|TODO|TODO|TODO|
-|Batch|TODO|TODO|TODO|TODO|
-|Streaming|TODO|TODO|TODO|TODO|
-|Word Error Rate (WER)|X|TODO|TODO|TODO|
-|Match Error Rate (MER)|X|TODO|TODO|TODO|
-|Word Information Lost (WIL)|X|TODO|TODO|TODO|
-|Word Information Preserved (WIP)|X|TODO|TODO|TODO|
-|Character Error Rate (CER)|X|TODO|TODO|TODO|
-|Summary|TODO|TODO|TODO|TODO|
+
+### Model Server - STT Model Performance Evaluation
+
+||vLLM|Speaches.ai (formerly Faster-Whisper Server)|Nvidia RIVA|Ray Serve|
+|-|-|-|-|-|
+|OpenAI Whisper|TODO|TODO|TODO|TODO|
+|Faster Whisper|TODO|TODO|TODO|TODO|
+|Nvidia Conformer CTC|TODO|TODO|TODO|TODO|
+|Wav2Vec|TODO|TODO|TODO|TODO|
 
 ## Performance Metrics Evaluated:
 
