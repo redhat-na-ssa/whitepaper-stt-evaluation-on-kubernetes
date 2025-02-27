@@ -4,14 +4,17 @@
 # bash evaluations/transcribe.sh medium.en jfk-audio-rice-university-12-september-1962
 
 # Set default values
-MODEL=${1:-tiny.en}  # Allow overriding via CLI argument
-INPUT=${2:-jfk-audio-inaugural-address-20-january-1961}
+MODEL=${1:-whisper}
+MODEL_SIZE=${2:-tiny.en}
+OS=${3:-ubuntu}
+INPUT=${4:-jfk-audio-inaugural-address-20-january-1961}
+PROCESSOR=${5:-gpu}
 
 # Define paths
 AUDIO_FILE="audio-samples/$INPUT.mp3"
 OUTPUT_DIR="output"
 DATE_FMT=$(date +"%Y-%m-%d")
-OUTPUT_FILE="$OUTPUT_DIR/whisper-${MODEL}-ubuntu-${INPUT}-gpu-1-${DATE_FMT}.txt"
+OUTPUT_FILE="$OUTPUT_DIR/${DATE_FMT}.txt"
 
 # Ensure the audio file exists
 if [[ ! -f "$AUDIO_FILE" ]]; then
