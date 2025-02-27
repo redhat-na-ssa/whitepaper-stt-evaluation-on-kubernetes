@@ -32,22 +32,46 @@ import argparse
 import csv
 import os
 import subprocess
+import time
 from datetime import datetime
 
 def execute_model(model, model_size, base_image, platform, processor, input_file, output_dir):
-    """Executes the model and saves output to a file."""
+    """Executes the model, captures timing metrics, and saves output to a file."""
     date_fmt = datetime.now().strftime("%Y-%m-%d")
     output_file = os.path.join(output_dir, f"{date_fmt}.txt")
     
     os.makedirs(output_dir, exist_ok=True)
-    
-    command = [model, input_file, "--model", model_size]
-    
-    with open(output_file, "w", encoding="utf-8") as out_file:
-        subprocess.run(command, stdout=out_file, stderr=subprocess.STDOUT, check=True)
-    
-    print(f"Model executed and output saved to {output_file}")
-    return output_file
+
+    # Capture timing using built-in time module
+    start_real = time.time()
+    start_process = time.process_time()
+
+    try:
+        result = subprocess.run(
+            [model, input_file, "--model", model_size],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        
+        end_real = time.time()
+        end_process = time.process_time()
+
+        real_time = round(end_real - start_real, 3)  # Total elapsed time
+        user_time = round(end_process - start_process, 3)  # CPU time used by the process
+        sys_time = 0  # Python's time module does not track system time separately
+
+        # Write model output to file
+        with open(output_file, "w", encoding="utf-8") as out_file:
+            out_file.write(result.stdout)
+        
+        print(f"Model executed and output saved to {output_file}")
+        return output_file, real_time, user_time, sys_time
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing model: {e}")
+        return None, "", "", ""
 
 def get_cuda_version():
     """Fetch CUDA version using nvidia-smi and parse output."""
@@ -60,7 +84,7 @@ def get_cuda_version():
         print(f"Failed to get CUDA version: {e}")
     return "Unknown"
 
-def calculate_eval(model, model_size, base_image, platform, processor, reference_file, hypothesis_file, output_dir):
+def calculate_eval(model, model_size, base_image, platform, processor, reference_file, hypothesis_file, output_dir, real_time, user_time, sys_time):
     """Calculates error rates between a reference and hypothesis text and writes results to a CSV file."""
     
     # Read reference and hypothesis files
@@ -84,9 +108,9 @@ def calculate_eval(model, model_size, base_image, platform, processor, reference
     # Performance data
     performance = {
         "vram": "",
-        "time_real": "",
-        "time_sys": "",
-        "time_user": "",
+        "time_real": real_time,
+        "time_sys": sys_time,
+        "time_user": user_time,
         "response_latency": "",
         "qps": "",
         "max_concur_endpoints": "",
@@ -136,6 +160,12 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    hypothesis_file = execute_model(args.model, args.model_size, args.base_image, args.platform, args.processor, args.input_file, args.output_dir)
+    hypothesis_file, real_time, user_time, sys_time = execute_model(
+        args.model, args.model_size, args.base_image, args.platform, args.processor, args.input_file, args.output_dir
+    )
     
-    calculate_eval(args.model, args.model_size, args.base_image, args.platform, args.processor, args.reference_file, hypothesis_file, args.output_dir)
+    if hypothesis_file:
+        calculate_eval(
+            args.model, args.model_size, args.base_image, args.platform, args.processor, 
+            args.reference_file, hypothesis_file, args.output_dir, real_time, user_time, sys_time
+        )
