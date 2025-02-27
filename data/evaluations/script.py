@@ -34,6 +34,7 @@ import os
 import subprocess
 import time
 from datetime import datetime
+import torch
 
 def execute_model(model, model_size, base_image, platform, processor, input_file, output_dir):
     """Executes the model, captures timing metrics, and saves output to a file."""
@@ -65,13 +66,16 @@ def execute_model(model, model_size, base_image, platform, processor, input_file
         # Write model output to file
         with open(output_file, "w", encoding="utf-8") as out_file:
             out_file.write(result.stdout)
-        
+
+        # Detect floating-point precision from logs (if available)
+        float_point = detect_fp_precision(result.stdout, result.stderr)
+
         print(f"Model executed and output saved to {output_file}")
-        return output_file, real_time, user_time, sys_time
+        return output_file, real_time, user_time, sys_time, float_point
 
     except subprocess.CalledProcessError as e:
         print(f"Error executing model: {e}")
-        return None, "", "", ""
+        return None, "", "", "", "Unknown"
 
 def get_cuda_version():
     """Fetch CUDA version using nvidia-smi and parse output."""
@@ -84,7 +88,38 @@ def get_cuda_version():
         print(f"Failed to get CUDA version: {e}")
     return "Unknown"
 
-def calculate_eval(model, model_size, base_image, platform, processor, reference_file, hypothesis_file, output_dir, real_time, user_time, sys_time):
+def get_float_precision():
+    """Determines the default floating-point precision used by the GPU."""
+    if torch.cuda.is_available():
+        # Check autocast GPU dtype (used in mixed precision training)
+        try:
+            return str(torch.get_autocast_dtype("cuda")) # Usually fp16 or bf16
+        except AttributeError:
+            pass
+        
+        # Fallback: Check default tensor type
+        tensor = torch.tensor([1.0], device="cuda")
+        return str(tensor.dtype)  # e.g., torch.float32, torch.float16, torch.bfloat16
+
+    return "Unknown"
+
+# Example usage
+float_precision = get_float_precision()
+print(f"Floating-point precision: {float_precision}")
+
+def detect_fp_precision(stdout, stderr):
+    """Tries to determine the floating-point precision used by checking output logs."""
+    if "FP8" in stdout or "FP8" in stderr:
+        return "FP8"
+    elif "FP16" in stdout or "FP16" in stderr or "mixed precision" in stdout:
+        return "FP16"
+    elif "BF16" in stdout or "BF16" in stderr:
+        return "BF16"
+    elif "FP32" in stdout or "FP32" in stderr or "full precision" in stdout:
+        return "FP32"
+    return "Unknown"
+
+def calculate_eval(model, model_size, base_image, platform, processor, reference_file, hypothesis_file, output_dir, real_time, user_time, sys_time, float_point):
     """Calculates error rates between a reference and hypothesis text and writes results to a CSV file."""
     
     # Read reference and hypothesis files
@@ -114,7 +149,7 @@ def calculate_eval(model, model_size, base_image, platform, processor, reference
         "response_latency": "",
         "qps": "",
         "max_concur_endpoints": "",
-        "float_point": "",
+        "float_point": float_precision,  # Newly added FP column
     }
 
     # Compute error rates
@@ -160,12 +195,12 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    hypothesis_file, real_time, user_time, sys_time = execute_model(
+    hypothesis_file, real_time, user_time, sys_time, float_point = execute_model(
         args.model, args.model_size, args.base_image, args.platform, args.processor, args.input_file, args.output_dir
     )
     
     if hypothesis_file:
         calculate_eval(
             args.model, args.model_size, args.base_image, args.platform, args.processor, 
-            args.reference_file, hypothesis_file, args.output_dir, real_time, user_time, sys_time
+            args.reference_file, hypothesis_file, args.output_dir, real_time, user_time, sys_time, float_point
         )
