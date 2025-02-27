@@ -49,6 +49,17 @@ def execute_model(model, model_size, base_image, platform, processor, input_file
     print(f"Model executed and output saved to {output_file}")
     return output_file
 
+def get_cuda_version():
+    """Fetch CUDA version using nvidia-smi and parse output."""
+    try:
+        result = subprocess.run(["nvidia-smi"], capture_output=True, text=True, check=True)
+        for line in result.stdout.split("\n"):
+            if "CUDA Version" in line:
+                return line.split("CUDA Version:")[1].split()[0]  # Extract the version number
+    except Exception as e:
+        print(f"Failed to get CUDA version: {e}")
+    return "Unknown"
+
 def calculate_eval(model, model_size, base_image, platform, processor, reference_file, hypothesis_file, output_dir):
     """Calculates error rates between a reference and hypothesis text and writes results to a CSV file."""
     
@@ -67,7 +78,7 @@ def calculate_eval(model, model_size, base_image, platform, processor, reference
         "platform": platform,
         "processor": processor,
         "image_size": "",
-        "cuda_ver": "",
+        "cuda_ver": get_cuda_version(),
     }
 
     # Performance data

@@ -28,18 +28,17 @@ Tracking the deployment and integration status of different speech-to-text (ASR)
 |NVIDIA Triton|TODO|TODO|TODO|TODO|
 |vLLM|TODO|TODO|TODO|TODO|
 |Ray Serve|TODO|TODO|TODO|TODO|
-|Batch|TODO|TODO|TODO|TODO|
+|Batch|X|TODO|TODO|TODO|
 |Streaming|TODO|TODO|TODO|TODO|
 |Word Error Rate (WER)|X|TODO|TODO|TODO|
 |Match Error Rate (MER)|X|TODO|TODO|TODO|
 |Word Information Lost (WIL)|X|TODO|TODO|TODO|
 |Word Information Preserved (WIP)|X|TODO|TODO|TODO|
 |Character Error Rate (CER)|X|TODO|TODO|TODO|
+|Pipeline Build|TODO|TODO|TODO|TODO|
 |Summary|TODO|TODO|TODO|TODO|
 
 ## Performance Metrics Evaluated:
-
-Each inference test outputs a transcription file using the following pattern:  `model-size-baseImage-audioFile-cpuOrGpu-qty-date.txt`
 
 **Infrastructure**: What types of hardware were tested?
 
