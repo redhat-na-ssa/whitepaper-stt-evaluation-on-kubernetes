@@ -30,11 +30,11 @@ Tracking the deployment and integration status of different speech-to-text (ASR)
 |Ray Serve|TODO|TODO|TODO|TODO|
 |Batch|TODO|TODO|TODO|TODO|
 |Streaming|TODO|TODO|TODO|TODO|
-|Word Error Rate (WER)|TODO|TODO|TODO|TODO|
-|Match Error Rate (MER)|TODO|TODO|TODO|TODO|
-|Word Information Lost (WIL)|TODO|TODO|TODO|TODO|
-|Word Information Preserved (WIP)|TODO|TODO|TODO|TODO|
-|Character Error Rate (CER)|TODO|TODO|TODO|TODO|
+|Word Error Rate (WER)|X|TODO|TODO|TODO|
+|Match Error Rate (MER)|X|TODO|TODO|TODO|
+|Word Information Lost (WIL)|X|TODO|TODO|TODO|
+|Word Information Preserved (WIP)|X|TODO|TODO|TODO|
+|Character Error Rate (CER)|X|TODO|TODO|TODO|
 |Summary|TODO|TODO|TODO|TODO|
 
 ## Performance Metrics Evaluated:
