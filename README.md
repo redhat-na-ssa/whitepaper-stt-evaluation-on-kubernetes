@@ -59,7 +59,7 @@ Performance evaluation across models in Containerfiles deployed on OCP
 
 Model servers deployed on OCP with models loaded dynamically from external storage
 
-||vLLM|Speeches.ai (formerly Faster-Whisper Server)|Nvidia RIVA|Ray Serve|
+||vLLM|Speaches.ai (formerly Faster-Whisper Server)|Nvidia RIVA|Ray Serve|
 |-|-|-|-|-|
 |OCP|X|X|X|TODO|
 |OCP TSSC|TODO|TODO|TODO|TODO|
