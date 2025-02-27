@@ -26,11 +26,18 @@ Models in a Containerfile deployed on RHEL
 |Nvidia Conformer CTC|TODO|TODO|TODO|
 |Wav2Vec|TODO|TODO|TODO|
 
+Performance evaluation across models in Containerfiles deployed on RHEL
+
+||Ubuntu|UBI|ModelKit
+|-|-|-|-|
+|OpenAI Whisper|TODO|TODO|TODO|
+|Faster Whisper|TODO|TODO|TODO|
+|Nvidia Conformer CTC|TODO|TODO|TODO|
+|Wav2Vec|TODO|TODO|TODO|
+
 ## Walk
 
 Models in a Containerfile deployed on OCP 
-
-### Embedded Deployments
 
 ||Ubuntu|Ubuntu TSSC|UBI|UBI TSSC|
 |-|-|-|-|-|
@@ -39,20 +46,18 @@ Models in a Containerfile deployed on OCP
 |Nvidia Conformer CTC|TODO|TODO|TODO|TODO|
 |Wav2Vec|TODO|TODO|TODO|TODO|
 
-### Embedded Deployments - STT Model Performance Evaluation
+Performance evaluation across models in Containerfiles deployed on OCP
 
-||Ubuntu|Ubuntu TSSC|UBI|UBI TSSC|
-|-|-|-|-|-|
-|OpenAI Whisper|TODO|TODO|TODO|TODO
-|Faster Whisper|TODO|TODO|TODO|TODO|
-|Nvidia Conformer CTC|TODO|TODO|TODO|TODO|
-|Wav2Vec|TODO|TODO|TODO|TODO|
+||Ubuntu|UBI|
+|-|-|-|
+|OpenAI Whisper|TODO|TODO|
+|Faster Whisper|TODO|TODO|
+|Nvidia Conformer CTC|TODO|TODO|
+|Wav2Vec|TODO|TODO|
 
 ## Run
 
 Model servers deployed on OCP with models loaded dynamically from external storage
-
-### Model Server Deployments
 
 ||vLLM|Speeches.ai (formerly Faster-Whisper Server)|Nvidia RIVA|Ray Serve|
 |-|-|-|-|-|
@@ -60,7 +65,7 @@ Model servers deployed on OCP with models loaded dynamically from external stora
 |OCP TSSC|TODO|TODO|TODO|TODO|
 |Ray Serve|TODO|TODO|TODO|TODO|
 
-### Model Server - STT Model Performance Evaluation
+Performance evaluation across models loaded into various model servers deployed on OCP
 
 ||vLLM|Speaches.ai (formerly Faster-Whisper Server)|Nvidia RIVA|Ray Serve|
 |-|-|-|-|-|
