@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # USAGE
-# bash evaluate.sh medium.en jfk-audio-rice-university-12-september-1962 jfk-transcript-rice-university-12-september-1962
+# bash evaluations/accuracy.sh medium.en jfk-audio-rice-university-12-september-1962 jfk-transcript-rice-university-12-september-1962
 
 # Set default values
 MODEL=${1:-tiny.en}

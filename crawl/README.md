@@ -44,18 +44,13 @@ podman run --rm -it \
 MODEL options:
 - tiny.en, tiny, base.en, base, small.en, small, medium.en, medium, large, turbo
 
-INPUT options:
+AUDIO options:
 
 1. jfk-audio-inaugural-address-20-january-1961
 1. jfk-audio-rice-university-12-september-1962
 
 ```sh
-MODEL=tiny.en
-INPUT=jfk-audio-inaugural-address-20-january-1961
-
-echo "Running: time whisper audio-samples/$INPUT.mp3 --model $MODEL > output/whisper-$MODEL-ubuntu-$INPUT-gpu-1-$(date +"%Y-%m-%d").txt"
-
-time whisper audio-samples/$INPUT.mp3 --model $MODEL > output/whisper-$MODEL-ubuntu-$INPUT-gpu-1-$(date +"%Y-%m-%d").txt
+bash transcribe.sh medium.en jfk-audio-rice-university-12-september-1962
 ```
 
 ### Evalaute the accuracy

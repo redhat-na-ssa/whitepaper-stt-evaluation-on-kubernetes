@@ -4,6 +4,16 @@
 
 ### Ubuntu
 
+#### 1 GPU
+
+```sh
+podman run --rm -it \
+    -v $(pwd)/data:/data:z \
+    --security-opt=label=disable \
+    --device nvidia.com/gpu=all \
+    localhost/gpu-whisper:latest
+```
+
 ```sh
 MODEL=tiny.en
 INPUT=jfk-audio-inaugural-address-20-january-1961

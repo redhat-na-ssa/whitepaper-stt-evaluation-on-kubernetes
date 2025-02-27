@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # USAGE
-# bash transcribe.sh medium.en jfk-audio-rice-university-12-september-1962
+# bash evaluations/transcribe.sh medium.en jfk-audio-rice-university-12-september-1962
 
 # Set default values
 MODEL=${1:-tiny.en}  # Allow overriding via CLI argument
@@ -27,3 +27,21 @@ echo "Running: whisper $AUDIO_FILE --model $MODEL > $OUTPUT_FILE"
 time whisper "$AUDIO_FILE" --model "$MODEL" > "$OUTPUT_FILE"
 
 echo "Transcription saved to $OUTPUT_FILE"
+
+# Determine the reference file dynamically
+REFERENCE_FILE="ground-truth/${INPUT}.txt"
+
+if [[ ! -f "$REFERENCE_FILE" ]]; then
+    echo "Error: Reference file '$REFERENCE_FILE' not found!"
+    exit 1
+fi
+
+# Ensure evaluations directory exists
+EVAL_DIR="evaluations"
+mkdir -p "$EVAL_DIR"
+
+# Run WER evaluation
+echo "Running: python3 evaluations/wer.py $REFERENCE_FILE $OUTPUT_FILE $EVAL_DIR"
+time python3 evaluations/wer.py "$REFERENCE_FILE" "$OUTPUT_FILE" "$EVAL_DIR"
+
+echo "WER evaluation completed. Results saved in $EVAL_DIR/wer_results.csv"
