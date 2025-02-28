@@ -53,19 +53,24 @@ podman run --rm -it \
     -v $(pwd)/data:/data:z \
     localhost/whisper-cpu:ubuntu
 
-# different model sizes transcribing jfk-audio-inaugural-address-20-january-1961
-bash evaluations/transcribe.sh tiny.en jfk-audio-inaugural-address-20-january-1961
-bash evaluations/transcribe.sh small.en jfk-audio-inaugural-address-20-january-1961
-bash evaluations/transcribe.sh medium.en jfk-audio-inaugural-address-20-january-1961
-bash evaluations/transcribe.sh large jfk-audio-inaugural-address-20-january-1961
-bash evaluations/transcribe.sh turbo jfk-audio-inaugural-address-20-january-1961
+# launch whisper-gpu:ubuntu pod
+podman run --rm -it \
+    -v $(pwd)/data:/data:z \
+    --security-opt=label=disable \
+    --device nvidia.com/gpu=all \
+    localhost/whisper-gpu:ubuntu
 
-# different model sizes transcribing jfk-audio-rice-university-12-september-1962
-bash evaluations/transcribe.sh tiny.en jfk-audio-rice-university-12-september-1962
-bash evaluations/transcribe.sh small.en jfk-audio-rice-university-12-september-1962
-bash evaluations/transcribe.sh medium.en jfk-audio-rice-university-12-september-1962
-bash evaluations/transcribe.sh large jfk-audio-rice-university-12-september-1962
-bash evaluations/transcribe.sh turbo jfk-audio-rice-university-12-september-1962
+# different model sizes transcribing jfk-audio-inaugural-address-20-january-1961
+python3 evaluations/script.py \
+        --model whisper \
+        --model_size tiny.en \
+        --base_image ubuntu \
+        --platform ubuntu \
+        --processor gpu \
+        --input_file audio-samples/jfk-audio-inaugural-address-20-january-1961.mp3 \
+        ground-truth/jfk-audio-inaugural-address-20-january-1961.txt \
+        output
+
 ```
 
 ## Resources:

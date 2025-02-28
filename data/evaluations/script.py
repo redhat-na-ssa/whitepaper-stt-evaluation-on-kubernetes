@@ -202,5 +202,4 @@ if __name__ == "__main__":
     if hypothesis_file:
         calculate_eval(
             args.model, args.model_size, args.base_image, args.platform, args.processor, 
-            args.reference_file, hypothesis_file, args.output_dir, real_time, user_time, sys_time, float_point
-        )
+            args.reference_file, hypothesis_file, args.output_dir, real_time, user_time, sys_time, float_point)
