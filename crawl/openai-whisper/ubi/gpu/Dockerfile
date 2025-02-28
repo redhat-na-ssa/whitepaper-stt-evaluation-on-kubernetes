@@ -1,6 +1,6 @@
 ARG RHEL_VER=8
-#ARG IMAGE=nvidia/cuda:12.8.0-cudnn-devel-ubi8:12.8.0-cudnn-devel-ubi8
-ARG IMAGE=nvidia/cuda:12.8.0-cudnn-devel-ubi8:12.8.0-cudnn-devel-ubi8@sha256:d38778c859b3b8bfb5b47f1736b9d6a0c89308e283d1a0e09ade7b4c5168ff68
+#ARG IMAGE=nvidia/cuda:12.8.0-cudnn-devel-ubi8
+ARG IMAGE=docker.io/nvidia/cuda:12.8.0-cudnn-devel-ubi8@sha256:d38778c859b3b8bfb5b47f1736b9d6a0c89308e283d1a0e09ade7b4c5168ff68
 
 FROM ${IMAGE}
 
