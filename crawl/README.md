@@ -6,8 +6,8 @@ OpenAI Whisper interactive session with local audio files on a laptop/server:
   - [x] CPU ~6G
   - [x] GPU ~22G
 - [x] UBI
-  - [ ] CPU
-  - [ ] GPU
+  - [x] CPU
+  - [x] GPU
 
 ## Ubuntu
 
@@ -49,15 +49,7 @@ AUDIO options:
 
 ```sh
 # different model sizes transcribing jfk-audio-inaugural-address-20-january-1961
-python3 evaluations/script.py \
-        --model whisper \
-        --model_size tiny.en \
-        --base_image ubuntu \
-        --platform ubuntu \
-        --processor gpu \
-        --input_file audio-samples/jfk-audio-inaugural-address-20-january-1961.mp3 \
-        ground-truth/jfk-audio-inaugural-address-20-january-1961.txt \
-        output
+python evaluations/evaluation.py --model_name small.en
 ```
 
 ## UBI
