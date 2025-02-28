@@ -402,6 +402,12 @@ Create project
 oc new-project riva
 ```
 
+Assign RBAC permissions to service account for riva
+
+```sh
+oc adm policy add-scc-to-user nonroot-v2 -z default
+```
+
 Deploy
 
 
