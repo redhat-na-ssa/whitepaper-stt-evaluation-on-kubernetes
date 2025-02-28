@@ -64,16 +64,22 @@ python3 evaluations/script.py \
 
 ### Build UBI CPU image
 
-`podman build -t whisper-cpu:ubi crawl/openai-whisper/ubi/cpu/.`
+`podman build -t whisper:ubi crawl/openai-whisper/ubi/.`
 
-### Build UBI GPU image
-
-`podman build -t whisper-gpu:ubi crawl/openai-whisper/ubi/gpu/.`
-
-### Run CPU container 
+### Run UBI container on CPU
 
 ```sh
 podman run --rm -it \
+    -v $(pwd)/data:/data:z \
+    localhost/whisper:ubi
+```
+
+### Run UBI container on GPU
+
+```sh
+podman run --rm -it \
+    --security-opt=label=disable \
+    --device nvidia.com/gpu=all \
     -v $(pwd)/data:/data:z \
     localhost/whisper:ubi
 ```
