@@ -24,7 +24,7 @@ OpenAI Whisper interactive session with local audio files on a laptop/server:
 ```sh
 podman run --rm -it \
     -v $(pwd)/data:/data:z \
-    localhost/whisper-cpu:ubuntu
+    localhost/whisper-cpu:ubuntu /bin/bash
 ```
 
 ### Run container on GPU
@@ -34,14 +34,35 @@ podman run --rm -it \
     -v $(pwd)/data:/data:z \
     --security-opt=label=disable \
     --device nvidia.com/gpu=all \
-    localhost/whisper-gpu:ubuntu
+    localhost/whisper-gpu:ubuntu /bin/bash
 ```
 
 ### Execute transcriptions
 
 ```sh
-# different model sizes transcribing jfk-audio-inaugural-address-20-january-1961
-python evaluations/evaluation.py --model_name small.en
+# harvard audio with different size models
+python3 evaluations/evaluation.py --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt
+python3 evaluations/evaluation.py --model_name base.en --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt
+python3 evaluations/evaluation.py --model_name small.en --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt
+python3 evaluations/evaluation.py --model_name medium.en --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt
+python3 evaluations/evaluation.py --model_name large --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt
+python3 evaluations/evaluation.py --model_name turbo --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt
+
+# jfk-audio-inaugural-address-20-january-1961 with different size models
+python3 evaluations/evaluation.py
+python3 evaluations/evaluation.py --model_name base.en
+python3 evaluations/evaluation.py --model_name small.en
+python3 evaluations/evaluation.py --model_name medium.en
+python3 evaluations/evaluation.py --model_name large
+python3 evaluations/evaluation.py --model_name turbo
+
+# jfk-audio-rice-university-12-september-1962 with different size models
+python3 evaluations/evaluation.py --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
+python3 evaluations/evaluation.py --model_name base.en --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
+python3 evaluations/evaluation.py --model_name small.en --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
+python3 evaluations/evaluation.py --model_name medium.en --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
+python3 evaluations/evaluation.py --model_name large --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
+python3 evaluations/evaluation.py --model_name turbo --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
 ```
 
 ## UBI
@@ -55,7 +76,7 @@ python evaluations/evaluation.py --model_name small.en
 ```sh
 podman run --rm -it \
     -v $(pwd)/data:/data:z \
-    localhost/whisper:ubi
+    localhost/whisper:ubi /bin/bash
 ```
 
 ### Run UBI container on GPU
