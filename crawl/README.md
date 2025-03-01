@@ -39,14 +39,6 @@ podman run --rm -it \
 
 ### Execute transcriptions
 
-Whisper MODEL options:
-- tiny.en, tiny, base.en, base, small.en, small, medium.en, medium, large, turbo
-
-AUDIO options:
-
-1. jfk-audio-inaugural-address-20-january-1961
-1. jfk-audio-rice-university-12-september-1962
-
 ```sh
 # different model sizes transcribing jfk-audio-inaugural-address-20-january-1961
 python evaluations/evaluation.py --model_name small.en

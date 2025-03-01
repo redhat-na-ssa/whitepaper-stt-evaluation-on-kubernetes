@@ -59,6 +59,9 @@ whisper,audio-samples/jfk-audio-inaugural-address-20-january-1961.mp3,small.en,/
 interesting values
 1. image size
 1. performance on rhel vs ocp
-1. how much gpu this uses
+1. how much gpu this uses from nvidia-smi
+    - Persistence-M Pwr:Usage/Cap
+    - Volatile GPU-Util
+    - Temp
 1. vram
     - gpu = `nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits | paste -sd "," -`

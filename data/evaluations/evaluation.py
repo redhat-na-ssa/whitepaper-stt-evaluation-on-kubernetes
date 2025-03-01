@@ -1,6 +1,33 @@
 # USAGE
-# BASIC = python evaluations/evaluation.py
-# CUSTOM = python evaluations/evaluation.py \
+# BASIC = python3 evaluations/evaluation.py
+# CUSTOM = python3 evaluations/evaluation.py \
+#   --model whisper \
+#   --input path/to/audio.mp3 \
+#   --model_name base.en \
+#   --model_dir /models \
+#   --output_dir /output
+
+# USAGE
+# BASIC = python3 evaluations/evaluation.py
+# CUSTOM = python3 evaluations/evaluation.py \
+#   --model whisper \
+#   --input path/to/audio.mp3 \
+#   --model_name base.en \
+#   --model_dir /models \
+#   --output_dir /output
+
+# USAGE
+# BASIC = python3 evaluations/evaluation.py
+# CUSTOM = python3 evaluations/evaluation.py \
+#   --model whisper \
+#   --input path/to/audio.mp3 \
+#   --model_name base.en \
+#   --model_dir /models \
+#   --output_dir /output
+
+# USAGE
+# BASIC = python3 evaluations/evaluation.py
+# CUSTOM = python3 evaluations/evaluation.py \
 #   --model whisper \
 #   --input path/to/audio.mp3 \
 #   --model_name base.en \
@@ -22,9 +49,11 @@ def get_os_version():
         return result.stdout.strip()
     except subprocess.CalledProcessError:
         try:
-            result = subprocess.run(["lsb_release", "-d"], capture_output=True, text=True, check=True)
-            return result.stdout.strip().split(":")[1].strip()
-        except subprocess.CalledProcessError:
+            with open("/etc/os-release", "r") as f:
+                for line in f:
+                    if line.startswith("PRETTY_NAME="):
+                        return line.split("=")[1].strip().strip('"')
+        except FileNotFoundError:
             return "Unknown OS"
 
 def get_floating_point_precision():
@@ -47,7 +76,7 @@ def evaluate_accuracy(hypothesis_path, reference_path):
         print(f"Error evaluating accuracy: {e}")
         return {}
 
-def run_whisper(model, input_file, model_name, model_dir, output_dir):
+def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_file):
     command = [
         model, 
         input_file, 
@@ -79,15 +108,18 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir):
     # Evaluate transcription accuracy
     hypothesis_filename = os.path.basename(input_file).rsplit(".", 1)[0] + ".txt"
     hypothesis_path = os.path.join(output_dir, hypothesis_filename)
-    reference_path = os.path.join("ground-truth", hypothesis_filename)
-    accuracy_metrics = evaluate_accuracy(hypothesis_path, reference_path)
+    accuracy_metrics = evaluate_accuracy(hypothesis_path, reference_file)
     
-    # Save arguments, execution times, and accuracy metrics to CSV under output_dir
-    csv_path = os.path.join(output_dir, "evaluations.csv")
-    file_exists = os.path.isfile(csv_path)
+    # Generate dynamic CSV filename
+    sanitized_input_file = os.path.basename(input_file).replace(".", "_")
+    csv_filename = f"evaluation_{current_date}_{model}_{model_name}_{os_version.replace(' ', '_')}_{sanitized_input_file}.csv"
+    csv_temp_path = os.path.join("/tmp", csv_filename)
+    file_exists = os.path.isfile(csv_temp_path)
     
-    with open(csv_path, mode="a", newline="") as file:
-        fieldnames = ["model", "input_file", "model_name", "model_dir", "output_dir", "start_time", "end_time", "duration", "os_version", "float_precision", "date", "hypothesis_file", "reference_file", "wer", "mer", "wil", "wip", "cer"]
+    executed_command = f"python3 evaluations/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file}"
+    
+    with open(csv_temp_path, mode="a", newline="") as file:
+        fieldnames = ["model", "input_file", "model_name", "model_dir", "output_dir", "start_time", "end_time", "duration", "os_version", "float_precision", "date", "hypothesis_file", "reference_file", "wer", "mer", "wil", "wip", "cer", "executed_command"]
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         
         if not file_exists:
@@ -106,12 +138,13 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir):
             "float_precision": float_precision,
             "date": current_date,
             "hypothesis_file": hypothesis_filename,
-            "reference_file": reference_path,
+            "reference_file": reference_file,
             "wer": accuracy_metrics.get("wer", "N/A"),
             "mer": accuracy_metrics.get("mer", "N/A"),
             "wil": accuracy_metrics.get("wil", "N/A"),
             "wip": accuracy_metrics.get("wip", "N/A"),
             "cer": accuracy_metrics.get("cer", "N/A"),
+            "executed_command": executed_command,
         }
         writer.writerow(row_data)
 
@@ -122,6 +155,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", default="tiny.en", help="Name of the Whisper model to use.")
     parser.add_argument("--model_dir", default="/tmp", help="Directory for storing the model.")
     parser.add_argument("--output_dir", default="/tmp", help="Directory for storing the output.")
+    parser.add_argument("--reference_file", default="ground-truth/jfk-audio-inaugural-address-20-january-1961.txt", help="Path to the reference text file for accuracy evaluation.")
     
     args = parser.parse_args()
-    run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir)
+    run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file)
