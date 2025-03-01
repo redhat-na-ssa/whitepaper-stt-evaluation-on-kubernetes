@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Update package list and install required dependencies
 RUN apt update && \
-    apt install -y python3-venv python3-pip ffmpeg wget curl && \
+    apt install -y python3 python3-pip ffmpeg wget curl && \
     rm -rf /var/lib/apt/lists/*
 
 # Install python packages

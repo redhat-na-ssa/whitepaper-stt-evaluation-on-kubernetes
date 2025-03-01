@@ -73,7 +73,7 @@ podman run --rm -it \
     --security-opt=label=disable \
     --device nvidia.com/gpu=all \
     -v $(pwd)/data:/data:z \
-    localhost/whisper:ubi
+    localhost/whisper:ubi /bin/bash
 ```
 
 ### Execute transcriptions
