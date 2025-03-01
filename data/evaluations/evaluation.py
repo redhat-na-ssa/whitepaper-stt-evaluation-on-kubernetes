@@ -7,33 +7,6 @@
 #   --model_dir /models \
 #   --output_dir /output
 
-# USAGE
-# BASIC = python3 evaluations/evaluation.py
-# CUSTOM = python3 evaluations/evaluation.py \
-#   --model whisper \
-#   --input path/to/audio.mp3 \
-#   --model_name base.en \
-#   --model_dir /models \
-#   --output_dir /output
-
-# USAGE
-# BASIC = python3 evaluations/evaluation.py
-# CUSTOM = python3 evaluations/evaluation.py \
-#   --model whisper \
-#   --input path/to/audio.mp3 \
-#   --model_name base.en \
-#   --model_dir /models \
-#   --output_dir /output
-
-# USAGE
-# BASIC = python3 evaluations/evaluation.py
-# CUSTOM = python3 evaluations/evaluation.py \
-#   --model whisper \
-#   --input path/to/audio.mp3 \
-#   --model_name base.en \
-#   --model_dir /models \
-#   --output_dir /output
-
 import subprocess
 import argparse
 import csv
@@ -58,6 +31,16 @@ def get_os_version():
 
 def get_floating_point_precision():
     return sys.float_info.dig
+
+def get_gpu_info():
+    try:
+        result = subprocess.run(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"], capture_output=True, text=True, check=True)
+        gpus = result.stdout.strip().split("\n")
+        gpu_name = gpus[0] if gpus else "CPU"
+        gpu_count = len(gpus) if gpus else 0
+        return gpu_name.replace(" ", "_"), gpu_count
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return "CPU", 0
 
 def evaluate_accuracy(hypothesis_path, reference_path):
     try:
@@ -93,33 +76,26 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
         print(f"Error executing Whisper: {e}")
     end_time = time.time()
     
-    # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
     
-    # Get OS version
     os_version = get_os_version()
-    
-    # Get floating point precision
     float_precision = get_floating_point_precision()
-    
-    # Get current date
+    gpu_name, gpu_count = get_gpu_info()
     current_date = datetime.now().strftime("%m-%d-%Y")
     
-    # Evaluate transcription accuracy
     hypothesis_filename = os.path.basename(input_file).rsplit(".", 1)[0] + ".txt"
     hypothesis_path = os.path.join(output_dir, hypothesis_filename)
     accuracy_metrics = evaluate_accuracy(hypothesis_path, reference_file)
     
-    # Generate dynamic CSV filename
     sanitized_input_file = os.path.basename(input_file).replace(".", "_")
-    csv_filename = f"evaluation_{current_date}_{model}_{model_name}_{os_version.replace(' ', '_')}_{sanitized_input_file}.csv"
+    csv_filename = f"evaluation_{current_date}_{model}_{model_name}_{os_version.replace(' ', '_')}_{gpu_name}_{sanitized_input_file}.csv"
     csv_temp_path = os.path.join("/tmp", csv_filename)
     file_exists = os.path.isfile(csv_temp_path)
     
     executed_command = f"python3 evaluations/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file}"
     
     with open(csv_temp_path, mode="a", newline="") as file:
-        fieldnames = ["model", "input_file", "model_name", "model_dir", "output_dir", "start_time", "end_time", "duration", "os_version", "float_precision", "date", "hypothesis_file", "reference_file", "wer", "mer", "wil", "wip", "cer", "executed_command"]
+        fieldnames = ["model", "input_file", "model_name", "model_dir", "output_dir", "start_time", "end_time", "duration", "os_version", "float_precision", "gpu_name", "gpu_count", "date", "hypothesis_file", "reference_file", "wer", "mer", "wil", "wip", "cer", "executed_command"]
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         
         if not file_exists:
@@ -136,6 +112,8 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
             "duration": end_time - start_time,
             "os_version": os_version,
             "float_precision": float_precision,
+            "gpu_name": gpu_name,
+            "gpu_count": gpu_count,
             "date": current_date,
             "hypothesis_file": hypothesis_filename,
             "reference_file": reference_file,

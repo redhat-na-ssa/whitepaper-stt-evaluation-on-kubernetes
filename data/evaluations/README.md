@@ -1,5 +1,7 @@
 # Summary of Script Steps
 
+## evaluation.py
+
 This script automates the process of running Whisper for speech-to-text transcription, evaluating its accuracy, and logging relevant metadata in a CSV file.
 
 Key Functions:
@@ -55,6 +57,28 @@ whisper,audio-samples/jfk-audio-inaugural-address-20-january-1961.mp3,small.en,/
 1. wil
 1. wip
 1. cer
+
+## gpu-logger
+
+The script writes to data/output/pod_gpu_usage.csv, containing:
+```sh
+Date, Pod Name, GPU Name, GPU Count, Max GPU Usage (%)
+02/29/2025, whisper-ubuntu-gpu-harvard, NVIDIA RTX A6000, 2, 85
+```
+
+This will execute the script in the background, logging data every 10 seconds.
+```sh
+# start
+nohup python3 data/evaluations/gpu_logger.py &
+```
+
+Find the process ID (PID) and kill it:
+```sh
+# stop
+ps aux | grep data/evaluations/gpu_logger.py
+kill <PID>
+```
+
 
 interesting values
 1. image size
