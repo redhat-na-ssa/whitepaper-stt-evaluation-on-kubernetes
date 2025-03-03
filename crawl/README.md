@@ -9,32 +9,283 @@ OpenAI Whisper interactive session with local audio files on a laptop/server:
   - [x] CPU
   - [x] GPU
 
-## Ubuntu
+## Crawl procedure
 
-### Build CPU image
-
-`podman build -t whisper-cpu:ubuntu crawl/openai-whisper/ubuntu/.`
-
-### Build GPU image
-
-`podman build -t whisper-gpu:ubuntu crawl/openai-whisper/ubuntu/gpu/.`
-
-### Run container on CPU
+### Single Server
 
 ```sh
-podman run --rm -it \
-    -v $(pwd)/data:/data:z \
-    localhost/whisper-cpu:ubuntu /bin/bash
+# Step 0: Access your machine
+ssh
+
+# Step 1: Clone this repo
+git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
+
+# Step 2: Move into repo
+cd whitepaper-stt-evaluation-on-kubernete 
 ```
 
-### Run container on GPU
+### Whisper Ubunutu on CPU
 
 ```sh
+# Step 0: Review the Ubuntu Dockerfile
+cat crawl/openai-whisper/ubuntu/Dockerfile 
+
+# Step 1: Build an Ubuntu CPU container image
+podman build -t whisper-cpu:ubuntu crawl/openai-whisper/ubuntu/.
+
+# Step 2: Review the available images
+podman images
+
+# Expected output
+# REPOSITORY                TAG         IMAGE ID      CREATED        SIZE
+# localhost/whisper-cpu     ubuntu      a2b133b6ef7f  5 seconds ago  6.65 GB
+# docker.io/library/ubuntu  22.04       a24be041d957  5 weeks ago    80.4 MB
+
+# Step 3: Run the image on CPU
 podman run --rm -it \
+  --name whisper-ubuntu-cpu \
+  -v $(pwd)/data:/data:z \
+  localhost/whisper-cpu:ubuntu /bin/bash
+
+# Step 4: Test transcription and view the output
+whisper audio-samples/harvard.wav | tee /tmp/harvard-whisper-transcription.txt
+
+# Expected output
+# 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
+# /usr/local/lib/python3.10/dist-packages/whisper/transcribe.py:126: UserWarning: FP16 is not supported on CPU; using FP32 instead
+#   warnings.warn("FP16 is not supported on CPU; using FP32 instead")
+# Detecting language using up to the first 30 seconds. Use `--language` to specify the language
+# Detected language: English
+# [00:00.800 --> 00:03.620]  The stale smell of old beer lingers.
+# [00:04.420 --> 00:06.200]  It takes heat to bring out the odor.
+# [00:07.040 --> 00:09.360]  A cold dip restores health and zest.
+# [00:09.980 --> 00:12.060]  A salt pickle tastes fine with ham.
+# [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
+# [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
+
+# Step 5: Compare output against ground truth
+diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
+
+# Expected output
+# 1,6c1,8
+# < The stale smell of old beer lingers.
+# < It takes heat to bring out the odor.
+# < A cold dip restores health and zest.
+# < A salt pickle tastes fine with ham.
+# < Tacos al pastor are my favorite.
+# < A zestful food is the hot cross bun.
+# \ No newline at end of file
+# ---
+# > Detecting language using up to the first 30 seconds. Use `--language` to specify the language
+# > Detected language: English
+# > [00:00.800 --> 00:03.620]  The stale smell of old beer lingers.
+# > [00:04.420 --> 00:06.200]  It takes heat to bring out the odor.
+# > [00:07.040 --> 00:09.360]  A cold dip restores health and zest.
+# > [00:09.980 --> 00:12.060]  A salt pickle tastes fine with ham.
+# > [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
+# > [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
+
+# Step 6: Observations
+- Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
+- Whisper adds timestamps before each transcribed line the ground-truth file does not have.
+```
+
+### Whisper Ubunutu on GPU
+
+```sh
+# Step 0: Terminal 1 of 2 - watch NVIDIA consumption
+watch nvidia smi
+
+# Step 0: Review the Ubuntu Dockerfile
+cat crawl/openai-whisper/ubuntu/gpu/Dockerfile
+
+# Step 1: Build an Ubuntu GPU container image
+podman build -t whisper-gpu:ubuntu crawl/openai-whisper/ubuntu/gpu/.
+
+# Step 2: Review the available images
+podman images
+
+# Expected output
+# REPOSITORY                TAG                             IMAGE ID      CREATED            SIZE
+# localhost/whisper-gpu     ubuntu                          e43dfbd65513  7 minutes ago      16.8 GB
+# localhost/whisper-cpu     ubuntu                          a2b133b6ef7f  About an hour ago  6.65 GB
+# docker.io/nvidia/cuda     12.8.0-cudnn-devel-ubuntu22.04  7d79b4fee201  5 weeks ago        10.5 GB
+# docker.io/library/ubuntu  22.04                           a24be041d957  5 weeks ago        80.4 MB
+
+# Step 3: Run the image on GPU
+podman run --rm -it \
+    --name whisper-ubuntu-gpu \
     -v $(pwd)/data:/data:z \
     --security-opt=label=disable \
     --device nvidia.com/gpu=all \
     localhost/whisper-gpu:ubuntu /bin/bash
+
+# Step 4: Test transcription and view the output
+whisper audio-samples/harvard.wav | tee /tmp/harvard-whisper-transcription.txt
+
+# Expected output
+# 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
+# /usr/local/lib/python3.10/dist-packages/whisper/transcribe.py:126: UserWarning: FP16 is not supported on CPU; using FP32 instead
+#   warnings.warn("FP16 is not supported on CPU; using FP32 instead")
+# Detecting language using up to the first 30 seconds. Use `--language` to specify the language
+# Detected language: English
+# [00:00.800 --> 00:03.620]  The stale smell of old beer lingers.
+# [00:04.420 --> 00:06.200]  It takes heat to bring out the odor.
+# [00:07.040 --> 00:09.360]  A cold dip restores health and zest.
+# [00:09.980 --> 00:12.060]  A salt pickle tastes fine with ham.
+# [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
+# [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
+
+# Step 5: Compare output against ground truth
+diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
+
+# Expected output
+# 1,6c1,8
+# < The stale smell of old beer lingers.
+# < It takes heat to bring out the odor.
+# < A cold dip restores health and zest.
+# < A salt pickle tastes fine with ham.
+# < Tacos al pastor are my favorite.
+# < A zestful food is the hot cross bun.
+# \ No newline at end of file
+# ---
+# > Detecting language using up to the first 30 seconds. Use `--language` to specify the language
+# > Detected language: English
+# > [00:00.800 --> 00:03.620]  The stale smell of old beer lingers.
+# > [00:04.420 --> 00:06.200]  It takes heat to bring out the odor.
+# > [00:07.040 --> 00:09.360]  A cold dip restores health and zest.
+# > [00:09.980 --> 00:12.060]  A salt pickle tastes fine with ham.
+# > [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
+# > [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
+
+# Step 6: Observations
+- Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
+- Whisper adds timestamps before each transcribed line the ground-truth file does not have.
+```
+
+### Whisper UBI on CPU
+
+```sh
+# Step 0: Review the UBI Dockerfile
+cat crawl/openai-whisper/ubi/Dockerfile
+
+# Step 1: Build an UBI container image
+podman build -t whisper:ubi crawl/openai-whisper/ubi/.
+
+# Step 2: Review the available images
+podman images
+
+# Expected output
+# REPOSITORY                                 TAG                             IMAGE ID      CREATED            SIZE
+# localhost/whisper                          ubi                             a1d56a8ed468  13 seconds ago     7.06 GB
+# localhost/whisper-gpu                      ubuntu                          e43dfbd65513  21 minutes ago     16.8 GB
+# localhost/whisper-cpu                      ubuntu                          a2b133b6ef7f  About an hour ago  6.65 GB
+# registry.access.redhat.com/ubi8/python-39  <none>                          b88c25db9cfd  2 weeks ago        917 MB
+# docker.io/nvidia/cuda                      12.8.0-cudnn-devel-ubuntu22.04  7d79b4fee201  5 weeks ago        10.5 GB
+# docker.io/library/ubuntu                   22.04                           a24be041d957  5 weeks ago        80.4 MB
+
+# Step 3: Run the image on CPU
+podman run --rm -it --name whisper-ubi-cpu \
+    -v $(pwd)/data:/data:z \
+    localhost/whisper:ubi /bin/bash
+
+# Step 4: Test transcription and view the output
+whisper audio-samples/harvard.wav --output_dir /tmp/ --model_dir /tmp/ | tee /tmp/harvard-whisper-transcription.txt
+
+# Expected output
+# 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
+# /usr/local/lib/python3.10/dist-packages/whisper/transcribe.py:126: UserWarning: FP16 is not supported on CPU; using FP32 instead
+#   warnings.warn("FP16 is not supported on CPU; using FP32 instead")
+# Detecting language using up to the first 30 seconds. Use `--language` to specify the language
+# Detected language: English
+# [00:00.800 --> 00:03.620]  The stale smell of old beer lingers.
+# [00:04.420 --> 00:06.200]  It takes heat to bring out the odor.
+# [00:07.040 --> 00:09.360]  A cold dip restores health and zest.
+# [00:09.980 --> 00:12.060]  A salt pickle tastes fine with ham.
+# [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
+# [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
+
+# Step 5: Compare output against ground truth
+diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
+
+# Expected output
+# 1,6c1,8
+# < The stale smell of old beer lingers.
+# < It takes heat to bring out the odor.
+# < A cold dip restores health and zest.
+# < A salt pickle tastes fine with ham.
+# < Tacos al pastor are my favorite.
+# < A zestful food is the hot cross bun.
+# \ No newline at end of file
+# ---
+# > Detecting language using up to the first 30 seconds. Use `--language` to specify the language
+# > Detected language: English
+# > [00:00.800 --> 00:03.620]  The stale smell of old beer lingers.
+# > [00:04.420 --> 00:06.200]  It takes heat to bring out the odor.
+# > [00:07.040 --> 00:09.360]  A cold dip restores health and zest.
+# > [00:09.980 --> 00:12.060]  A salt pickle tastes fine with ham.
+# > [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
+# > [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
+
+# Step 6: Observations
+- Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
+- Whisper adds timestamps before each transcribed line the ground-truth file does not have.
+```
+
+### Whisper UBI on GPU
+
+```sh
+# Step 0: Terminal 1 of 2 - watch NVIDIA consumption
+watch nvidia smi
+
+# Step 0: Terminal 2 of 2 - Run the image on GPU
+podman run --rm -it --name whisper-ubi-gpu-harvard \
+    --security-opt=label=disable \
+    --device nvidia.com/gpu=all \
+    -v $(pwd)/data:/data:z \
+    localhost/whisper:ubi /bin/bash
+
+# Step 1: Test transcription and view the output
+whisper audio-samples/harvard.wav --output_dir /tmp/ --model_dir /tmp/ | tee /tmp/harvard-whisper-transcription.txt
+
+# Expected output
+# 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
+# /usr/local/lib/python3.10/dist-packages/whisper/transcribe.py:126: UserWarning: FP16 is not supported on CPU; using FP32 instead
+#   warnings.warn("FP16 is not supported on CPU; using FP32 instead")
+# Detecting language using up to the first 30 seconds. Use `--language` to specify the language
+# Detected language: English
+# [00:00.800 --> 00:03.620]  The stale smell of old beer lingers.
+# [00:04.420 --> 00:06.200]  It takes heat to bring out the odor.
+# [00:07.040 --> 00:09.360]  A cold dip restores health and zest.
+# [00:09.980 --> 00:12.060]  A salt pickle tastes fine with ham.
+# [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
+# [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
+
+# Step 5: Compare output against ground truth
+diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
+
+# Expected output
+# 1,6c1,8
+# < The stale smell of old beer lingers.
+# < It takes heat to bring out the odor.
+# < A cold dip restores health and zest.
+# < A salt pickle tastes fine with ham.
+# < Tacos al pastor are my favorite.
+# < A zestful food is the hot cross bun.
+# \ No newline at end of file
+# ---
+# > Detecting language using up to the first 30 seconds. Use `--language` to specify the language
+# > Detected language: English
+# > [00:00.800 --> 00:03.620]  The stale smell of old beer lingers.
+# > [00:04.420 --> 00:06.200]  It takes heat to bring out the odor.
+# > [00:07.040 --> 00:09.360]  A cold dip restores health and zest.
+# > [00:09.980 --> 00:12.060]  A salt pickle tastes fine with ham.
+# > [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
+# > [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
+
+# Step 6: Observations
+- Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
+- Whisper adds timestamps before each transcribed line the ground-truth file does not have.
 ```
 
 ### Execute transcriptions
@@ -65,29 +316,7 @@ python3 evaluations/evaluation.py --model_name large --input audio-samples/jfk-a
 python3 evaluations/evaluation.py --model_name turbo --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
 ```
 
-## UBI
 
-### Build UBI CPU image
-
-`podman build -t whisper:ubi crawl/openai-whisper/ubi/.`
-
-### Run UBI container on CPU
-
-```sh
-podman run --rm -it \
-    -v $(pwd)/data:/data:z \
-    localhost/whisper:ubi /bin/bash
-```
-
-### Run UBI container on GPU
-
-```sh
-podman run --rm -it \
-    --security-opt=label=disable \
-    --device nvidia.com/gpu=all \
-    -v $(pwd)/data:/data:z \
-    localhost/whisper:ubi /bin/bash
-```
 
 ### Execute transcriptions
 
