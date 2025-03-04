@@ -298,38 +298,75 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 
 ## Benchmarking
 
-TODO rename files to DATE+TIME.csv
-TODO reorder column headers
-TODO for loop on evaluation.py
+### Harvard data
+
 TODO for evaluation.py check FP
-TODO gpu_logger.py add DATE+TIME 
 
 ```sh
-## whisper ubuntu download model performance on cpu on harvard.wav
-podman run --rm -it --name whisper-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name tiny.en
-python3 evaluations/evaluation.py --model_name base.en
-python3 evaluations/evaluation.py --model_name small.en
-python3 evaluations/evaluation.py --model_name medium.en
-python3 evaluations/evaluation.py --model_name large
-python3 evaluations/evaluation.py --model_name turbo
-## rerun with models cached
-cp /tmp/*.csv output/.
-
-
-## whisper ubuntu download model performance on gpu on harvard.wav
-podman run --rm -it --name whisper-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name tiny.en
-python3 evaluations/evaluation.py --model_name base.en
-python3 evaluations/evaluation.py --model_name small.en
-python3 evaluations/evaluation.py --model_name medium.en
-python3 evaluations/evaluation.py --model_name large
-python3 evaluations/evaluation.py --model_name turbo
-## rerun with models cached
-cp /tmp/*.csv output/.
-
-# Step 0: Start the gpu_logger.py script that writes to data/output/pod_gpu_usage.csv
+# Terminal 1 of 2
 nohup python3 data/evaluations/gpu_logger.py &
+
+# Terminal 2 of 2
+
+## Whisper Ubuntu CPU
+podman run --rm -it --name whisper-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
+
+## For loop through each model twice to capture pre-downloaded performance
+for model in tiny.en base.en small.en medium.en large turbo; do
+  # First run
+  python3 evaluations/evaluation.py --model_name $model
+  # Second run with models cached
+  python3 evaluations/evaluation.py --model_name $model
+done
+
+## Review the data captured runn `sort -u /tmp/*.csv`
+
+## Copy the .csv data to local output dir
+cp /tmp/*.csv output/.
+
+## Whisper Ubuntu GPU
+podman run --rm -it --name whisper-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
+
+## For loop through each model twice to capture pre-downloaded performance
+for model in tiny.en base.en small.en medium.en large turbo; do
+  # First run
+  python3 evaluations/evaluation.py --model_name $model
+  # Second run with models cached
+  python3 evaluations/evaluation.py --model_name $model
+done
+
+## Copy the .csv data to local output dir
+cp /tmp/*.csv output/.
+
+## Whisper UBI CPU
+podman run --rm -it --name whisper-ubi-cpu -v $(pwd)/data:/data:z localhost/whisper:ubi /bin/bash
+
+## For loop through each model twice to capture pre-downloaded performance
+for model in tiny.en base.en small.en medium.en large turbo; do
+  # First run
+  python3 evaluations/evaluation.py --model_name $model
+  # Second run with models cached
+  python3 evaluations/evaluation.py --model_name $model
+done
+
+## Copy the .csv data to local output dir
+## You may have to chmod 777 data/output
+cp /tmp/*.csv output/.
+
+## Whisper UBI GPU
+podman run --rm -it --name whisper-ubi-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubi /bin/bash
+
+## For loop through each model twice to capture pre-downloaded performance
+for model in tiny.en base.en small.en medium.en large turbo; do
+  # First run
+  python3 evaluations/evaluation.py --model_name $model
+  # Second run with models cached
+  python3 evaluations/evaluation.py --model_name $model
+done
+
+## Copy the .csv data to local output dir
+## You may have to chmod 777 data/output
+cp /tmp/*.csv output/.
 
 # Step 0: Copy output to host from pod
 cp output/pod_gpu_usage.csv .
