@@ -121,12 +121,13 @@ Tracking the deployment and integration status of different speech-to-text (ASR)
 ### Environments
 
 1. Request environments from demo.redhat.com
-1. [RHEL AI (GA) VM](https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/rhdp.rhel-ai-vm.prod&utm_source=webapp&utm_medium=share-link)
+526238
+2. [RHEL AI (GA) VM](https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/rhdp.rhel-ai-vm.prod&utm_source=webapp&utm_medium=share-link)
     - Activity: `Practice / Enablement`
     - Purpose: `Trying out a technical solution`
     - Region: `us-east-2`
     - GPU Selection by Node Type: `g6.xlarge 1 x L4` OR `g6.12xlarge 4 x L4`
-1. [AWS with OpenShift Open Environment](https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/sandboxes-gpte.sandbox-ocp.prod&utm_source=webapp&utm_medium=share-link)
+3. [AWS with OpenShift Open Environment](https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/sandboxes-gpte.sandbox-ocp.prod&utm_source=webapp&utm_medium=share-link)
     - Activity: `Practice / Enablement`
     - Purpose: `Trying out a technical solution`
     - Region: `us-east-2`
