@@ -6,9 +6,11 @@ Crawl OpenAI Whisper STT model from Ubuntu on CPU to UBI on NVIDIA GPU
 
 In summary:
 
-1. Access your machine
+1. Access your Single Server
 1. Clone this repo
 1. Build the container images from Dockerfile for Ubuntu and UBI
+1. Test the containers on CPU and GPU against a sample audio file
+1. Build to OpenShift cluster
 1. Test the containers on CPU and GPU against a sample audio file
 1. Run evaluation experiments
 
@@ -25,21 +27,21 @@ git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernet
 cd whitepaper-stt-evaluation-on-kubernetes 
 ```
 
-### Whisper Ubuntu on CPU
+### Whisper Ubuntu
 
 ```sh
 # Step 0: Review the Ubuntu Dockerfile
 cat crawl/openai-whisper/ubuntu/Dockerfile 
 
 # Step 1: Build an Ubuntu CPU container image
-podman build -t whisper-cpu:ubuntu crawl/openai-whisper/ubuntu/.
+podman build -t whisper:ubuntu crawl/openai-whisper/ubuntu/.
 
 # Step 2: Review the available images
 podman images
 
 # Expected output
 # REPOSITORY                TAG         IMAGE ID      CREATED        SIZE
-# localhost/whisper-cpu     ubuntu      a2b133b6ef7f  5 seconds ago  6.65 GB
+# localhost/whisper         ubuntu      a2b133b6ef7f  5 seconds ago  6.65 GB
 # docker.io/library/ubuntu  22.04       a24be041d957  5 weeks ago    80.4 MB
 
 # Step 3: Run the image on CPU
@@ -89,31 +91,25 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 # Step 6: Observations
 - Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
 - Whisper adds timestamps before each transcribed line the ground-truth file does not have.
+
+# Terminal 1 of 2
+# Step 7: Stop the watch
+Ctrl+c
+
+# Terminal 2 of 2
+# Step7: Stop the pod
+exit
 ```
 
 ### Whisper Ubuntu on GPU
 
 ```sh
-# Step 0: Terminal 1 of 2 - watch NVIDIA consumption
+# Terminal 1 of 2
+# Step 0: watch NVIDIA consumption
 watch nvidia smi
 
-# Step 0: Review the Ubuntu Dockerfile
-cat crawl/openai-whisper/ubuntu/gpu/Dockerfile
-
-# Step 1: Build an Ubuntu GPU container image
-podman build -t whisper-gpu:ubuntu crawl/openai-whisper/ubuntu/gpu/.
-
-# Step 2: Review the available images
-podman images
-
-# Expected output
-# REPOSITORY                TAG                             IMAGE ID      CREATED            SIZE
-# localhost/whisper-gpu     ubuntu                          e43dfbd65513  7 minutes ago      16.8 GB
-# localhost/whisper-cpu     ubuntu                          a2b133b6ef7f  About an hour ago  6.65 GB
-# docker.io/nvidia/cuda     12.8.0-cudnn-devel-ubuntu22.04  7d79b4fee201  5 weeks ago        10.5 GB
-# docker.io/library/ubuntu  22.04                           a24be041d957  5 weeks ago        80.4 MB
-
-# Step 3: Run the image on GPU
+# Terminal 2 of 2
+# Step 1: Run the image on GPU
 podman run --rm -it \
     --name whisper-ubuntu-gpu \
     -v $(pwd)/data:/data:z \
@@ -121,7 +117,8 @@ podman run --rm -it \
     --device nvidia.com/gpu=all \
     localhost/whisper:ubuntu /bin/bash
 
-# Step 4: Test transcription and view the output
+# Terminal 2 of 2
+# Step 2: Test transcription and view the output
 whisper audio-samples/harvard.wav | tee /tmp/harvard-whisper-transcription.txt
 
 # Expected output
@@ -137,7 +134,8 @@ whisper audio-samples/harvard.wav | tee /tmp/harvard-whisper-transcription.txt
 # [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
 # [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
 
-# Step 5: Compare output against ground truth
+# Terminal 2 of 2
+# Step 3: Compare output against ground truth
 diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 
 # Expected output
@@ -159,9 +157,18 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 # > [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
 # > [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
 
-# Step 6: Observations
+# Step 4: Observations
 - Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
 - Whisper adds timestamps before each transcribed line the ground-truth file does not have.
+- The model is downloading each time and we can pre-download the model 
+
+# Terminal 1 of 2
+# Step 4: Stop the watch
+Ctrl+c
+
+# Terminal 2 of 2
+# Step 4: Stop the pod
+exit
 ```
 
 ### Whisper UBI on CPU
@@ -177,18 +184,20 @@ podman build -t whisper:ubi crawl/openai-whisper/ubi/.
 podman images
 
 # Expected output
-# REPOSITORY                                 TAG                             IMAGE ID      CREATED            SIZE
-# localhost/whisper                          ubi                             a1d56a8ed468  13 seconds ago     7.06 GB
-# localhost/whisper-gpu                      ubuntu                          e43dfbd65513  21 minutes ago     16.8 GB
-# localhost/whisper-cpu                      ubuntu                          a2b133b6ef7f  About an hour ago  6.65 GB
-# registry.access.redhat.com/ubi8/python-39  <none>                          b88c25db9cfd  2 weeks ago        917 MB
-# docker.io/nvidia/cuda                      12.8.0-cudnn-devel-ubuntu22.04  7d79b4fee201  5 weeks ago        10.5 GB
-# docker.io/library/ubuntu                   22.04                           a24be041d957  5 weeks ago        80.4 MB
+# REPOSITORY                                 TAG         IMAGE ID      CREATED             SIZE
+# localhost/whisper                          ubi         bf845e793179  About a minute ago  7.06 GB
+# localhost/whisper                          ubuntu      23908f6da923  11 minutes ago      6.65 GB
+# registry.access.redhat.com/ubi8/python-39  <none>      b88c25db9cfd  2 weeks ago         917 MB
+# docker.io/library/ubuntu                   22.04       a24be041d957  5 weeks ago         80.4 MB
 
 # Step 3: Run the image on CPU
 podman run --rm -it --name whisper-ubi-cpu \
     -v $(pwd)/data:/data:z \
     localhost/whisper:ubi /bin/bash
+
+# TODO - cleanup
+# mkdir: cannot create directory ‘/data/models’: Permission denied
+# mkdir: cannot create directory ‘/data/audio’: Permission denied
 
 # Step 4: Test transcription and view the output
 whisper audio-samples/harvard.wav --output_dir /tmp/ --model_dir /tmp/ | tee /tmp/harvard-whisper-transcription.txt
@@ -230,7 +239,8 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 
 # Step 6: Observations
 - Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
-- Whisper adds timestamps before each transcribed line the ground-truth file does not have. Timestamps are not written to the hypothesis file.
+- Whisper adds timestamps before each transcribed line the ground-truth file does not have. 
+- Need to build the images with the models.
 ```
 
 ### Whisper UBI on GPU
@@ -291,14 +301,56 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 
 ## Benchmarking
 
-|Image|Processor|
-|---|---|
-|Ubuntu|CPU|
-|Ubuntu|GPU|
-|UBI|CPU|
-|UBI|GPU|
 
 ```sh
+# Build the images with the models pre-downloaded
+
+# Ubuntu
+for model in tiny-en base-en small-en medium-en large turbo; do
+    podman build -t whisper-$model:ubuntu crawl/openai-whisper/ubuntu/model-sizes/$model/.
+done
+
+# UBI
+for model in tiny-en base-en small-en medium-en large turbo; do
+    podman build -t whisper-$model:ubi crawl/openai-whisper/ubi/model-sizes/$model/.
+done
+
+## whisper ubuntu download model performance on cpu on harvard.wav
+podman run --rm -it --name whisper-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name tiny.en
+python3 evaluations/evaluation.py --model_name base.en
+python3 evaluations/evaluation.py --model_name small.en
+python3 evaluations/evaluation.py --model_name medium.en
+python3 evaluations/evaluation.py --model_name large
+python3 evaluations/evaluation.py --model_name turbo
+cp /tmp/*.csv output/.
+
+## whisper ubuntu pre-downloaded model performance on cpu on harvard.wav
+podman run --rm -it --name whisper-pre-dl-tiny-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper-tiny-en:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name tiny.en
+cp /tmp/*.csv output/.
+exit
+podman run --rm -it --name whisper-pre-dl-base-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper-base-en:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name base.en
+cp /tmp/*.csv output/.
+exit
+podman run --rm -it --name whisper-pre-dl-small-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper-small-en:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name small.en
+cp /tmp/*.csv output/.
+exit
+podman run --rm -it --name whisper-pre-dl-medium-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper-medium-en:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name medium.en
+cp /tmp/*.csv output/.
+exit
+podman run --rm -it --name whisper-pre-dl-large-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper-large:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name large
+cp /tmp/*.csv output/.
+exit
+podman run --rm -it --name whisper-pre-dl-turbo-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper-turbo:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name turbo
+cp /tmp/*.csv output/.
+exit
+
 # Step 0: Start the gpu_logger.py script that writes to data/output/pod_gpu_usage.csv
 nohup python3 data/evaluations/gpu_logger.py &
 
@@ -306,7 +358,7 @@ nohup python3 data/evaluations/gpu_logger.py &
 podman run --rm -it \
   --name whisper-ubuntu-cpu \
   -v $(pwd)/data:/data:z \
-  localhost/whisper-cpu:ubuntu /bin/bash
+  localhost/whisper:ubuntu /bin/bash
 
 # Step 2: tiny.en
 python3 evaluations/evaluation.py \
