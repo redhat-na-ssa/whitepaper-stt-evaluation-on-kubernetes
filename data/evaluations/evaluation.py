@@ -92,7 +92,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     
     accuracy_metrics = evaluate_accuracy(hypothesis_file, reference_file)
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%H%M%S")
     date_today = datetime.now().strftime("%Y-%m-%d")
     csv_filename = f"{timestamp}.csv"
     csv_temp_path = os.path.join(output_dir, csv_filename)
