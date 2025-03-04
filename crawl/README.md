@@ -318,9 +318,7 @@ podman run --rm -it \
 # Step 2: tiny.en
 python3 evaluations/evaluation.py \
    --model whisper \
-   --model_name tiny.en \
-   --input audio-samples/harvard.wav \
-   --reference_file ground-truth/harvard.txt
+   --model_name tiny.en
 
 # Step 3: base.en
 python3 evaluations/evaluation.py \

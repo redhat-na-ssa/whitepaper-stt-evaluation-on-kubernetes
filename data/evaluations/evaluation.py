@@ -1,11 +1,19 @@
+#
 # USAGE
-# BASIC = python3 evaluations/evaluation.py
-# CUSTOM = python3 evaluations/evaluation.py \
+# BASIC = 
+# python3 evaluations/evaluation.py
+#
+# CUSTOM = 
+# python3 evaluations/evaluations.py \
 #   --model whisper \
-#   --input path/to/audio.mp3 \
-#   --model_name base.en \
-#   --model_dir /models \
-#   --output_dir /output
+#   --model_name tiny.en \
+#   --language en \
+#   --input audio-samples/harvard.mp3 \
+#   --model_dir /tmp \
+#   --output_dir /tmp \
+#   --reference_file ground-truth/harvard.txt \
+#   --hypothesis_file /tmp/harvard.txt
+
 
 import subprocess
 import argparse
@@ -43,6 +51,9 @@ def get_gpu_info():
         return "CPU", 0
 
 def evaluate_accuracy(hypothesis_path, reference_path):
+    if not os.path.exists(hypothesis_path):
+        print(f"Error: Hypothesis file '{hypothesis_path}' not found.")
+        return {}
     try:
         with open(hypothesis_path, "r") as hyp_file, open(reference_path, "r") as ref_file:
             hypothesis = hyp_file.read().strip()
@@ -59,7 +70,7 @@ def evaluate_accuracy(hypothesis_path, reference_path):
         print(f"Error evaluating accuracy: {e}")
         return {}
 
-def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_file, language):
+def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_file, language, hypothesis_file):
     output_dir = "/tmp"
     command = [
         model, 
@@ -85,8 +96,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     gpu_name, gpu_count = get_gpu_info()
     current_date = datetime.now().strftime("%m-%d-%Y")
     
-    hypothesis_filename = os.path.join(output_dir, os.path.basename(input_file).rsplit(".", 1)[0] + ".txt")
-    accuracy_metrics = evaluate_accuracy(hypothesis_filename, reference_file)
+    accuracy_metrics = evaluate_accuracy(hypothesis_file, reference_file)
     
     sanitized_input_file = os.path.basename(input_file).replace(".", "_")
     csv_filename = f"evaluation_{current_date}_{model}_{model_name}_{os_version.replace(' ', '_')}_{gpu_name}_{sanitized_input_file}.csv"
@@ -116,7 +126,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
             "gpu_name": gpu_name,
             "gpu_count": gpu_count,
             "date": current_date,
-            "hypothesis_file": hypothesis_filename,
+            "hypothesis_file": hypothesis_file,
             "reference_file": reference_file,
             "wer": accuracy_metrics.get("wer", "N/A"),
             "mer": accuracy_metrics.get("mer", "N/A"),
@@ -130,13 +140,13 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run Whisper with configurable arguments.")
     parser.add_argument("--model", default="whisper", help="Path to the Whisper executable.")
-    parser.add_argument("--input", default="audio-samples/harvard.wav", help="Path to the input audio file.")
     parser.add_argument("--model_name", default="tiny.en", help="Name of the Whisper model to use.")
-    parser.add_argument("--model_dir", default="/tmp", help="Directory for storing the model.")
-    parser.add_argument("--output_dir", default="/tmp", help="Directory for storing the output.")
+    parser.add_argument("--input", default="audio-samples/harvard.wav", help="Path to the input audio file.")
+    parser.add_argument("--model_dir", default="/tmp/", help="Directory for storing the model.")
+    parser.add_argument("--output_dir", default="/tmp/", help="Directory for storing the output.")
     parser.add_argument("--reference_file", default="ground-truth/harvard.txt", help="Path to the reference text file for accuracy evaluation.")
-    parser.add_argument("--language", default="english", help="Language for Whisper transcription.")
-    
-    args = parser.parse_args()
-    run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language)
+    parser.add_argument("--hypothesis_file", default="/tmp/harvard.txt", help="Path to the hypothesis text file.")
+    parser.add_argument("--language", default="en", help="Language for Whisper transcription.")
 
+    args = parser.parse_args()
+    run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language, args.hypothesis_file)
