@@ -66,7 +66,7 @@ process_audio(){
     "$AUDIO_FILES"/*
 }
 
-init
+# init
 
 # if you pass parameter, it will execute as is, else run whisper --help
 if [ "$1" != "" ]; then

@@ -196,12 +196,8 @@ podman run --rm -it --name whisper-ubi-cpu \
     -v $(pwd)/data:/data:z \
     localhost/whisper:ubi /bin/bash
 
-# TODO - cleanup
-# mkdir: cannot create directory ‘/data/models’: Permission denied
-# mkdir: cannot create directory ‘/data/audio’: Permission denied
-
 # Step 4: Test transcription and view the output
-whisper audio-samples/harvard.wav --output_dir /tmp/ --model_dir /tmp/ | tee /tmp/harvard-whisper-transcription.txt
+whisper audio-samples/harvard.wav --output_dir /tmp/ --model_dir /tmp/
 
 # Expected output
 # 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
@@ -258,7 +254,7 @@ podman run --rm -it --name whisper-ubi-gpu-harvard \
     localhost/whisper:ubi /bin/bash
 
 # Step 1: Test transcription and view the output
-whisper audio-samples/harvard.wav --output_dir /tmp/ --model_dir /tmp/ | tee /tmp/harvard-whisper-transcription.txt
+whisper audio-samples/harvard.wav --output_dir /tmp/ --model_dir /tmp/
 
 # Expected output
 # 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
@@ -302,19 +298,13 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 
 ## Benchmarking
 
+TODO rename files to DATE+TIME.csv
+TODO reorder column headers
+TODO for loop on evaluation.py
+TODO for evaluation.py check FP
+TODO gpu_logger.py add DATE+TIME 
+
 ```sh
-# Build the images with the models pre-downloaded
-
-# Ubuntu
-for model in tiny-en base-en small-en medium-en large turbo; do
-    podman build -t whisper-$model:ubuntu crawl/openai-whisper/ubuntu/model-sizes/$model/.
-done
-
-# UBI
-for model in tiny-en base-en small-en medium-en large turbo; do
-    podman build -t whisper-$model:ubi crawl/openai-whisper/ubi/model-sizes/$model/.
-done
-
 ## whisper ubuntu download model performance on cpu on harvard.wav
 podman run --rm -it --name whisper-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
 python3 evaluations/evaluation.py --model_name tiny.en
@@ -323,7 +313,9 @@ python3 evaluations/evaluation.py --model_name small.en
 python3 evaluations/evaluation.py --model_name medium.en
 python3 evaluations/evaluation.py --model_name large
 python3 evaluations/evaluation.py --model_name turbo
+## rerun with models cached
 cp /tmp/*.csv output/.
+
 
 ## whisper ubuntu download model performance on gpu on harvard.wav
 podman run --rm -it --name whisper-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
@@ -333,59 +325,8 @@ python3 evaluations/evaluation.py --model_name small.en
 python3 evaluations/evaluation.py --model_name medium.en
 python3 evaluations/evaluation.py --model_name large
 python3 evaluations/evaluation.py --model_name turbo
+## rerun with models cached
 cp /tmp/*.csv output/.
-
-## whisper ubuntu pre-downloaded model performance on cpu on harvard.wav
-podman run --rm -it --name whisper-pre-dl-tiny-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper-tiny-en:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name tiny.en
-cp /tmp/*.csv output/.
-exit
-podman run --rm -it --name whisper-pre-dl-base-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper-base-en:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name base.en
-cp /tmp/*.csv output/.
-exit
-podman run --rm -it --name whisper-pre-dl-small-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper-small-en:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name small.en
-cp /tmp/*.csv output/.
-exit
-podman run --rm -it --name whisper-pre-dl-medium-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper-medium-en:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name medium.en
-cp /tmp/*.csv output/.
-exit
-podman run --rm -it --name whisper-pre-dl-large-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper-large:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name large
-cp /tmp/*.csv output/.
-exit
-podman run --rm -it --name whisper-pre-dl-turbo-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper-turbo:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name turbo
-cp /tmp/*.csv output/.
-exit
-
-## whisper ubuntu pre-downloaded model performance on gpu on harvard.wav
-podman run --rm -it --name whisper-pre-dl-tiny-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper-tiny-en:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name tiny.en
-cp /tmp/*.csv output/.
-exit
-podman run --rm -it --name whisper-pre-dl-base-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper-base-en:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name base.en
-cp /tmp/*.csv output/.
-exit
-podman run --rm -it --name whisper-pre-dl-small-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper-small-en:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name small.en
-cp /tmp/*.csv output/.
-exit
-podman run --rm -it --name whisper-pre-dl-medium-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper-medium-en:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name medium.en
-cp /tmp/*.csv output/.
-exit
-podman run --rm -it --name whisper-pre-dl-large-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper-large:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name large
-cp /tmp/*.csv output/.
-exit
-podman run --rm -it --name whisper-pre-dl-turbo-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper-turbo:ubuntu /bin/bash
-python3 evaluations/evaluation.py --model_name turbo
-cp /tmp/*.csv output/.
-exit
 
 # Step 0: Start the gpu_logger.py script that writes to data/output/pod_gpu_usage.csv
 nohup python3 data/evaluations/gpu_logger.py &

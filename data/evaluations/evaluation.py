@@ -14,7 +14,6 @@
 #   --reference_file ground-truth/harvard.txt \
 #   --hypothesis_file /tmp/harvard.txt
 
-
 import subprocess
 import argparse
 import csv
@@ -91,28 +90,26 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     
     os.makedirs(output_dir, exist_ok=True)
     
-    os_version = get_os_version()
-    float_precision = get_floating_point_precision()
-    gpu_name, gpu_count = get_gpu_info()
-    current_date = datetime.now().strftime("%m-%d-%Y")
-    
     accuracy_metrics = evaluate_accuracy(hypothesis_file, reference_file)
     
-    sanitized_input_file = os.path.basename(input_file).replace(".", "_")
-    csv_filename = f"evaluation_{current_date}_{model}_{model_name}_{os_version.replace(' ', '_')}_{gpu_name}_{sanitized_input_file}.csv"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    date_today = datetime.now().strftime("%Y-%m-%d")
+    csv_filename = f"{timestamp}.csv"
     csv_temp_path = os.path.join(output_dir, csv_filename)
     file_exists = os.path.isfile(csv_temp_path)
     
     executed_command = f"python3 evaluations/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language}"
     
     with open(csv_temp_path, mode="a", newline="") as file:
-        fieldnames = ["model", "input_file", "model_name", "model_dir", "output_dir", "start_time", "end_time", "duration", "os_version", "float_precision", "gpu_name", "gpu_count", "date", "hypothesis_file", "reference_file", "wer", "mer", "wil", "wip", "cer", "executed_command"]
+        fieldnames = ["date", "timestamp", "model", "model_name", "model_dir", "input_file", "output_dir", "start_time", "end_time", "duration", "wer", "mer", "wil", "wip", "cer", "executed_command"]
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         
         if not file_exists:
             writer.writeheader()
         
         row_data = {
+            "date": date_today,
+            "timestamp": timestamp,
             "model": model,
             "input_file": input_file,
             "model_name": model_name,
@@ -121,13 +118,6 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
             "start_time": start_time,
             "end_time": end_time,
             "duration": end_time - start_time,
-            "os_version": os_version,
-            "float_precision": float_precision,
-            "gpu_name": gpu_name,
-            "gpu_count": gpu_count,
-            "date": current_date,
-            "hypothesis_file": hypothesis_file,
-            "reference_file": reference_file,
             "wer": accuracy_metrics.get("wer", "N/A"),
             "mer": accuracy_metrics.get("mer", "N/A"),
             "wil": accuracy_metrics.get("wil", "N/A"),
