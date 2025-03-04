@@ -250,6 +250,12 @@ Create a Persistent Volume for model
 oc create -f ocp/vllm/pv.yaml
 ```
 
+Assign policy to allow vLLM SA to run as root
+
+```sh
+oc adm policy add-scc-to-user anyuid -z default
+```
+
 Create a vLLM deployment with whisper
 
 ```sh
