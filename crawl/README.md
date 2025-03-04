@@ -11,6 +11,14 @@ OpenAI Whisper interactive session with local audio files on a laptop/server:
 
 ## Crawl procedure
 
+In summary:
+
+1. Access your machine
+1. Clone this repo
+1. Build the container images from Dockerfile for Ubuntu and UBI
+1. Test the containers on CPU and GPU against a sample audio file
+1. 
+
 ### Single Server
 
 ```sh
@@ -21,10 +29,10 @@ ssh
 git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
 
 # Step 2: Move into repo
-cd whitepaper-stt-evaluation-on-kubernete 
+cd whitepaper-stt-evaluation-on-kubernetes 
 ```
 
-### Whisper Ubunutu on CPU
+### Whisper Ubuntu on CPU
 
 ```sh
 # Step 0: Review the Ubuntu Dockerfile
@@ -90,7 +98,7 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 - Whisper adds timestamps before each transcribed line the ground-truth file does not have.
 ```
 
-### Whisper Ubunutu on GPU
+### Whisper Ubuntu on GPU
 
 ```sh
 # Step 0: Terminal 1 of 2 - watch NVIDIA consumption
@@ -286,6 +294,74 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 # Step 6: Observations
 - Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
 - Whisper adds timestamps before each transcribed line the ground-truth file does not have.
+```
+
+## Benchmarking
+
+|Image|Processor|
+|---|---|
+|Ubuntu|CPU|
+|Ubuntu|GPU|
+|UBI|CPU|
+|UBI|GPU|
+
+```sh
+# Step 0: Start the gpu_logger.py script that writes to data/output/pod_gpu_usage.csv
+nohup python3 data/evaluations/gpu_logger.py &
+
+# Step 1: 
+podman run --rm -it \
+  --name whisper-ubuntu-cpu \
+  -v $(pwd)/data:/data:z \
+  localhost/whisper-cpu:ubuntu /bin/bash
+
+# Step 2: tiny.en
+python3 evaluations/evaluation.py \
+   --model whisper \
+   --model_name tiny.en \
+   --input audio-samples/harvard.wav \
+   --reference_file ground-truth/harvard.txt
+
+# Step 3: base.en
+python3 evaluations/evaluation.py \
+   --model whisper \
+   --model_name base.en \
+   --input audio-samples/harvard.wav \
+   --reference_file ground-truth/harvard.txt
+
+# Step 4: small
+python3 evaluations/evaluation.py \
+   --model whisper \
+   --model_name small.en \
+   --input audio-samples/harvard.wav \
+   --reference_file ground-truth/harvard.txt
+
+# Step 5: medium
+python3 evaluations/evaluation.py \
+   --model whisper \
+   --model_name medium.en \
+   --input audio-samples/harvard.wav \
+   --reference_file ground-truth/harvard.txt
+
+# Step 6: large
+python3 evaluations/evaluation.py \
+   --model whisper \
+   --model_name large \
+   --input audio-samples/harvard.wav \
+   --reference_file ground-truth/harvard.txt
+
+# Step 7: turbo
+python3 evaluations/evaluation.py \
+   --model whisper \
+   --model_name turbo \
+   --input audio-samples/harvard.wav \
+   --reference_file ground-truth/harvard.txt
+
+# Step 8: Copy output to host from pod
+cp output/pod_gpu_usage.csv .
+
+# Step 9: Stop the gpu_logger.py script
+ps aux | grep gpu_logger
 ```
 
 ### Execute transcriptions

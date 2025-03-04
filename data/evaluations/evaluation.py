@@ -59,13 +59,14 @@ def evaluate_accuracy(hypothesis_path, reference_path):
         print(f"Error evaluating accuracy: {e}")
         return {}
 
-def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_file):
+def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_file, language):
     command = [
         model, 
         input_file, 
         "--model", model_name, 
         "--model_dir", model_dir, 
-        "--output_dir", output_dir
+        "--output_dir", output_dir,
+        "--language", language
     ]
     
     start_time = time.time()
@@ -92,7 +93,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     csv_temp_path = os.path.join("/tmp", csv_filename)
     file_exists = os.path.isfile(csv_temp_path)
     
-    executed_command = f"python3 evaluations/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file}"
+    executed_command = f"python3 evaluations/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language}"
     
     with open(csv_temp_path, mode="a", newline="") as file:
         fieldnames = ["model", "input_file", "model_name", "model_dir", "output_dir", "start_time", "end_time", "duration", "os_version", "float_precision", "gpu_name", "gpu_count", "date", "hypothesis_file", "reference_file", "wer", "mer", "wil", "wip", "cer", "executed_command"]
@@ -129,11 +130,13 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run Whisper with configurable arguments.")
     parser.add_argument("--model", default="whisper", help="Path to the Whisper executable.")
-    parser.add_argument("--input", default="audio-samples/jfk-audio-inaugural-address-20-january-1961.mp3", help="Path to the input audio file.")
+    parser.add_argument("--input", default="audio-samples/harvard.wav", help="Path to the input audio file.")
     parser.add_argument("--model_name", default="tiny.en", help="Name of the Whisper model to use.")
     parser.add_argument("--model_dir", default="/tmp", help="Directory for storing the model.")
-    parser.add_argument("--output_dir", default="/tmp", help="Directory for storing the output.")
-    parser.add_argument("--reference_file", default="ground-truth/jfk-audio-inaugural-address-20-january-1961.txt", help="Path to the reference text file for accuracy evaluation.")
+    parser.add_argument("--output_dir", default="output", help="Directory for storing the output.")
+    parser.add_argument("--reference_file", default="ground-truth/harvard.txt", help="Path to the reference text file for accuracy evaluation.")
+    parser.add_argument("--language", default="english", help="Language for Whisper transcription.")
     
     args = parser.parse_args()
-    run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file)
+    run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language)
+
