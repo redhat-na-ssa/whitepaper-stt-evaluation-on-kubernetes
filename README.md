@@ -138,8 +138,8 @@ Tracking the deployment and integration status of different speech-to-text (ASR)
     - Activity: `Practice / Enablement`
     - Purpose: `Trying out a technical solution`
     - Developer Hub: `stable`
-    - Orchestrator: Enabled
-    - Enable RHOAI: Enabled
+    - Orchestrator: `Enabled`
+    - Enable RHOAI: `Enabled`
 
 ### RHEL AI VM
 
