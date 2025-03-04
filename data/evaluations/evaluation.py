@@ -60,6 +60,7 @@ def evaluate_accuracy(hypothesis_path, reference_path):
         return {}
 
 def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_file, language):
+    output_dir = "/tmp"
     command = [
         model, 
         input_file, 
@@ -84,13 +85,12 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     gpu_name, gpu_count = get_gpu_info()
     current_date = datetime.now().strftime("%m-%d-%Y")
     
-    hypothesis_filename = os.path.basename(input_file).rsplit(".", 1)[0] + ".txt"
-    hypothesis_path = os.path.join(output_dir, hypothesis_filename)
-    accuracy_metrics = evaluate_accuracy(hypothesis_path, reference_file)
+    hypothesis_filename = os.path.join(output_dir, os.path.basename(input_file).rsplit(".", 1)[0] + ".txt")
+    accuracy_metrics = evaluate_accuracy(hypothesis_filename, reference_file)
     
     sanitized_input_file = os.path.basename(input_file).replace(".", "_")
     csv_filename = f"evaluation_{current_date}_{model}_{model_name}_{os_version.replace(' ', '_')}_{gpu_name}_{sanitized_input_file}.csv"
-    csv_temp_path = os.path.join("/tmp", csv_filename)
+    csv_temp_path = os.path.join(output_dir, csv_filename)
     file_exists = os.path.isfile(csv_temp_path)
     
     executed_command = f"python3 evaluations/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language}"
@@ -133,9 +133,9 @@ if __name__ == "__main__":
     parser.add_argument("--input", default="audio-samples/harvard.wav", help="Path to the input audio file.")
     parser.add_argument("--model_name", default="tiny.en", help="Name of the Whisper model to use.")
     parser.add_argument("--model_dir", default="/tmp", help="Directory for storing the model.")
-    parser.add_argument("--output_dir", default="output", help="Directory for storing the output.")
+    parser.add_argument("--output_dir", default="/tmp", help="Directory for storing the output.")
     parser.add_argument("--reference_file", default="ground-truth/harvard.txt", help="Path to the reference text file for accuracy evaluation.")
-    parser.add_argument("--language", default="en", help="Language for Whisper transcription.")
+    parser.add_argument("--language", default="english", help="Language for Whisper transcription.")
     
     args = parser.parse_args()
     run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language)
