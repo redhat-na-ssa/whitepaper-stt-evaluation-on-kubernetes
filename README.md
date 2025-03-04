@@ -134,6 +134,13 @@ Tracking the deployment and integration status of different speech-to-text (ASR)
     - Control Plane Count: `1`
     - Control Plane Instance Type: `m6a.4xlarge`
 
+1. [Pipeline Demo Environment](https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/enterprise.redhat-tap-demo.prod&utm_source=webapp&utm_medium=share-link)
+    - Activity: `Practice / Enablement`
+    - Purpose: `Trying out a technical solution`
+    - Developer Hub: `stable`
+    - Orchestrator: Enabled
+    - Enable RHOAI: Enabled
+
 ### RHEL AI VM
 
 1. SSH to your RHEL AI VM
