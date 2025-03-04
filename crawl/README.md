@@ -1,13 +1,6 @@
 # Crawl
 
-OpenAI Whisper interactive session with local audio files on a laptop/server:
-
-- [x] Ubuntu
-  - [x] CPU ~6G
-  - [x] GPU ~22G
-- [x] UBI
-  - [x] CPU
-  - [x] GPU
+Crawl OpenAI Whisper STT model from Ubuntu on CPU to UBI on NVIDIA GPU
 
 ## Crawl procedure
 
@@ -17,7 +10,7 @@ In summary:
 1. Clone this repo
 1. Build the container images from Dockerfile for Ubuntu and UBI
 1. Test the containers on CPU and GPU against a sample audio file
-1. 
+1. Run evaluation experiments
 
 ### Single Server
 
@@ -53,7 +46,7 @@ podman images
 podman run --rm -it \
   --name whisper-ubuntu-cpu \
   -v $(pwd)/data:/data:z \
-  localhost/whisper-cpu:ubuntu /bin/bash
+  localhost/whisper:ubuntu /bin/bash
 
 # Step 4: Test transcription and view the output
 whisper audio-samples/harvard.wav | tee /tmp/harvard-whisper-transcription.txt
@@ -126,7 +119,7 @@ podman run --rm -it \
     -v $(pwd)/data:/data:z \
     --security-opt=label=disable \
     --device nvidia.com/gpu=all \
-    localhost/whisper-gpu:ubuntu /bin/bash
+    localhost/whisper:ubuntu /bin/bash
 
 # Step 4: Test transcription and view the output
 whisper audio-samples/harvard.wav | tee /tmp/harvard-whisper-transcription.txt
@@ -237,7 +230,7 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 
 # Step 6: Observations
 - Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
-- Whisper adds timestamps before each transcribed line the ground-truth file does not have.
+- Whisper adds timestamps before each transcribed line the ground-truth file does not have. Timestamps are not written to the hypothesis file.
 ```
 
 ### Whisper UBI on GPU
@@ -361,36 +354,6 @@ cp output/pod_gpu_usage.csv .
 # Step 9: Stop the gpu_logger.py script
 ps aux | grep gpu_logger
 ```
-
-### Execute transcriptions
-
-```sh
-# harvard audio with different size models
-python3 evaluations/evaluation.py --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt
-python3 evaluations/evaluation.py --model_name base.en --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt
-python3 evaluations/evaluation.py --model_name small.en --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt
-python3 evaluations/evaluation.py --model_name medium.en --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt
-python3 evaluations/evaluation.py --model_name large --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt
-python3 evaluations/evaluation.py --model_name turbo --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt
-
-# jfk-audio-inaugural-address-20-january-1961 with different size models
-python3 evaluations/evaluation.py
-python3 evaluations/evaluation.py --model_name base.en
-python3 evaluations/evaluation.py --model_name small.en
-python3 evaluations/evaluation.py --model_name medium.en
-python3 evaluations/evaluation.py --model_name large
-python3 evaluations/evaluation.py --model_name turbo
-
-# jfk-audio-rice-university-12-september-1962 with different size models
-python3 evaluations/evaluation.py --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
-python3 evaluations/evaluation.py --model_name base.en --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
-python3 evaluations/evaluation.py --model_name small.en --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
-python3 evaluations/evaluation.py --model_name medium.en --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
-python3 evaluations/evaluation.py --model_name large --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
-python3 evaluations/evaluation.py --model_name turbo --input audio-samples/jfk-audio-rice-university-12-september-1962.mp3 --reference_file ground-truth/jfk-audio-rice-university-12-september-1962.txt 
-```
-
-
 
 ### Execute transcriptions
 
