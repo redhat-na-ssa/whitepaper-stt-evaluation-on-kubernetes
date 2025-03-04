@@ -1,3 +1,4 @@
+date,timestamp,model,model_name,model_dir,input_file,output_dir,start_time,end_time,duration,wer,mer,wil,wip,cer,executed_command
 2025-03-04,20250304_220258,whisper,tiny.en,/tmp/,audio-samples/harvard.wav,/tmp,1741125773.1695611,1741125778.0312574,4.861696243286133,0.0,0.0,0.0,1.0,0.0,python3 evaluations/evaluation.py --model_name tiny.en --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt --language en
 2025-03-04,20250304_220301,whisper,tiny.en,/tmp/,audio-samples/harvard.wav,/tmp,1741125778.0804245,1741125781.1666317,3.086207151412964,0.0,0.0,0.0,1.0,0.0,python3 evaluations/evaluation.py --model_name tiny.en --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt --language en
 2025-03-04,20250304_220307,whisper,base.en,/tmp/,audio-samples/harvard.wav,/tmp,1741125781.2141008,1741125787.33069,6.116589069366455,0.0,0.0,0.0,1.0,0.0,python3 evaluations/evaluation.py --model_name base.en --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt --language en
@@ -46,4 +47,4 @@
 2025-03-04,20250304_222702,whisper,large,/tmp/,audio-samples/harvard.wav,/tmp,1741127205.5152333,1741127222.7422178,17.22698450088501,0.0,0.0,0.0,1.0,0.0,python3 evaluations/evaluation.py --model_name large --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt --language en
 2025-03-04,20250304_222732,whisper,turbo,/tmp/,audio-samples/harvard.wav,/tmp,1741127222.7955163,1741127252.81286,30.017343759536743,0.0,0.0,0.0,1.0,0.0,python3 evaluations/evaluation.py --model_name turbo --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt --language en
 2025-03-04,20250304_222742,whisper,turbo,/tmp/,audio-samples/harvard.wav,/tmp,1741127252.868238,1741127262.3534238,9.485185861587524,0.0,0.0,0.0,1.0,0.0,python3 evaluations/evaluation.py --model_name turbo --input audio-samples/harvard.wav --reference_file ground-truth/harvard.txt --language en
-date,timestamp,model,model_name,model_dir,input_file,output_dir,start_time,end_time,duration,wer,mer,wil,wip,cer,executed_command
+

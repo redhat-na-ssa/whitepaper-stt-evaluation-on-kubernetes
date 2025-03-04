@@ -48,8 +48,9 @@ def write_to_csv(pod_name, gpu_name, gpu_count, max_utilization, max_temperature
     with open(file_path, mode='a', newline='') as file:
         writer = csv.writer(file)
         if not file_exists:
-            writer.writerow(['Date', 'Pod Name', 'Processor/GPU Name', 'Core/GPU Count', 'Max Usage (%)', 'Max GPU Temperature (C)', 'Max Pwr:Usage/Cap (%)', 'Max VRAM Usage (%)'])
-        writer.writerow([datetime.now().strftime('%m/%d/%Y'), pod_name, gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage])
+            writer.writerow(['date', 'timestamp', 'pod name', 'processor/gpu name', 'core/gpu count', 'max usage (%)', 'max gpu temperature (C)', 'max pwr:usage/cap (%)', 'max vram usage (%)'])
+        now = datetime.now()
+        writer.writerow([now.strftime('%m/%d/%Y'), now.strftime('%H:%M:%S'), pod_name, gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage])
 
 def main():
     while True:
