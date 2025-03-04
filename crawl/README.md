@@ -10,6 +10,7 @@ In summary:
 1. Clone this repo
 1. Build the container images from Dockerfile for Ubuntu and UBI
 1. Test the containers on CPU and GPU against a sample audio file
+1. Run evaluation experiments
 1. Build to OpenShift cluster
 1. Test the containers on CPU and GPU against a sample audio file
 1. Run evaluation experiments
@@ -301,7 +302,6 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 
 ## Benchmarking
 
-
 ```sh
 # Build the images with the models pre-downloaded
 
@@ -317,6 +317,16 @@ done
 
 ## whisper ubuntu download model performance on cpu on harvard.wav
 podman run --rm -it --name whisper-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name tiny.en
+python3 evaluations/evaluation.py --model_name base.en
+python3 evaluations/evaluation.py --model_name small.en
+python3 evaluations/evaluation.py --model_name medium.en
+python3 evaluations/evaluation.py --model_name large
+python3 evaluations/evaluation.py --model_name turbo
+cp /tmp/*.csv output/.
+
+## whisper ubuntu download model performance on gpu on harvard.wav
+podman run --rm -it --name whisper-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
 python3 evaluations/evaluation.py --model_name tiny.en
 python3 evaluations/evaluation.py --model_name base.en
 python3 evaluations/evaluation.py --model_name small.en
@@ -351,75 +361,40 @@ python3 evaluations/evaluation.py --model_name turbo
 cp /tmp/*.csv output/.
 exit
 
+## whisper ubuntu pre-downloaded model performance on gpu on harvard.wav
+podman run --rm -it --name whisper-pre-dl-tiny-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper-tiny-en:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name tiny.en
+cp /tmp/*.csv output/.
+exit
+podman run --rm -it --name whisper-pre-dl-base-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper-base-en:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name base.en
+cp /tmp/*.csv output/.
+exit
+podman run --rm -it --name whisper-pre-dl-small-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper-small-en:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name small.en
+cp /tmp/*.csv output/.
+exit
+podman run --rm -it --name whisper-pre-dl-medium-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper-medium-en:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name medium.en
+cp /tmp/*.csv output/.
+exit
+podman run --rm -it --name whisper-pre-dl-large-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper-large:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name large
+cp /tmp/*.csv output/.
+exit
+podman run --rm -it --name whisper-pre-dl-turbo-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper-turbo:ubuntu /bin/bash
+python3 evaluations/evaluation.py --model_name turbo
+cp /tmp/*.csv output/.
+exit
+
 # Step 0: Start the gpu_logger.py script that writes to data/output/pod_gpu_usage.csv
 nohup python3 data/evaluations/gpu_logger.py &
 
-# Step 1: 
-podman run --rm -it \
-  --name whisper-ubuntu-cpu \
-  -v $(pwd)/data:/data:z \
-  localhost/whisper:ubuntu /bin/bash
-
-# Step 2: tiny.en
-python3 evaluations/evaluation.py \
-   --model whisper \
-   --model_name tiny.en
-
-# Step 3: base.en
-python3 evaluations/evaluation.py \
-   --model whisper \
-   --model_name base.en \
-   --input audio-samples/harvard.wav \
-   --reference_file ground-truth/harvard.txt
-
-# Step 4: small
-python3 evaluations/evaluation.py \
-   --model whisper \
-   --model_name small.en \
-   --input audio-samples/harvard.wav \
-   --reference_file ground-truth/harvard.txt
-
-# Step 5: medium
-python3 evaluations/evaluation.py \
-   --model whisper \
-   --model_name medium.en \
-   --input audio-samples/harvard.wav \
-   --reference_file ground-truth/harvard.txt
-
-# Step 6: large
-python3 evaluations/evaluation.py \
-   --model whisper \
-   --model_name large \
-   --input audio-samples/harvard.wav \
-   --reference_file ground-truth/harvard.txt
-
-# Step 7: turbo
-python3 evaluations/evaluation.py \
-   --model whisper \
-   --model_name turbo \
-   --input audio-samples/harvard.wav \
-   --reference_file ground-truth/harvard.txt
-
-# Step 8: Copy output to host from pod
+# Step 0: Copy output to host from pod
 cp output/pod_gpu_usage.csv .
 
-# Step 9: Stop the gpu_logger.py script
+# Step 0: Stop the gpu_logger.py script
 ps aux | grep gpu_logger
-```
-
-### Execute transcriptions
-
-```sh
-# different model sizes transcribing jfk-audio-inaugural-address-20-january-1961
-python3 evaluations/script.py \
-        --model whisper \
-        --model_size tiny.en \
-        --base_image ubi \
-        --platform rhel \
-        --processor gpu \
-        --input_file audio-samples/jfk-audio-inaugural-address-20-january-1961.mp3 \
-        ground-truth/jfk-audio-inaugural-address-20-january-1961.txt \
-        output
 ```
 
 ## Whisper Optimizations

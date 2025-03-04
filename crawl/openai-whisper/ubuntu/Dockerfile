@@ -14,6 +14,9 @@ RUN pip install --no-cache-dir openai-whisper jiwer
 # Create and set working directory
 WORKDIR /data
 
+# Create env to access cached whisper models
+ENV HOME=/data
+
 # Give group write permissions
 RUN chmod 0775 /data
 
