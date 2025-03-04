@@ -35,4 +35,5 @@ This script is designed to run a transcription process using a Whisper model, ev
 - wil: The Word Information Lost metric.
 - wip: The Word Information Preserved metric.
 - cer: The Character Error Rate.
+- floating_point_format: Use PyTorch or TensorFlow to detect FP16/FP32.
 - executed_command: The command that was executed (for logging purposes).

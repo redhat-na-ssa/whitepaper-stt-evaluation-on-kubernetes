@@ -21,6 +21,7 @@ import os
 import time
 import jiwer
 import sys
+import torch  # PyTorch for detecting FP16/FP32 support
 from datetime import datetime
 
 def get_os_version():
@@ -38,6 +39,18 @@ def get_os_version():
 
 def get_floating_point_precision():
     return sys.float_info.dig
+
+def get_float_format():
+    # Check if GPU is available and if FP16 is supported (via PyTorch)
+    if torch.cuda.is_available():
+        # Check GPU's capability to handle FP16
+        if torch.cuda.get_device_capability(0)[0] >= 7:  # e.g., Volta or newer GPUs support FP16
+            return "FP16"
+        else:
+            return "FP32"
+    else:
+        # CPUs typically support FP32
+        return "FP32"
 
 def get_gpu_info():
     try:
@@ -92,6 +105,9 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     
     accuracy_metrics = evaluate_accuracy(hypothesis_file, reference_file)
     
+    # Get floating point format (FP16 or FP32)
+    float_format = get_float_format()
+    
     timestamp = datetime.now().strftime("%H%M%S")
     date_today = datetime.now().strftime("%Y-%m-%d")
     csv_filename = f"{timestamp}.csv"
@@ -101,7 +117,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     executed_command = f"python3 evaluations/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language}"
     
     with open(csv_temp_path, mode="a", newline="") as file:
-        fieldnames = ["date", "timestamp", "model", "model_name", "model_dir", "input_file", "output_dir", "start_time", "end_time", "duration", "wer", "mer", "wil", "wip", "cer", "executed_command"]
+        fieldnames = ["date", "timestamp", "model", "model_name", "model_dir", "input_file", "output_dir", "start_time", "end_time", "duration", "wer", "mer", "wil", "wip", "cer", "executed_command", "floating_point_format"]
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         
         if not file_exists:
@@ -123,7 +139,8 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
             "wil": accuracy_metrics.get("wil", "N/A"),
             "wip": accuracy_metrics.get("wip", "N/A"),
             "cer": accuracy_metrics.get("cer", "N/A"),
-            "executed_command": executed_command,
+            "floating_point_format": float_format,
+            "executed_command": executed_command
         }
         writer.writerow(row_data)
 

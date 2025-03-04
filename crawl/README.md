@@ -300,8 +300,6 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 
 ### Harvard data
 
-TODO for evaluation.py check FP
-
 ```sh
 # Terminal 1 of 2
 nohup python3 data/evaluations/gpu_logger.py &
