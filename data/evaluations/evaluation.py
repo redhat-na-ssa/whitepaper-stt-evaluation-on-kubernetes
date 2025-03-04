@@ -117,7 +117,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     executed_command = f"python3 evaluations/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language}"
     
     with open(csv_temp_path, mode="a", newline="") as file:
-        fieldnames = ["date", "timestamp", "model", "model_name", "model_dir", "input_file", "output_dir", "start_time", "end_time", "duration", "wer", "mer", "wil", "wip", "cer", "executed_command", "floating_point_format"]
+        fieldnames = ["date", "timestamp", "model", "model_name", "model_dir", "input_file", "output_dir", "start_time", "end_time", "duration", "wer", "mer", "wil", "wip", "cer", "floating_point_format", "executed_command"]
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         
         if not file_exists:

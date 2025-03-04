@@ -306,7 +306,7 @@ nohup python3 data/evaluations/gpu_logger.py &
 
 # Terminal 2 of 2
 
-## Whisper Ubuntu CPU
+## 1 - Whisper Ubuntu CPU
 podman run --rm -it --name whisper-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
 
 ## For loop through each model twice to capture pre-downloaded performance
@@ -317,12 +317,12 @@ for model in tiny.en base.en small.en medium.en large turbo; do
   python3 evaluations/evaluation.py --model_name $model
 done
 
-## Review the data captured runn `sort -u /tmp/*.csv`
+## Review the data captured run `sort -u /tmp/*.csv`
 
 ## Copy the .csv data to local output dir
-cp /tmp/*.csv output/.
+sort -u /tmp/*.csv >> output/whisper_harvard_metrics.csv
 
-## Whisper Ubuntu GPU
+## 2 - Whisper Ubuntu GPU
 podman run --rm -it --name whisper-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
 
 ## For loop through each model twice to capture pre-downloaded performance
@@ -334,9 +334,9 @@ for model in tiny.en base.en small.en medium.en large turbo; do
 done
 
 ## Copy the .csv data to local output dir
-cp /tmp/*.csv output/.
+sort -u /tmp/*.csv >> output/whisper_harvard_metrics.csv
 
-## Whisper UBI CPU
+## 3 - Whisper UBI CPU
 podman run --rm -it --name whisper-ubi-cpu -v $(pwd)/data:/data:z localhost/whisper:ubi /bin/bash
 
 ## For loop through each model twice to capture pre-downloaded performance
@@ -349,9 +349,9 @@ done
 
 ## Copy the .csv data to local output dir
 ## You may have to chmod 777 data/output
-cp /tmp/*.csv output/.
+sort -u /tmp/*.csv >> output/whisper_harvard_metrics.csv
 
-## Whisper UBI GPU
+## 4 - Whisper UBI GPU
 podman run --rm -it --name whisper-ubi-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubi /bin/bash
 
 ## For loop through each model twice to capture pre-downloaded performance
@@ -364,12 +364,12 @@ done
 
 ## Copy the .csv data to local output dir
 ## You may have to chmod 777 data/output
-cp /tmp/*.csv output/.
+sort -u /tmp/*.csv >> output/whisper_harvard_metrics.csv
 
-# Step 0: Copy output to host from pod
+# Copy output to host from pod
 cp output/pod_gpu_usage.csv .
 
-# Step 0: Stop the gpu_logger.py script
+# Stop the gpu_logger.py script
 ps aux | grep gpu_logger
 ```
 
