@@ -121,7 +121,7 @@ Tracking the deployment and integration status of different speech-to-text (ASR)
 ### Environments
 
 1. Request environments from demo.redhat.com
-526238
+
 2. [RHEL AI (GA) VM](https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/rhdp.rhel-ai-vm.prod&utm_source=webapp&utm_medium=share-link)
     - Activity: `Practice / Enablement`
     - Purpose: `Trying out a technical solution`
