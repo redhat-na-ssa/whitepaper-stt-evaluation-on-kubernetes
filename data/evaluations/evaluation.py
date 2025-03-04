@@ -135,7 +135,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_dir", default="/tmp", help="Directory for storing the model.")
     parser.add_argument("--output_dir", default="output", help="Directory for storing the output.")
     parser.add_argument("--reference_file", default="ground-truth/harvard.txt", help="Path to the reference text file for accuracy evaluation.")
-    parser.add_argument("--language", default="english", help="Language for Whisper transcription.")
+    parser.add_argument("--language", default="en", help="Language for Whisper transcription.")
     
     args = parser.parse_args()
     run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language)
