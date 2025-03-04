@@ -19,6 +19,9 @@ spec:
         key: nvidia.com/gpu
       # vLLM needs to access the host's shared memory for tensor parallel inference.
       volumes:
+      - name: cache-volume
+        persistentVolumeClaim:
+          claimName: whisper-tiny
       - name: shm
         emptyDir:
           medium: Memory
@@ -42,6 +45,8 @@ spec:
             memory: 6G
             nvidia.com/gpu: "1"
         volumeMounts:
+        - mountPath: /root/.cache/huggingface
+          name: cache-volume
         - name: shm
           mountPath: /dev/shm
         livenessProbe:
