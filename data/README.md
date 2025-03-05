@@ -1,6 +1,6 @@
 # Data Folder
 
-Directory folder:
+Directory folders:
 
 1. audio-samples - provided audio files for transcription
 1. evaluations - scripts to evaluate model (whisper currently)

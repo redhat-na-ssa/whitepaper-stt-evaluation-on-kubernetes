@@ -21,4 +21,4 @@ ENV HOME=/data
 RUN chmod 0775 /data
 
 # Default command to process the audio file using ffmpeg & whisper
-CMD ["/bin/bash"]
+CMD ["/bin/bash", "umask", "0002"]

@@ -9,9 +9,7 @@ In summary:
 1. Access your Single Server
 1. Clone this repo
 1. Build the container images from Dockerfile for Ubuntu and UBI
-1. Test the containers on CPU and GPU against a sample audio file
-1. Run evaluation experiments
-1. Build to OpenShift cluster
+1. TODO add the Gradio UI for Ubuntu and UBI
 1. Test the containers on CPU and GPU against a sample audio file
 1. Run evaluation experiments
 
@@ -55,7 +53,11 @@ podman run --rm -it \
   -v $(pwd)/data:/data:z \
   localhost/whisper:ubuntu /bin/bash
 
+# TODO set umask to 0002
+
 # Step 4: Test transcription and view the output
+whisper audio-samples/harvard.wav
+
 whisper audio-samples/harvard.wav | tee /tmp/harvard-whisper-transcription.txt
 
 whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcription.txt
@@ -100,6 +102,7 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 # Step 6: Observations
 - Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
 - Whisper adds timestamps before each transcribed line the ground-truth file does not have.
+- Changing the model size with --model parameter
 
 # Terminal 1 of 2
 # Step 4: Stop the watch
@@ -111,6 +114,8 @@ exit
 ```
 
 ### Whisper Ubuntu on GPU
+
+TODO test on RHEL VM on AWS with GPU (NOT RHEL AI image)
 
 ```sh
 # Terminal 1 of 2
@@ -128,8 +133,6 @@ podman run --rm -it \
 
 # Terminal 2 of 2
 # Step 2: Test transcription and view the output
-whisper audio-samples/harvard.wav | tee /tmp/harvard-whisper-transcription.txt
-
 whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcription.txt
 
 # Expected output
@@ -185,10 +188,11 @@ exit
 ### Whisper UBI on CPU
 
 Why use UBI?
+
 - trusted source
 - CVE comparison
 - managing licensing for software, like FFMPEG
-- default chang from rootful to rootless
+- default change from rootful to rootless
 - group rw permission in the Entrypoint
 
 ```sh
@@ -317,6 +321,8 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 
 ## Benchmarking
 
+TODO build UI scraper of the .csv to visualize the data
+
 ### Harvard data
 
 ```sh
@@ -397,7 +403,7 @@ ps aux | grep gpu_logger
 ### Best Initial Test Command
 
 ```sh
-whisper ground-truth/jfk-audio-inaugural-address-20-january-1961.txt \
+whisper audio-samples/harvard.wav \
     --model large \
     --language en \
     --beam_size 10 \
