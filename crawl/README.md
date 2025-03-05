@@ -31,6 +31,10 @@ cd whitepaper-stt-evaluation-on-kubernetes
 ### Whisper Ubuntu
 
 ```sh
+# Terminal 1 of 2
+# Step 0: watch NVIDIA consumption
+watch -n 0.1 nvidia-smi
+
 # Step 0: Review the Ubuntu Dockerfile
 cat crawl/openai-whisper/ubuntu/Dockerfile 
 
@@ -54,6 +58,8 @@ podman run --rm -it \
 # Step 4: Test transcription and view the output
 whisper audio-samples/harvard.wav | tee /tmp/harvard-whisper-transcription.txt
 
+whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcription.txt
+
 # Expected output
 # 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
 # /usr/local/lib/python3.10/dist-packages/whisper/transcribe.py:126: UserWarning: FP16 is not supported on CPU; using FP32 instead
@@ -69,6 +75,8 @@ whisper audio-samples/harvard.wav | tee /tmp/harvard-whisper-transcription.txt
 
 # Step 5: Compare output against ground truth
 diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
+
+# TODO cleanup output for better smoke test accuracy
 
 # Expected output
 # 1,6c1,8
@@ -94,7 +102,7 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 - Whisper adds timestamps before each transcribed line the ground-truth file does not have.
 
 # Terminal 1 of 2
-# Step 7: Stop the watch
+# Step 4: Stop the watch
 Ctrl+c
 
 # Terminal 2 of 2
@@ -107,7 +115,7 @@ exit
 ```sh
 # Terminal 1 of 2
 # Step 0: watch NVIDIA consumption
-watch nvidia smi
+watch -n 0.1 nvidia-smi
 
 # Terminal 2 of 2
 # Step 1: Run the image on GPU
@@ -121,6 +129,8 @@ podman run --rm -it \
 # Terminal 2 of 2
 # Step 2: Test transcription and view the output
 whisper audio-samples/harvard.wav | tee /tmp/harvard-whisper-transcription.txt
+
+whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcription.txt
 
 # Expected output
 # 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
@@ -174,7 +184,18 @@ exit
 
 ### Whisper UBI on CPU
 
+Why use UBI?
+- trusted source
+- CVE comparison
+- managing licensing for software, like FFMPEG
+- default chang from rootful to rootless
+- group rw permission in the Entrypoint
+
 ```sh
+# Terminal 1 of 2
+# Step 0: watch NVIDIA consumption
+watch -n 0.1 nvidia-smi
+
 # Step 0: Review the UBI Dockerfile
 cat crawl/openai-whisper/ubi/Dockerfile
 
@@ -197,7 +218,7 @@ podman run --rm -it --name whisper-ubi-cpu \
     localhost/whisper:ubi /bin/bash
 
 # Step 4: Test transcription and view the output
-whisper audio-samples/harvard.wav --output_dir /tmp/ --model_dir /tmp/
+whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcription.txt 
 
 # Expected output
 # 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
@@ -237,14 +258,13 @@ diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
 # Step 6: Observations
 - Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
 - Whisper adds timestamps before each transcribed line the ground-truth file does not have. 
-- Need to build the images with the models.
 ```
 
 ### Whisper UBI on GPU
 
 ```sh
 # Step 0: Terminal 1 of 2 - watch NVIDIA consumption
-watch nvidia smi
+watch -n 0.1 nvidia-smi
 
 # Step 0: Terminal 2 of 2 - Run the image on GPU
 podman run --rm -it --name whisper-ubi-gpu-harvard \
@@ -254,8 +274,7 @@ podman run --rm -it --name whisper-ubi-gpu-harvard \
     localhost/whisper:ubi /bin/bash
 
 # Step 1: Test transcription and view the output
-whisper audio-samples/harvard.wav --output_dir /tmp/ --model_dir /tmp/
-
+whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcription.txt 
 # Expected output
 # 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
 # /usr/local/lib/python3.10/dist-packages/whisper/transcribe.py:126: UserWarning: FP16 is not supported on CPU; using FP32 instead

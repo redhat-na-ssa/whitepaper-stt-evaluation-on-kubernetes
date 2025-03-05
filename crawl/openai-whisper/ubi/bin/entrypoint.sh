@@ -7,6 +7,8 @@ XDG_CACHE_HOME=${MODEL_CACHE}
 
 export XDG_CACHE_HOME
 
+umask 0002
+
 init(){
   [ -e "${MODEL_CACHE}" ] || mkdir -p "${MODEL_CACHE}"
   [ -e "${AUDIO_FILES}" ] || mkdir -p "${AUDIO_FILES}"
