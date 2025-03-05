@@ -12,6 +12,7 @@ In summary:
 1. TODO add the Gradio UI for Ubuntu and UBI
 1. Test the containers on CPU and GPU against a sample audio file
 1. Run evaluation experiments
+1. TODO visualization container
 
 ### Single Server
 
@@ -58,10 +59,6 @@ podman run --rm -it \
 # Step 4: Test transcription and view the output
 whisper audio-samples/harvard.wav
 
-whisper audio-samples/harvard.wav | tee /tmp/harvard-whisper-transcription.txt
-
-whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcription.txt
-
 # Expected output
 # 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
 # /usr/local/lib/python3.10/dist-packages/whisper/transcribe.py:126: UserWarning: FP16 is not supported on CPU; using FP32 instead
@@ -75,10 +72,31 @@ whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcr
 # [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
 # [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
 
-# Step 5: Compare output against ground truth
-diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
+# Step 5: Basic improvements
 
-# TODO cleanup output for better smoke test accuracy
+# Write output to /tmp directory
+# Format the output to txt
+# Set the task to transcribe
+# Set language to english
+# Set FP FP16 is not supported on CPU; using FP32 instead
+time whisper audio-samples/harvard.wav
+
+# Expected Output
+# real    0m13.340s
+# user    2m29.528s
+# sys     0m11.067s
+
+time whisper audio-samples/harvard.wav --output_dir /tmp/ --output_format txt --language en --task transcribe
+
+# Expected Output
+# real    0m11.990s
+# user    1m58.327s
+# sys     0m10.308s
+
+# Step 5: Compare output against ground truth
+diff --strip-trailing-cr ground-truth/harvard.txt /tmp/harvard.txt
+
+# The diff output you posted indicates that the only difference between the two files is a missing newline at the end of /tmp/harvard.txt.
 
 # Expected output
 # 1,6c1,8
@@ -133,7 +151,7 @@ podman run --rm -it \
 
 # Terminal 2 of 2
 # Step 2: Test transcription and view the output
-whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcription.txt
+time whisper audio-samples/harvard.wav --output_dir /tmp/ --output_format txt --language en --task transcribe
 
 # Expected output
 # 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
@@ -150,7 +168,7 @@ whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcr
 
 # Terminal 2 of 2
 # Step 3: Compare output against ground truth
-diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
+diff ground-truth/harvard.txt /tmp/harvard.txt
 
 # Expected output
 # 1,6c1,8
@@ -222,7 +240,7 @@ podman run --rm -it --name whisper-ubi-cpu \
     localhost/whisper:ubi /bin/bash
 
 # Step 4: Test transcription and view the output
-whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcription.txt 
+time whisper audio-samples/harvard.wav --output_dir /tmp/ --output_format txt --language en --task transcribe
 
 # Expected output
 # 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
@@ -238,7 +256,7 @@ whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcr
 # [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
 
 # Step 5: Compare output against ground truth
-diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
+diff ground-truth/harvard.txt /tmp/harvard.txt
 
 # Expected output
 # 1,6c1,8
@@ -278,7 +296,8 @@ podman run --rm -it --name whisper-ubi-gpu-harvard \
     localhost/whisper:ubi /bin/bash
 
 # Step 1: Test transcription and view the output
-whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcription.txt 
+time whisper audio-samples/harvard.wav --output_dir /tmp/ --output_format txt --language en --task transcribe
+
 # Expected output
 # 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
 # /usr/local/lib/python3.10/dist-packages/whisper/transcribe.py:126: UserWarning: FP16 is not supported on CPU; using FP32 instead
@@ -293,7 +312,7 @@ whisper audio-samples/harvard.wav | cut -c28- | tee /tmp/harvard-whisper-transcr
 # [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
 
 # Step 5: Compare output against ground truth
-diff ground-truth/harvard.txt /tmp/harvard-whisper-transcription.txt
+diff ground-truth/harvard.txt /tmp/harvard.txt
 
 # Expected output
 # 1,6c1,8
@@ -327,7 +346,7 @@ TODO build UI scraper of the .csv to visualize the data
 
 ```sh
 # Terminal 1 of 2
-nohup python3 data/evaluations/gpu_logger.py &
+nohup python3 data/evaluation-scripts/gpu_logger.py &
 
 # Terminal 2 of 2
 
@@ -337,9 +356,9 @@ podman run --rm -it --name whisper-ubuntu-cpu -v $(pwd)/data:/data:z localhost/w
 ## For loop through each model twice to capture pre-downloaded performance
 for model in tiny.en base.en small.en medium.en large turbo; do
   # First run
-  python3 evaluations/evaluation.py --model_name $model
+  python3 evaluation-scripts/evaluation.py --model_name $model
   # Second run with models cached
-  python3 evaluations/evaluation.py --model_name $model
+  python3 evaluation-scripts/evaluation.py --model_name $model
 done
 
 ## Review the data captured run `sort -u /tmp/*.csv`
@@ -353,9 +372,9 @@ podman run --rm -it --name whisper-ubuntu-gpu --security-opt=label=disable --dev
 ## For loop through each model twice to capture pre-downloaded performance
 for model in tiny.en base.en small.en medium.en large turbo; do
   # First run
-  python3 evaluations/evaluation.py --model_name $model
+  python3 evaluation-scripts/evaluation.py --model_name $model
   # Second run with models cached
-  python3 evaluations/evaluation.py --model_name $model
+  python3 evaluation-scripts/evaluation.py --model_name $model
 done
 
 ## Copy the .csv data to local output dir
@@ -367,9 +386,9 @@ podman run --rm -it --name whisper-ubi-cpu -v $(pwd)/data:/data:z localhost/whis
 ## For loop through each model twice to capture pre-downloaded performance
 for model in tiny.en base.en small.en medium.en large turbo; do
   # First run
-  python3 evaluations/evaluation.py --model_name $model
+  python3 evaluation-scripts/evaluation.py --model_name $model
   # Second run with models cached
-  python3 evaluations/evaluation.py --model_name $model
+  python3 evaluation-scripts/evaluation.py --model_name $model
 done
 
 ## Copy the .csv data to local output dir
@@ -382,9 +401,9 @@ podman run --rm -it --name whisper-ubi-gpu --security-opt=label=disable --device
 ## For loop through each model twice to capture pre-downloaded performance
 for model in tiny.en base.en small.en medium.en large turbo; do
   # First run
-  python3 evaluations/evaluation.py --model_name $model
+  python3 evaluation-scripts/evaluation.py --model_name $model
   # Second run with models cached
-  python3 evaluations/evaluation.py --model_name $model
+  python3 evaluation-scripts/evaluation.py --model_name $model
 done
 
 ## Copy the .csv data to local output dir
