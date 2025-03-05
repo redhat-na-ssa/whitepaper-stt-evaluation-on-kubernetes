@@ -348,7 +348,7 @@ for model in tiny.en base.en small.en medium.en large turbo; do
 done
 
 ## Copy the .csv data to local output dir
-## You may have to chmod 777 data/output
+## You may have to chmod 755 data/output/output/whisper_harvard_metrics.csv
 sort -u /tmp/*.csv >> output/whisper_harvard_metrics.csv
 
 ## 4 - Whisper UBI GPU
