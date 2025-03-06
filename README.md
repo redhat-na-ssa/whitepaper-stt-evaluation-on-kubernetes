@@ -68,6 +68,14 @@ Tracking the deployment and integration status of different speech-to-text (ASR)
 
 Go to the [Crawl README](./crawl/README.md)
 
+### Walk
+
+> TODO
+
+### Run
+
+Go to the [Run README](./run/README.md)
+
 ## Related resources
 
 - https://github.com/pmichaillat/latex-paper
