@@ -23,4 +23,5 @@ demo = gr.Interface(
     "text",
 )
 
-demo.launch(server_name="0.0.0.0", server_port=8000)
+demo.launch(server_name="0.0.0.0", server_port=8000, ssl_certfile="cert.pem",
+                        ssl_keyfile="key.pem", ssl_verify=False)
