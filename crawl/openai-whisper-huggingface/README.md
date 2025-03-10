@@ -23,7 +23,7 @@ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3
 - An NVIDIA GPU will speed up inference but it is not necessary.
 - Create a virtual python environment (tested with Python 3.9.18) and install 
 the requirements.txt file using `pip`.
-- Port 8000/tcp must be open.
+- Port 8080/tcp must be open.
 
 #### Deploy on Openshift
 
