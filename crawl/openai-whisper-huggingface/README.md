@@ -24,3 +24,16 @@ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3
 - Create a virtual python environment (tested with Python 3.9.18) and install 
 the requirements.txt file using `pip`.
 - Port 8000/tcp must be open.
+
+#### Openshift
+
+```bash
+oc new-project whisper
+oc new-app --context-dir=crawl/openai-whisper-huggingface --name=asr https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
+```
+
+```bash
+oc create route edge \
+  --service asr \
+  --insecure-policy='Redirect'
+```
