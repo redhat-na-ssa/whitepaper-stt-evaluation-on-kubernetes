@@ -3,6 +3,8 @@ import gradio as gr
 from transformers import pipeline
 import numpy as np
 
+OPENSHIFT=True
+
 transcriber = pipeline("automatic-speech-recognition", model="openai/whisper-base.en")
 
 def transcribe(audio):
@@ -23,6 +25,10 @@ demo = gr.Interface(
     "text",
 )
 
-# demo.launch(server_name="0.0.0.0", server_port=8080, ssl_certfile="cert.pem",
-#                        ssl_keyfile="key.pem", ssl_verify=False)
-demo.launch(server_name="0.0.0.0", server_port=8080)
+if OPENSHIFT==True:
+    demo.launch(server_name="0.0.0.0", server_port=8000)
+else:
+    demo.launch(server_name="0.0.0.0", server_port=8000, ssl_certfile="cert.pem",
+        ssl_keyfile="key.pem", ssl_verify=False)
+
+
