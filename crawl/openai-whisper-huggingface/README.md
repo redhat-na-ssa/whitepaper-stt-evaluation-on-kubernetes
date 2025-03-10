@@ -29,7 +29,7 @@ the requirements.txt file using `pip`.
 
 ```bash
 oc new-project whisper
-oc new-app --context-dir=crawl/openai-whisper-huggingface --name=asr https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
+oc new-app https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git --context-dir=crawl/openai-whisper-huggingface --name=asr
 ```
 
 ```bash
