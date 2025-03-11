@@ -24,9 +24,7 @@ Get the docker config json from quay account ([quay.io/redhat_na_ssa](https://qu
 
 Robot account : redhat_na_ssa+tektonpipeline
 
-#### roxctl-api-token-secret.yaml
-
-Get the rox api token from the environment from acs namespace. and replace the content <<DOCKER CONFIG JSON FROM QUAY ACCOUNT>>
+view the token and replace the content <<DOCKER CONFIG JSON FROM QUAY ACCOUNT>>
 
 ```
    cd pipeline
