@@ -29,7 +29,7 @@ Robot account : redhat_na_ssa+tektonpipeline
 Get the rox api token from the environment from acs namespace. and replace the content <<DOCKER CONFIG JSON FROM QUAY ACCOUNT>>
 
 ```
-   cd pipeline/ubi
+   cd pipeline
    oc apply -f .
 ```   
 
