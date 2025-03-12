@@ -14,6 +14,22 @@ In summary:
 1. Run evaluation experiments
 1. TODO visualization container
 
+## Quick Start
+
+```sh
+# build the images for whisper 
+podman build -t whisper:ubuntu crawl/openai-whisper/ubuntu/.
+podman build -t whisper:ubi crawl/openai-whisper/ubi/platform/.
+podman build -t whisper:ubi crawl/openai-whisper/ubi/minimal/.
+
+# build the images for faster-whisper 
+podman build -t faster-whisper:ubuntu crawl/faster-whisper/ubuntu/.
+podman build -t faster-whisper:ubi crawl/faster-whisper/ubi/platform/.
+podman build -t faster-whisper:ubi crawl/faster-whisper/ubi/minimal/.
+
+# TODO script
+```
+
 ### Single Server
 
 ```sh
@@ -205,13 +221,23 @@ exit
 
 ### Whisper UBI on CPU
 
-Why use UBI?
+What is (UBI)[https://catalog.redhat.com/software/base-images]? 
+- **Built from a subset of RHEL content:** Red Hat Universal Base images are built from a subset of normal Red Hat Enterprise Linux content.
+- **Redistributable:** UBI images allow standardization for Red Hat customers, partners, ISVs, and others. With UBI images, you can build your container images on a foundation of official Red Hat software that can be freely shared and deployed.
+- **Provide a set of four base images:** micro, minimal, standard, and init.
+- **Provide a set of pre-built language runtime container images:** The runtime images based on Application Streams provide a foundation for applications that can benefit from standard, supported runtimes such as python, perl, php, dotnet, nodejs, and ruby.
+- **Provide a set of associated DNF repositories:** DNF repositories include RPM packages and updates that allow you to add application dependencies and rebuild UBI container images.
+  - The ubi-9-baseos repository holds the redistributable subset of RHEL packages you can include in your container.
+  - The ubi-9-appstream repository holds Application streams packages that you can add to a UBI image to help you standardize the environments you use with applications that require particular runtimes.
+  - **Adding UBI RPMs:** You can add RPM packages to UBI images from preconfigured UBI repositories. If you happen to be in a disconnected environment, you must allowlist the UBI Content Delivery Network (https://cdn-ubi.redhat.com) to use that feature. For more information, see the Red Hat Knowledgebase solution Connect to https://cdn-ubi.redhat.com.
+- **Licensing:** You are free to use and redistribute UBI images, provided you adhere to the Red Hat Universal Base Image End User Licensing Agreement.
 
-- trusted source
-- CVE comparison
-- managing licensing for software, like FFMPEG
-- default change from rootful to rootless
-- group rw permission in the Entrypoint
+We show UBI8 and UBI9. Although, (RHEL 9)[https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/building_running_and_managing_containers/index#con_configuring-container-registries_working-with-container-registries] is more like Ubuntu 22.04 than RHEL 8 in terms of package versions, kernel, and security features.
+- RHEL 9 ships with Linux kernel 5.14, which is closer to Ubuntu 22.04’s Linux kernel 5.15.
+- RHEL 9: Uses glibc 2.34 (same as Ubuntu 22.04).
+- RHEL 9 and Ubuntu 22.04: OpenSSL 3, system-wide cryptographic policies.
+- RHEL 9 and Ubuntu 22.04 both include newer versions of Python (Python 3.9+), Node.js, and container tools.
+
 
 ```sh
 # Terminal 1 of 2
@@ -366,6 +392,9 @@ done
 ## Copy the .csv data to local output dir
 sort -u /tmp/*.csv >> output/whisper_harvard_metrics.csv
 
+## exit pod
+exit
+
 ## 2 - Whisper Ubuntu GPU
 podman run --rm -it --name whisper-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
 
@@ -379,6 +408,9 @@ done
 
 ## Copy the .csv data to local output dir
 sort -u /tmp/*.csv >> output/whisper_harvard_metrics.csv
+
+## exit pod
+exit
 
 ## 3 - Whisper UBI CPU
 podman run --rm -it --name whisper-ubi-cpu -v $(pwd)/data:/data:z localhost/whisper:ubi /bin/bash
@@ -395,6 +427,9 @@ done
 ## You may have to chmod 755 data/output/output/whisper_harvard_metrics.csv
 sort -u /tmp/*.csv >> output/whisper_harvard_metrics.csv
 
+## exit pod
+exit
+
 ## 4 - Whisper UBI GPU
 podman run --rm -it --name whisper-ubi-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubi /bin/bash
 
@@ -410,6 +445,10 @@ done
 ## You may have to chmod 777 data/output
 sort -u /tmp/*.csv >> output/whisper_harvard_metrics.csv
 
+## exit pod
+exit
+
+# Terminal 1 of 2
 # Copy output to host from pod
 cp output/pod_gpu_usage.csv .
 

@@ -1,5 +1,6 @@
-ARG RHEL_VER=8
-ARG IMAGE=registry.access.redhat.com/ubi8/python-39@sha256:24be696023cf97eca8da81112ca917de1e2e1ed6e57b285b8d0f2cd1ff91b1f9
+ARG RHEL_VER=9
+ARG PYTHON_VER=12
+ARG IMAGE=docker.io/nvidia/cuda:12.8.0-cudnn-devel-ubi${RHEL_VER}
 
 FROM ${IMAGE}
 
@@ -8,7 +9,7 @@ USER root
 
 # Install dependencies in a single step to reduce layers
 RUN yum -y install \
-    gcc gcc-c++ make automake autoconf libtool git diffutils && \
+    gcc gcc-c++ make automake autoconf libtool git diffutils python3.${PYTHON_VER} python3.${PYTHON_VER}-pip && \
     yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-$(rpm -E %{rhel}).noarch.rpm && \
     yum clean all && \
     rm -rf /var/cache/yum
@@ -33,7 +34,7 @@ RUN git clone https://git.ffmpeg.org/ffmpeg.git \
 
 # Install whisper
 RUN pip install --no-cache-dir -U pip==25.* && \
-    pip install --no-cache-dir openai-whisper==20240930 jiwer==3.1.*
+    pip install --no-cache-dir faster-whisper jiwer==3.1.*
 
 # Setup: entrypoint and other scripts over 
 COPY --chmod=0755 bin /usr/local/bin
@@ -52,9 +53,9 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Labels for container catalog
 LABEL \
-      summary="Python 3.9 image w/ whisper + ffmpeg" \
-      description="Python 3.9 image w/ whisper + ffmpeg" \
-      io.k8s.display-name="python-3.9-whisper" \
+      summary="Python 3.${PYTHON_VER} image w/ whisper + ffmpeg" \
+      description="Python 3.${PYTHON_VER} image w/ whisper + ffmpeg" \
+      io.k8s.display-name="python-3.${PYTHON_VER}-whisper" \
       org.opencontainers.image.description.vendor="openai" \
       org.opencontainers.image.description="A container for speech to text" \
       org.opencontainers.image.source="https://github.com/redhat-na-ssa"
