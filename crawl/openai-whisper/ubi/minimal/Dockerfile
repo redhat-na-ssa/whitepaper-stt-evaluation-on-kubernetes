@@ -10,8 +10,7 @@ USER root
 # Install dependencies in a single step to reduce layers
 RUN microdnf -y install \
     gcc gcc-c++ make automake autoconf libtool git diffutils python3.${PYTHON_VER} python3.${PYTHON_VER}-pip && \
-    yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-$(rpm -E %{rhel}).noarch.rpm && \
-    yum clean all && \
+    microdnf clean all && \
     rm -rf /var/cache/yum
 
 # Clone and build FFmpeg in one step

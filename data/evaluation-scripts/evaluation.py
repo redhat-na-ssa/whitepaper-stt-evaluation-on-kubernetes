@@ -1,10 +1,10 @@
 #
 # USAGE
 # BASIC = 
-# python3 evaluation-scripts/evaluation.py
+# python3.12 evaluation-scripts/evaluation.py
 #
 # CUSTOM = 
-# python3 evaluation-scripts/evaluations.py \
+# python3.12 evaluation-scripts/evaluations.py \
 #   --model whisper \
 #   --model_name tiny.en \
 #   --language en \
@@ -24,6 +24,8 @@ import sys
 import torch  # PyTorch for detecting FP16/FP32 support
 from datetime import datetime
 
+PYTHON_EXECUTABLE = "python3.12"
+
 def get_os_version():
     try:
         result = subprocess.run(["cat", "/etc/redhat-release"], capture_output=True, text=True, check=True)
@@ -41,15 +43,12 @@ def get_floating_point_precision():
     return sys.float_info.dig
 
 def get_float_format():
-    # Check if GPU is available and if FP16 is supported (via PyTorch)
     if torch.cuda.is_available():
-        # Check GPU's capability to handle FP16
-        if torch.cuda.get_device_capability(0)[0] >= 7:  # e.g., Volta or newer GPUs support FP16
+        if torch.cuda.get_device_capability(0)[0] >= 7:
             return "FP16"
         else:
             return "FP32"
     else:
-        # CPUs typically support FP32
         return "FP32"
 
 def get_gpu_info():
@@ -105,7 +104,6 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     
     accuracy_metrics = evaluate_accuracy(hypothesis_file, reference_file)
     
-    # Get floating point format (FP16 or FP32)
     float_format = get_float_format()
     
     timestamp = datetime.now().strftime("%H%M%S")
@@ -114,7 +112,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     csv_temp_path = os.path.join(output_dir, csv_filename)
     file_exists = os.path.isfile(csv_temp_path)
     
-    executed_command = f"python3 evaluation-scripts/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language}"
+    executed_command = f"{PYTHON_EXECUTABLE} evaluation-scripts/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language}"
     
     with open(csv_temp_path, mode="a", newline="") as file:
         fieldnames = ["date", "timestamp", "model", "model_name", "model_dir", "input_file", "output_dir", "start_time", "end_time", "duration", "wer", "mer", "wil", "wip", "cer", "floating_point_format", "executed_command"]
@@ -154,6 +152,7 @@ if __name__ == "__main__":
     parser.add_argument("--reference_file", default="ground-truth/harvard.txt", help="Path to the reference text file for accuracy evaluation.")
     parser.add_argument("--hypothesis_file", default="/tmp/harvard.txt", help="Path to the hypothesis text file.")
     parser.add_argument("--language", default="en", help="Language for Whisper transcription.")
-
+    
     args = parser.parse_args()
     run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language, args.hypothesis_file)
+

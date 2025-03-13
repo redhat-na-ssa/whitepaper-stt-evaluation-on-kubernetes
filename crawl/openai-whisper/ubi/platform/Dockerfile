@@ -10,7 +10,6 @@ USER root
 # Install dependencies in a single step to reduce layers
 RUN yum -y install \
     gcc gcc-c++ make automake autoconf libtool git diffutils && \
-    yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-$(rpm -E %{rhel}).noarch.rpm && \
     yum clean all && \
     rm -rf /var/cache/yum
 
