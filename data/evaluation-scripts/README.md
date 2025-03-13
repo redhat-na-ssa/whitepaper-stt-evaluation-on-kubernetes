@@ -1,6 +1,6 @@
 # Summary of Script Steps
 
-## gpu_logger script
+## host_metrics script
 
 This script collects system information, specifically about pods (likely using Podman), CPU, and GPU, then logs this data to a CSV file every 10 seconds. It runs in the background and writes to a CSV file (pod_host_usage.csv), which stores the following columns:
 

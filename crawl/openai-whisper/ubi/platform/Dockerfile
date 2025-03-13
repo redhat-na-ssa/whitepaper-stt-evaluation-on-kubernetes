@@ -52,9 +52,9 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Labels for container catalog
 LABEL \
-      summary="Python 3.9 image w/ whisper + ffmpeg" \
-      description="Python 3.9 image w/ whisper + ffmpeg" \
-      io.k8s.display-name="python-3.9-whisper" \
+      summary="Python 3.${PYTHON_VER} image w/ whisper + ffmpeg" \
+      description="Python 3.${PYTHON_VER} image w/ whisper + ffmpeg" \
+      io.k8s.display-name="python-3.${PYTHON_VER}-whisper" \
       org.opencontainers.image.description.vendor="openai" \
       org.opencontainers.image.description="A container for speech to text" \
       org.opencontainers.image.source="https://github.com/redhat-na-ssa"
