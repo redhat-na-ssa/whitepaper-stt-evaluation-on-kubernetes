@@ -4,11 +4,11 @@
 # python3.12 evaluation-scripts/evaluation.py
 #
 # CUSTOM = 
-# python3.12 evaluation-scripts/evaluations.py \
+# python3.12 evaluation-scripts/evaluation.py \
 #   --model whisper \
 #   --model_name tiny.en \
 #   --language en \
-#   --input audio-samples/harvard.mp3 \
+#   --input input-samples/harvard.mp3 \
 #   --model_dir /tmp \
 #   --output_dir /tmp \
 #   --reference_file ground-truth/harvard.txt \
@@ -81,17 +81,22 @@ def evaluate_accuracy(hypothesis_path, reference_path):
         print(f"Error evaluating accuracy: {e}")
         return {}
 
+from transcribe_audio import transcribe_audio
+
 def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_file, language, hypothesis_file):
-    output_dir = "/tmp"
-    command = [
-        model, 
-        input_file, 
-        "--model", model_name, 
-        "--model_dir", model_dir, 
-        "--output_dir", output_dir,
-        "--language", language
-    ]
-    
+    transcribe_audio(
+        input_file=input_file,
+        output_dir=output_dir,
+        model_dir=model_dir,
+        output_format="txt",
+        language=language,
+        task="transcribe"
+    )
+
+    print("Whisper transcription completed.")
+
+    # Evaluate accuracy
+    accuracy_metrics = evaluate_accuracy(hypothesis_file, reference_file)
     start_time = time.time()
     try:
         subprocess.run(command, check=True)
@@ -146,7 +151,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run Whisper with configurable arguments.")
     parser.add_argument("--model", default="whisper", help="Path to the Whisper executable.")
     parser.add_argument("--model_name", default="tiny.en", help="Name of the Whisper model to use.")
-    parser.add_argument("--input", default="audio-samples/harvard.wav", help="Path to the input audio file.")
+    parser.add_argument("--input", default="input-samples/harvard.wav", help="Path to the input audio file.")
     parser.add_argument("--model_dir", default="/tmp/", help="Directory for storing the model.")
     parser.add_argument("--output_dir", default="/tmp/", help="Directory for storing the output.")
     parser.add_argument("--reference_file", default="ground-truth/harvard.txt", help="Path to the reference text file for accuracy evaluation.")
