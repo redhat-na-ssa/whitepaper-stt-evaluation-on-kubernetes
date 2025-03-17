@@ -1,6 +1,6 @@
 # Build
 
-### Whisper - Test on OpenShift with a UBI container
+### Whisper on OpenShift with a UBI container
 
 This tests Whisper in a UBI container on OpenShift
 
