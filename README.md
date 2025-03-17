@@ -70,7 +70,7 @@ Go to the [Crawl README](./crawl/README.md)
 
 ### Walk
 
-> TODO
+Go to the [Walk README](./walk/README.md)
 
 ### Run
 
