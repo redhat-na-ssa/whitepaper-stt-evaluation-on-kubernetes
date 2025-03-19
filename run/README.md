@@ -16,6 +16,8 @@ Feel free to try different models!
 
 ### vLLM Model Server
 
+> IMPORTANT NOTE: At this time, vLLM cannot run Whisper or Faster Whisper models successfully. The specific issues are called out below in the instructions.
+
 The vLLM server can only host one model at a time, please see this [GitHub Issue](https://github.com/vllm-project/vllm/issues/299).
 
 A separate vLLM server must be deployed for each model type.
@@ -62,7 +64,7 @@ curl $WHISPER_ENDPOINT/v1/models
 
 Smoke test API
 
-> Note this will throw an Internal Server Error at the moment: https://github.com/vllm-project/vllm/pull/12909
+> IMPORTANT NOTE: This does not work right now as there is an Internal Server Error: https://github.com/vllm-project/vllm/pull/12909
 
 ```sh
 curl -X POST $WHISPER_ENDPOINT/v1/audio/transcriptions \                           
@@ -76,7 +78,7 @@ curl -X POST $WHISPER_ENDPOINT/v1/audio/transcriptions \
 
 #### Model - Faster Whisper
 
-> TODO: Test
+> IMPORTANT NOTE: The vLLM deployment will fail because the model architecture for Faster Whisper (Voice Activity Detector) is not supported in vLLM at this time: https://github.com/vllm-project/vllm/issues/13866
 
 Create PVC for downloaded model
 
@@ -106,7 +108,7 @@ curl $FASTER_WHISPER_ENDPOINT/v1/models
 
 Smoke test API
 
-> Note this will throw an Internal Server Error at the moment: https://github.com/vllm-project/vllm/pull/12909
+> IMPORTANT NOTE: This does not work right now as there is an Internal Server Error: https://github.com/vllm-project/vllm/pull/12909
 
 ```sh
 curl -X POST $FASTER_WHISPER_ENDPOINT/v1/audio/transcriptions \
@@ -183,37 +185,6 @@ Smoke test audio file
 curl -X POST $FASTER_WHISPER_ENDPOINT/v1/audio/transcriptions -H 'accept: application/json' -F 'model=Systran/faster-whisper-tiny.en' -F 'stream=true' -F 'file=@test.mp4'
 ```
 
-#### DEBUGGING ONLY: RHEL with Ubuntu container
-
-These instructions are here solely to test the speaches model server outside of OCP, if needed
-
-> Note: This test does not require GPUs
-
-```sh
-podman run \
-  --rm \
-  --detach \
-  --publish 8000:8000 \
-  --name speaches \
-  --volume hf-hub-cache:/home/ubuntu/.cache/huggingface/hub \
-  ghcr.io/speaches-ai/speaches:latest-cpu
-```
-
-Smoke test
-
-> Note: You can also access the server's web browser using a UI and upload an audio file there
-
-```sh
-ENDPOINT_URL='http://localhost:8000'  # replace with RHEL endpoint
-curl $ENDPOINT_URL/v1/models
-```
-
-Smoke test audio file
-
-```sh
-curl -X POST $ENDPOINT_URL/v1/audio/transcriptions -H 'accept: application/json' -F 'model=Systran/faster-whisper-tiny.en' -F 'stream=true' -F 'file=@test.mp4'
-``` 
-
 ### NVIDIA Riva 
 
 Create an account on ngc.nvidia.com
@@ -282,4 +253,38 @@ riva_streaming_asr_client --print_transcripts    --audio_file=/opt/riva/wav/en-U
 ```
 
 > TODO: Try different models
+
+## Appendix
+
+#### DEBUGGING ONLY: Speaches.ai Model Server on RHEL with Ubuntu container
+
+These instructions are here solely to test the speaches model server outside of OCP, if needed
+
+> Note: This test does not require GPUs
+
+```sh
+podman run \
+  --rm \
+  --detach \
+  --publish 8000:8000 \
+  --name speaches \
+  --volume hf-hub-cache:/home/ubuntu/.cache/huggingface/hub \
+  ghcr.io/speaches-ai/speaches:latest-cpu
+```
+
+Smoke test
+
+> Note: You can also access the server's web browser using a UI and upload an audio file there
+
+```sh
+ENDPOINT_URL='http://localhost:8000'  # replace with RHEL endpoint
+curl $ENDPOINT_URL/v1/models
+```
+
+Smoke test audio file
+
+```sh
+curl -X POST $ENDPOINT_URL/v1/audio/transcriptions -H 'accept: application/json' -F 'model=Systran/faster-whisper-tiny.en' -F 'stream=true' -F 'file=@test.mp4'
+``` 
+
 

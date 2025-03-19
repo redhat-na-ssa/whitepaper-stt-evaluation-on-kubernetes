@@ -29,7 +29,7 @@ oc start-build \
   -n "${NAMESPACE}" \
   "${APP_NAME}" \
   --follow \
-  --from-dir openai-whisper/ubi
+  --from-dir openai-whisper/ubi/platform
 
 # run a container on openshift like docker
 oc run \
