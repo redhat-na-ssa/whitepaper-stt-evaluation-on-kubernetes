@@ -1,0 +1,98 @@
+# Unstructured Notes
+
+## Create RHEL VM in AWS
+
+### Links
+
+- https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html
+- https://docs.nvidia.com/cuda/cuda-installation-guide-linux
+- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html
+- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+
+```sh
+VPC_ID="vpc-xxxxxxxxxxxxxxx"
+
+aws ec2 create-security-group \
+  --group-name "rhel-gpu-test" \
+  --description "RHEL GPU TEST created at $(date)" \
+  --vpc-id "$VPC_ID"
+
+aws ec2 authorize-security-group-ingress \
+  --group-id "sg-preview-1" \
+  --ip-permissions '{"IpProtocol":"tcp","FromPort":22,"ToPort":22,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]}' 
+
+aws ec2 run-instances \
+  --image-id "ami-002acc74c401fa86b" \
+  --instance-type "g6.xlarge" \
+  --key-name "kowdora" \
+  --block-device-mappings '{"DeviceName":"/dev/sda1","Ebs":{"Encrypted":false,"DeleteOnTermination":true,"Iops":3000,"SnapshotId":"snap-0a4b0a8e5fc325041","VolumeSize":100,"VolumeType":"gp3","Throughput":125}}' \
+  --network-interfaces '{"AssociatePublicIpAddress":true,"DeviceIndex":0,"Groups":["sg-preview-1"]}' \
+  --credit-specification '{"CpuCredits":"standard"}' \
+  --tag-specifications '{"ResourceType":"instance","Tags":[{"Key":"Name","Value":"RHEL GPU Test"}]}' \
+  --metadata-options '{"HttpEndpoint":"enabled","HttpPutResponseHopLimit":2,"HttpTokens":"required"}' \
+  --private-dns-name-options '{"HostnameType":"ip-name","EnableResourceNameDnsARecord":true,"EnableResourceNameDnsAAAARecord":false}' \
+  --count "1"
+```
+
+### Setup NVIDIA Software / CUDA / Drivers
+
+```sh
+sudo dnf install -y gcc
+```
+
+```sh
+lspci | grep -i nvidia
+uname -m && cat /etc/*release
+gcc --version
+```
+
+```sh
+# install kernel source
+sudo dnf -y install kernel-devel-matched kernel-headers
+
+# setup os repos
+sudo subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
+sudo subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
+sudo subscription-manager repos --enable=codeready-builder-for-rhel-9-x86_64-rpms
+sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+sudo rpm --erase gpg-pubkey-7fa2af80*
+
+# setup nvidia repos
+sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
+sudo rpm --import https://developer.download.nvidia.com/compute/cuda/repos/fedora39/x86_64/D42D0685.pub
+
+# setup gpu drivers
+sudo dnf -y install nvidia-driver-assistant
+# sudo nvidia-driver-assistant --install
+
+# open kernel modules
+# sudo dnf module install nvidia-driver:open-dkms
+sudo dnf install nvidia-driver-cuda kmod-nvidia-open-dkms
+
+# proprietary kernel modules
+# sudo dnf module install nvidia-driver:latest-dkms
+
+# sudo dnf -y install cuda-toolkit
+# sudo dnf install -y nvidia-gds
+```
+
+### Setup `podman`
+
+```sh
+sudo dnf upgrade -y
+sudo dnf install skopeo podman buildah gcc
+```
+
+```sh
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
+  sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+
+sudo dnf-config-manager --enable nvidia-container-toolkit-experimental
+
+sudo dnf install -y nvidia-container-toolkit
+```
+
+```sh
+sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+nvidia-ctk cdi list
+```
