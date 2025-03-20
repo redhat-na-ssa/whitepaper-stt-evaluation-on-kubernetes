@@ -62,18 +62,18 @@ sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute
 sudo rpm --import https://developer.download.nvidia.com/compute/cuda/repos/fedora39/x86_64/D42D0685.pub
 
 # setup gpu drivers
-sudo dnf -y install nvidia-driver-assistant
+# sudo dnf -y install nvidia-driver-assistant
 # sudo nvidia-driver-assistant --install
 
 # open kernel modules
 # sudo dnf module install nvidia-driver:open-dkms
-sudo dnf install nvidia-driver-cuda kmod-nvidia-open-dkms
+# sudo dnf install nvidia-driver-cuda kmod-nvidia-open-dkms
 
 # proprietary kernel modules
-# sudo dnf module install nvidia-driver:latest-dkms
+sudo dnf module install nvidia-driver:latest-dkms
+# dnf install nvidia-driver-cuda kmod-nvidia-latest-dkms
 
-# sudo dnf -y install cuda-toolkit
-# sudo dnf install -y nvidia-gds
+dkms status
 ```
 
 ### Setup `podman`
@@ -95,4 +95,16 @@ sudo dnf install -y nvidia-container-toolkit
 ```sh
 sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
 nvidia-ctk cdi list
+```
+
+```sh
+#  run with ubuntu
+podman run --rm \
+  --device nvidia.com/gpu=all \
+  --security-opt=label=disable docker.io/library/ubuntu nvidia-smi -L
+
+# run with ubi9
+podman run --rm \
+  --device nvidia.com/gpu=all \
+  --security-opt=label=disable registry.access.redhat.com/ubi9 nvidia-smi -L
 ```
