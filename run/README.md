@@ -239,20 +239,102 @@ Riva exposes a gRPC API instead of HTTP, so it needs a client
 oc create -f ocp/riva/client.yaml
 ```
 
-Exec into pod
+Get a reference to the client pod
 
 ```sh
-export cpod=`oc get pods | cut -d " " -f 1 | grep riva-client`
-oc exec --stdin --tty $cpod /bin/bash
+RIVA_CLIENT=$(oc get pods -l app=rivaasrclient -o jsonpath='{.items[0].metadata.name}')
 ```
 
-From inside the shell
+Run a transcription smoke test
 
 ```sh
-riva_streaming_asr_client --print_transcripts    --audio_file=/opt/riva/wav/en-US_sample.wav    --automatic_punctuation=true    --riva_uri=riva-api:50051
+oc exec $RIVA_CLIENT -- clients/riva_streaming_asr_client --print_transcripts --audio_file=/opt/riva/wav/en-US_sample.wav --automatic_punctuation=true --riva_uri=riva-api:50051
 ```
 
-> TODO: Try different models
+Run a streaming transcription
+
+```sh
+oc exec $RIVA_CLIENT -- python3 examples/transcribe_file.py --input-file /opt/riva/wav/en-US_sample.wav --server riva-api:50051
+```
+
+Run an offline transcription
+
+```sh
+oc exec $RIVA_CLIENT -- python3 examples/transcribe_file_offline.py --input-file /opt/riva/wav/en-US_sample.wav --server riva-api:50051
+```
+
+List available ASR models in your Riva server
+
+```sh
+oc exec $RIVA_CLIENT -- python3 examples/transcribe_file.py --list-models --server riva-api:50051
+```
+
+#### Model - Conformer
+
+Run a streaming transcription with the conformer streaming model
+
+```sh
+oc exec $RIVA_CLIENT -- python3 examples/transcribe_file.py --model-name conformer-en-US-asr-streaming-asr-bls-ensemble\
+  --input-file /opt/riva/wav/en-US_sample.wav --server riva-api:50051
+```
+
+#### Model - Parakeet
+
+Run a streaming transcription with the parakeet streaming model
+
+```sh
+oc exec $RIVA_CLIENT -- python3 examples/transcribe_file.py --model-name parakeet-0.6b-en-US-asr-streaming-throughput-asr-bls-ensemble\
+  --input-file /opt/riva/wav/en-US_sample.wav --server riva-api:50051
+```
+
+**Optional: Transcribe live with an audio mic**
+
+> Note: This requires you to download the repo to your machine that has an audio mic
+
+In one terminal,
+
+```sh
+oc port-forward service/riva-api 8443:riva-speech
+```
+
+In another terminal:
+
+Clone the repo
+
+```sh
+git clone git@github.com:nvidia-riva/python-clients.git
+cd python-clients
+```
+
+Install Python Audio
+
+```sh
+pipenv install pyaudio
+```
+
+Install dependencies
+
+```sh
+pipenv install -r requirements.txt
+```
+
+Install Riva Client
+
+```sh
+pipenv install nvidia-riva-client
+```
+
+Activate shell
+
+```sh
+pipenv shell
+```
+
+Run Audio mic transcription
+
+```sh
+python3 scripts/asr/transcribe_mic.py --server localhost:8443
+```
 
 ## Appendix
 
