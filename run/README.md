@@ -254,13 +254,13 @@ oc exec $RIVA_CLIENT -- clients/riva_streaming_asr_client --print_transcripts --
 Run a  streaming transcription
 
 ```sh
-oc exec $RIVA_CIENT -- python3 examples/transcribe_file.py --input-file /opt/riva/wav/en-US_sample.wav
+oc exec $RIVA_CLIENT -- python3 examples/transcribe_file.py --input-file /opt/riva/wav/en-US_sample.wav --server riva-api:50051
 ```
 
 Run an offline transcription
 
 ```sh
-oc exec $RIVA_CLIENT -- python3 examples/transcribe_file_offline.py --input-file /opt/riva/wav/en-US_sample.wav
+oc exec $RIVA_CLIENT -- python3 examples/transcribe_file_offline.py --input-file /opt/riva/wav/en-US_sample.wav --server riva-api:50051
 ```
 
 > TODO: Different models
@@ -312,7 +312,7 @@ pipenv shell
 Run Audio mic transcription
 
 ```sh
-python3 examples/transcribe_mic.py
+python3 scripts/asr/transcribe_mic.py
 ```
 
 ## Appendix
