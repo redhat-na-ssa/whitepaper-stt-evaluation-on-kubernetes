@@ -273,7 +273,7 @@ oc exec $RIVA_CLIENT -- python3 examples/transcribe_file_offline.py --input-file
 In one terminal,
 
 ```sh
-oc port-forward $RIVA_CLIENT 50051:50051
+oc port-forward service/riva-api 8443:riva-speech
 ```
 
 In another terminal:
@@ -312,7 +312,7 @@ pipenv shell
 Run Audio mic transcription
 
 ```sh
-python3 scripts/asr/transcribe_mic.py
+python3 scripts/asr/transcribe_mic.py --server localhost:8443
 ```
 
 ## Appendix
