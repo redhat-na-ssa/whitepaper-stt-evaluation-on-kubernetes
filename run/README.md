@@ -269,12 +269,16 @@ List available ASR models in your Riva server
 oc exec $RIVA_CLIENT -- python3 examples/transcribe_file.py --list-models --server riva-api:50051
 ```
 
+#### Model - Conformer
+
 Run a streaming transcription with the conformer streaming model
 
 ```sh
 oc exec $RIVA_CLIENT -- python3 examples/transcribe_file.py --model-name conformer-en-US-asr-streaming-asr-bls-ensemble\
   --input-file /opt/riva/wav/en-US_sample.wav --server riva-api:50051
 ```
+
+#### Model - Parakeet
 
 Run a streaming transcription with the parakeet streaming model
 
