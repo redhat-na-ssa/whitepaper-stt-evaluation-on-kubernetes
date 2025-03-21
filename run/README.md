@@ -251,7 +251,7 @@ Run a transcription smoke test
 oc exec $RIVA_CLIENT -- clients/riva_streaming_asr_client --print_transcripts --audio_file=/opt/riva/wav/en-US_sample.wav --automatic_punctuation=true --riva_uri=riva-api:50051
 ```
 
-Run a  streaming transcription
+Run a streaming transcription
 
 ```sh
 oc exec $RIVA_CLIENT -- python3 examples/transcribe_file.py --input-file /opt/riva/wav/en-US_sample.wav --server riva-api:50051
@@ -263,8 +263,25 @@ Run an offline transcription
 oc exec $RIVA_CLIENT -- python3 examples/transcribe_file_offline.py --input-file /opt/riva/wav/en-US_sample.wav --server riva-api:50051
 ```
 
-> TODO: Different models
+List available ASR models in your Riva server
 
+```sh
+oc exec $RIVA_CLIENT -- python3 examples/transcribe_file.py --list-models --server riva-api:50051
+```
+
+Run a streaming transcription with the conformer streaming model
+
+```sh
+oc exec $RIVA_CLIENT -- python3 examples/transcribe_file.py --model-name conformer-en-US-asr-streaming-asr-bls-ensemble\
+  --input-file /opt/riva/wav/en-US_sample.wav --server riva-api:50051
+```
+
+Run a streaming transcription with the parakeet streaming model
+
+```sh
+oc exec $RIVA_CLIENT -- python3 examples/transcribe_file.py --model-name parakeet-0.6b-en-US-asr-streaming-throughput-asr-bls-ensemble\
+  --input-file /opt/riva/wav/en-US_sample.wav --server riva-api:50051
+```
 
 **Optional: Transcribe live with an audio mic**
 
