@@ -12,23 +12,33 @@
 - https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 
 ```sh
-VPC_ID="aws ec2 create-vpc --cidr-block 10.0.0.0/24 --query Vpc.VpcId --output text"
+VPC_ID=$(aws ec2 create-default-vpc --query Vpc.VpcId --output text)
+SG_NAME=rhel-gpu-test
 
+# create security group
 aws ec2 create-security-group \
-  --group-name "rhel-gpu-test" \
+  --group-name "${SG_NAME}" \
   --description "RHEL GPU TEST created at $(date)" \
   --vpc-id "$VPC_ID"
 
-aws ec2 authorize-security-group-ingress \
-  --group-id "sg-preview-1" \
-  --ip-permissions '{"IpProtocol":"tcp","FromPort":22,"ToPort":22,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]}' 
+# get security group
+SG_ID=$(aws ec2 describe-security-groups --filter Name=vpc-id,Values=${VPC_ID} Name=group-name,Values=${SG_NAME} --query 'SecurityGroups[*].[GroupId]' --output text)
 
+# allow ssh on security group
+aws ec2 authorize-security-group-ingress \
+  --group-id "${SG_ID}" \
+  --ip-permissions '{"IpProtocol":"tcp","FromPort":22,"ToPort":22,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]}'
+
+# import ssh key
+aws ec2 import-key-pair --key-name my-key --public-key-material fileb:///tmp/id.pub
+
+# create ec2 install with g6.xlarge
 aws ec2 run-instances \
   --image-id "ami-002acc74c401fa86b" \
   --instance-type "g6.xlarge" \
-  --key-name "kowdora" \
+  --key-name "my-key" \
   --block-device-mappings '{"DeviceName":"/dev/sda1","Ebs":{"Encrypted":false,"DeleteOnTermination":true,"Iops":3000,"SnapshotId":"snap-0a4b0a8e5fc325041","VolumeSize":100,"VolumeType":"gp3","Throughput":125}}' \
-  --network-interfaces '{"AssociatePublicIpAddress":true,"DeviceIndex":0,"Groups":["sg-preview-1"]}' \
+  --network-interfaces '{"AssociatePublicIpAddress":true,"DeviceIndex":0,"Groups":["'${SG_ID}'"]}' \
   --credit-specification '{"CpuCredits":"standard"}' \
   --tag-specifications '{"ResourceType":"instance","Tags":[{"Key":"Name","Value":"RHEL GPU Test"}]}' \
   --metadata-options '{"HttpEndpoint":"enabled","HttpPutResponseHopLimit":2,"HttpTokens":"required"}' \
@@ -56,7 +66,7 @@ sudo dnf -y install kernel-devel-matched kernel-headers
 sudo subscription-manager repos --enable=rhel-9-for-x86_64-appstream-rpms
 sudo subscription-manager repos --enable=rhel-9-for-x86_64-baseos-rpms
 sudo subscription-manager repos --enable=codeready-builder-for-rhel-9-x86_64-rpms
-sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
 sudo rpm --erase gpg-pubkey-7fa2af80*
 
 # setup nvidia repos
@@ -72,10 +82,11 @@ sudo rpm --import https://developer.download.nvidia.com/compute/cuda/repos/fedor
 # sudo dnf install nvidia-driver-cuda kmod-nvidia-open-dkms
 
 # proprietary kernel modules
-sudo dnf module install nvidia-driver:latest-dkms
+sudo dnf module -y install nvidia-driver:latest-dkms
 # dnf install nvidia-driver-cuda kmod-nvidia-latest-dkms
 
 dkms status
+dkms install nvidia/570.124.06
 ```
 
 ### Setup `podman`
