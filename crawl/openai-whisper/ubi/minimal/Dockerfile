@@ -1,15 +1,15 @@
-ARG RHEL_VER=9
-ARG PYTHON_VER=12
-ARG IMAGE=registry.access.redhat.com/ubi${RHEL_VER}/ubi-minimal
-
+ARG OS_VER=9
+ARG IMAGE=registry.access.redhat.com/ubi${OS_VER}/ubi-minimal
 FROM ${IMAGE}
 
-# Switch to root user
+ARG PYTHON_VER=3.11
+
+# Switch to root for OS dependencies
 USER root
 
-# Install dependencies in a single step to reduce layers
-RUN microdnf -y install \
-    gcc gcc-c++ make automake autoconf libtool git diffutils python3.${PYTHON_VER} python3.${PYTHON_VER}-pip && \
+# Install OS dependencies in a single step to reduce layers
+RUN microdnf -y install python${PYTHON_VER} python${PYTHON_VER}-pip \
+      gcc gcc-c++ make automake autoconf libtool git diffutils  && \
     microdnf clean all && \
     rm -rf /var/cache/yum
 
@@ -31,9 +31,9 @@ RUN git clone https://git.ffmpeg.org/ffmpeg.git \
     cd .. && \
       rm -rf ffmpeg
 
-# Install whisper
-RUN pip3.${PYTHON_VER} install --no-cache-dir -U pip==25.* && \
-    pip3.${PYTHON_VER} install --no-cache-dir openai-whisper==20240930 jiwer==3.1.*
+# Install python packages
+RUN pip${PYTHON_VER} install --no-cache-dir --upgrade pip==25.* && \
+    pip${PYTHON_VER} install --no-cache-dir openai-whisper==20240930 jiwer==3.1.*
 
 # Setup: entrypoint and other scripts over 
 COPY --chmod=0755 bin /usr/local/bin
@@ -44,7 +44,7 @@ WORKDIR /data
 # Give group write permissions
 RUN chmod 0775 /data
 
-# Switch back to default user
+# Switch to non-root user
 USER 1001
 
 # Default command to process the audio file using ffmpeg & whisper
@@ -52,9 +52,9 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Labels for container catalog
 LABEL \
-      summary="Python 3.9 image w/ whisper + ffmpeg" \
-      description="Python 3.9 image w/ whisper + ffmpeg" \
-      io.k8s.display-name="python-3.9-whisper" \
+      summary="Python ${PYTHON_VER} image w/ whisper + ffmpeg" \
+      description="Python ${PYTHON_VER} image w/ whisper + ffmpeg" \
+      io.k8s.display-name="python-${PYTHON_VER}-whisper" \
       org.opencontainers.image.description.vendor="openai" \
       org.opencontainers.image.description="A container for speech to text" \
       org.opencontainers.image.source="https://github.com/redhat-na-ssa"
