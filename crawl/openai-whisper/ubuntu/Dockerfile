@@ -21,8 +21,7 @@ RUN ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
 RUN dpkg-reconfigure -f noninteractive tzdata
 
 # Upgrade pip to the latest version
-RUN python3 -m ensurepip && \
-    python3 -m pip install --no-cache-dir --upgrade pip
+RUN python3 -m pip install --no-cache-dir --upgrade pip
 
 # Install python packages
 RUN pip install --no-cache-dir openai-whisper jiwer
