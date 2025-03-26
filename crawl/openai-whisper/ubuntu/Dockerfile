@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Set timezone to avoid tzdata configuration prompt
 RUN apt update && \
     apt install -y python${PYTHON_VER} python${PYTHON_VER}-venv python${PYTHON_VER}-dev \
-      python${PYTHON_VER}-pip ffmpeg wget curl tzdata && \
+      python3-pip ffmpeg wget curl tzdata && \
     rm -rf /var/lib/apt/lists/*
 
 # Reconfigure tzdata silently
