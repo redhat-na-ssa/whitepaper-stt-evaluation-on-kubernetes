@@ -1,20 +1,13 @@
 FROM docker.io/library/ubuntu:22.04
-
-# Set non-interactive mode for apt
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHON_VER=12
+ENV PYTHON_VER=3.10
 
 # Set non-interactive mode for apt
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Set timezone to avoid tzdata configuration prompt
-RUN ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
-    echo "Etc/UTC" > /etc/timezone && \
-    apt update && \
-    apt install -y software-properties-common && \
-    add-apt-repository -y ppa:deadsnakes/ppa && \
-    apt update && \
-    apt install -y python3.${PYTHON_VER} python3.${PYTHON_VER}-venv python3.${PYTHON_VER}-dev python3-pip ffmpeg wget curl tzdata && \
+RUN apt update && \
+    apt install -y python3.${PYTHON_VER} python${PYTHON_VER}-venv python${PYTHON_VER}-dev \
+      python3-pip ffmpeg wget curl tzdata && \
     rm -rf /var/lib/apt/lists/*
 
 # Reconfigure tzdata silently
