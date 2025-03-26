@@ -4,7 +4,15 @@ Deploy STT services using API model servers that pull models from external stora
 
 STT models are **decoupled** from the containerized API servers that host them.
 
-> TODO: Add an image
+||OpenAI Whisper|Faster-Whisper|Nvidia Canary|
+|-|-|-|-|
+|vLLM|Supported*|Not Supported|Not Supported
+|Speaches.ai (Faster Whisper Server)|Supported|Supported|Not Supported
+|Nvidia Riva|Supported**|Not Supported|Supported
+
+*There is a bug today with loading Whisper models in vLLM, see below
+**Nvidia optimized version of Whisper
+
 
 ## How to use this guide
 
