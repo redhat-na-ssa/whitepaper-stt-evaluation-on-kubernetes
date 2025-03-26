@@ -10,9 +10,6 @@ RUN apt update && \
       python3-pip ffmpeg wget curl tzdata && \
     rm -rf /var/lib/apt/lists/*
 
-# Reconfigure tzdata silently
-RUN dpkg-reconfigure -f noninteractive tzdata
-
 # Upgrade pip to the latest version
 RUN python3 -m pip install --no-cache-dir --upgrade pip
 
