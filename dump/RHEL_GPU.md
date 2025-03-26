@@ -12,7 +12,7 @@
 - https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 
 ```sh
-VPC_ID="vpc-xxxxxxxxxxxxxxx"
+VPC_ID="aws ec2 create-vpc --cidr-block 10.0.0.0/24 --query Vpc.VpcId --output text"
 
 aws ec2 create-security-group \
   --group-name "rhel-gpu-test" \
