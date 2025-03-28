@@ -41,12 +41,15 @@ def transcribe_audio(model, input_file, output_dir, model_name, model_dir, outpu
         f.write(result['text'])
     
     print(f"Transcription saved to {output_file}")
+    logger.info(f"transcribe_audio(): Transcription saved to {output_file}")
 
 # Example usage
 if __name__ == "__main__":
     transcribe_audio(
+        model="whisper",
         input_file="input-samples/harvard.wav",
         output_dir="/tmp/",
+        model_name="medium.en",
         model_dir="/tmp/",
         output_format="txt",
         language="en",
