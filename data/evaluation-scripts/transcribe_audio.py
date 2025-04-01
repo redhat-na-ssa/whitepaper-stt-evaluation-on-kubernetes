@@ -1,5 +1,6 @@
 import whisper
 import os
+import sys
 import logging
 
 logger = logging.getLogger()
@@ -19,9 +20,6 @@ def transcribe_audio(model, input_file, output_dir, model_name, model_dir, outpu
     - task (str): Task to perform ('transcribe' or 'translate').
     """
 
-    logger.debug(f'transcribe_audio(): model = {model}')
-    logger.debug(f'transcribe_audio(): model_name = {model_name}')
-
     # Load model from specified model directory
     # model = whisper.load_model("large", download_root=model_dir)
     model = whisper.load_model(model_name, download_root=model_dir)
@@ -40,8 +38,8 @@ def transcribe_audio(model, input_file, output_dir, model_name, model_dir, outpu
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(result['text'])
     
-    print(f"Transcription saved to {output_file}")
-    logger.info(f"transcribe_audio(): Transcription saved to {output_file}")
+    current_function_name = sys._getframe().f_code.co_name
+    logger.debug(f"{current_function_name}: Transcription saved to {output_file}")
 
 # Example usage
 if __name__ == "__main__":
