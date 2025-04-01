@@ -114,7 +114,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     end_time = time.time()
     elapsed_time = end_time - start_time
     
-    logger.info(f'{current_function_name}: Whisper transcription completed in {elapsed_time:.3f} seconds.')
+    logger.info(f'{current_function_name}: Transcription of {input_file} by {model_name} was completed in {elapsed_time:.3f} seconds.')
 
     # Evaluate
     accuracy_start_time = time.time()
