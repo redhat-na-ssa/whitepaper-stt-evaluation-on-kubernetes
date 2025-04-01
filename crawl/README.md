@@ -91,7 +91,7 @@ sort -u /tmp/*.csv >> metrics/whisper_harvard_metrics.csv
 exit
 
 ## 3 - Whisper UBI CPU
-podman run --rm -it --name whisper-ubi-cpu -v $(pwd)/data:/data:z localhost/whisper:ubi /bin/bash
+podman run --rm -it --name whisper-ubi-cpu -v $(pwd)/data:/data:z localhost/whisper:ubi9 /bin/bash
 
 ## For loop through each model twice to capture pre-downloaded performance
 for model in tiny.en base.en small.en medium.en large turbo; do
@@ -109,7 +109,7 @@ sort -u /tmp/*.csv >> metrics/whisper_harvard_metrics.csv
 exit
 
 ## 4 - Whisper UBI GPU
-podman run --rm -it --name whisper-ubi-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubi /bin/bash
+podman run --rm -it --name whisper-ubi-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubi9 /bin/bash
 
 ## For loop through each model twice to capture pre-downloaded performance
 for model in tiny.en base.en small.en medium.en large turbo; do
