@@ -23,6 +23,7 @@ import jiwer
 import sys
 import torch  # PyTorch for detecting FP16/FP32 support
 from datetime import datetime
+import logging
 
 PYTHON_EXECUTABLE = "python3.12"
 
@@ -84,9 +85,19 @@ def evaluate_accuracy(hypothesis_path, reference_path):
 from transcribe_audio import transcribe_audio
 
 def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_file, language, hypothesis_file):
+
+
+    # Evaluate accuracy
+    # 
+    # Why is evaluate_accuracy being called twice? Should it be called after each 
+    # call to transcribe_audio()?
+    #
+    start_time = time.time()
     transcribe_audio(
+        model=model,
         input_file=input_file,
         output_dir=output_dir,
+        model_name=model_name,
         model_dir=model_dir,
         output_format="txt",
         language=language,
@@ -95,19 +106,33 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
 
     print("Whisper transcription completed.")
 
-    # Evaluate accuracy
+    #
+    # Should evaluate_accuracy() be included in the benchmark timing?
+    #
+
     accuracy_metrics = evaluate_accuracy(hypothesis_file, reference_file)
-    start_time = time.time()
-    try:
-        subprocess.run(command, check=True)
-        print("Whisper command executed successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"Error executing Whisper: {e}")
+    
+    #
+    # Should transcribe_audio() replace this try/expect block?
+    #
+
+    # try:
+    #     command = ["set me to some command"]
+    #     subprocess.run(command, check=True)
+    #     print("Whisper command executed successfully.")
+    # except subprocess.CalledProcessError as e:
+    #     print(f"Error executing Whisper: {e}")
+
     end_time = time.time()
     
+    logger.info(f'run_whisper(): Whisper transcription completed in {end_time - start_time:.3f} seconds.')
+
     os.makedirs(output_dir, exist_ok=True)
     
-    accuracy_metrics = evaluate_accuracy(hypothesis_file, reference_file)
+    #
+    # Why is evaluate_accuracy() being called twice?
+    #
+    # accuracy_metrics = evaluate_accuracy(hypothesis_file, reference_file)
     
     float_format = get_float_format()
     
@@ -119,6 +144,10 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     
     executed_command = f"{PYTHON_EXECUTABLE} evaluation-scripts/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language}"
     
+    #
+    # Do we really want to include the time to write the benchmark data? This could
+    # skew the results.
+    #
     with open(csv_temp_path, mode="a", newline="") as file:
         fieldnames = ["date", "timestamp", "model", "model_name", "model_dir", "input_file", "output_dir", "start_time", "end_time", "duration", "wer", "mer", "wil", "wip", "cer", "floating_point_format", "executed_command"]
         writer = csv.DictWriter(file, fieldnames=fieldnames)
@@ -157,7 +186,12 @@ if __name__ == "__main__":
     parser.add_argument("--reference_file", default="ground-truth/harvard.txt", help="Path to the reference text file for accuracy evaluation.")
     parser.add_argument("--hypothesis_file", default="/tmp/harvard.txt", help="Path to the hypothesis text file.")
     parser.add_argument("--language", default="en", help="Language for Whisper transcription.")
+    parser.add_argument("--log_level", default="ERROR", help="Sets python logging to ERROR (default), WARNING, INFO or DEBUG")
+
     
     args = parser.parse_args()
+    logger = logging.getLogger()
+    logging.basicConfig(level=args.log_level)
+    logger.debug(f'run_whisper(): model_name = {args.model_name}, input = {args.input}')
     run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language, args.hypothesis_file)
 
