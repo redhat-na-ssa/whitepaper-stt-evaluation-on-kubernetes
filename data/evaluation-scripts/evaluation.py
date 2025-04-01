@@ -38,6 +38,7 @@ def get_os_version():
                     if line.startswith("PRETTY_NAME="):
                         return line.split("=")[1].strip().strip('"')
         except FileNotFoundError:
+            logger.error("Unknown OS")
             return "Unknown OS"
 
 def get_floating_point_precision():
@@ -64,7 +65,7 @@ def get_gpu_info():
 
 def evaluate_accuracy(hypothesis_path, reference_path):
     if not os.path.exists(hypothesis_path):
-        print(f"Error: Hypothesis file '{hypothesis_path}' not found.")
+        logger.error(f"Error: Hypothesis file '{hypothesis_path}' not found.")
         return {}
     try:
         with open(hypothesis_path, "r") as hyp_file, open(reference_path, "r") as ref_file:
@@ -79,20 +80,26 @@ def evaluate_accuracy(hypothesis_path, reference_path):
         
         return {"wer": wer, "mer": mer, "wil": wil, "wip": wip, "cer": cer}
     except Exception as e:
-        print(f"Error evaluating accuracy: {e}")
+        logger.error(f"Error evaluating accuracy: {e}")
         return {}
 
 from transcribe_audio import transcribe_audio
 
 def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_file, language, hypothesis_file):
 
+    current_function_name = sys._getframe().f_code.co_name
+    logger.debug(f'{current_function_name}: model = {model}')
+    logger.debug(f'{current_function_name}: input_file = {input_file}')
+    logger.debug(f'{current_function_name}: model_name = {model_name}')
+    logger.debug(f'{current_function_name}: model_dir = {model_dir}')
+    logger.debug(f'{current_function_name}: output_dir = {output_dir}')
+    logger.debug(f'{current_function_name}: reference_file = {reference_file}')
+    logger.debug(f'{current_function_name}: language = {language}')
+    logger.debug(f'{current_function_name}: hypothesis_file = {hypothesis_file}')
 
-    # Evaluate accuracy
-    # 
-    # Why is evaluate_accuracy being called twice? Should it be called after each 
-    # call to transcribe_audio()?
-    #
+    # Transcribe
     start_time = time.time()
+    
     transcribe_audio(
         model=model,
         input_file=input_file,
@@ -104,36 +111,18 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
         task="transcribe"
     )
 
-    print("Whisper transcription completed.")
-
-    #
-    # Should evaluate_accuracy() be included in the benchmark timing?
-    #
-
-    accuracy_metrics = evaluate_accuracy(hypothesis_file, reference_file)
-    
-    #
-    # Should transcribe_audio() replace this try/expect block?
-    #
-
-    # try:
-    #     command = ["set me to some command"]
-    #     subprocess.run(command, check=True)
-    #     print("Whisper command executed successfully.")
-    # except subprocess.CalledProcessError as e:
-    #     print(f"Error executing Whisper: {e}")
-
     end_time = time.time()
+    elapsed_time = end_time - start_time
     
-    logger.info(f'run_whisper(): Whisper transcription completed in {end_time - start_time:.3f} seconds.')
+    logger.info(f'{current_function_name}: Whisper transcription completed in {elapsed_time:.3f} seconds.')
+
+    # Evaluate
+    accuracy_start_time = time.time()
+    accuracy_metrics = evaluate_accuracy(hypothesis_file, reference_file)
+    logger.debug(f'{current_function_name}: Time to evaluate accuracy = {time.time() - accuracy_start_time:.5f} seconds.')
 
     os.makedirs(output_dir, exist_ok=True)
-    
-    #
-    # Why is evaluate_accuracy() being called twice?
-    #
-    # accuracy_metrics = evaluate_accuracy(hypothesis_file, reference_file)
-    
+        
     float_format = get_float_format()
     
     timestamp = datetime.now().strftime("%H%M%S")
@@ -145,8 +134,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     executed_command = f"{PYTHON_EXECUTABLE} evaluation-scripts/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language}"
     
     #
-    # Do we really want to include the time to write the benchmark data? This could
-    # skew the results.
+    # Write out the benchmark results. 
     #
     with open(csv_temp_path, mode="a", newline="") as file:
         fieldnames = ["date", "timestamp", "model", "model_name", "model_dir", "input_file", "output_dir", "start_time", "end_time", "duration", "wer", "mer", "wil", "wip", "cer", "floating_point_format", "executed_command"]
@@ -165,7 +153,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
             "output_dir": output_dir,
             "start_time": start_time,
             "end_time": end_time,
-            "duration": end_time - start_time,
+            "duration": elapsed_time,
             "wer": accuracy_metrics.get("wer", "N/A"),
             "mer": accuracy_metrics.get("mer", "N/A"),
             "wil": accuracy_metrics.get("wil", "N/A"),
@@ -192,6 +180,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logger = logging.getLogger()
     logging.basicConfig(level=args.log_level)
-    logger.debug(f'run_whisper(): model_name = {args.model_name}, input = {args.input}')
     run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language, args.hypothesis_file)
 

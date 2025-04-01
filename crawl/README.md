@@ -134,6 +134,11 @@ cp metrics/pod_gpu_usage.csv .
 ps aux | grep host_metrics
 ```
 
+### Addtional examples
+#### JFK speeches
+```bash
+python3 evaluation-scripts/evaluation.py --model_name $model --input input-samples/jfk-audio-inaugural-address-20-january-1961.mp3  --reference_file ground-truth/jfk-audio-inaugural-address-20-january-1961.txt --hypothesis_file /tmp/jfk-audio-inaugural-address-20-january-1961.txt --log_level DEBUG
+```
 ## Whisper Optimizations
 
 ### Best Initial Test Command
