@@ -3,6 +3,7 @@
 INSTANCE_NAME="RHEL GPU Instance"
 INSTANCE_TYPE=${INSTANCE_TYPE:-g6.xlarge}
 SG_NAME=ssh-ingress
+AWS_KEY_NAME=my-key
 
 echo "This script is untested - hit <CTRL> + C to abort"
 sleep 6
@@ -50,11 +51,16 @@ aws_create_sg_ssh(){
     --ip-permissions '{"IpProtocol":"tcp","FromPort":22,"ToPort":22,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]}'
 }
 
-aws_create_ssh_key(){
+aws_get_ssh_key(){
   AWS_KEY_NAME=${1:-my-key}
 
   aws ec2 describe-key-pairs \
-    --key-names "${AWS_KEY_NAME}" && return 0
+  --key-names "${AWS_KEY_NAME}" \
+  --output text
+}
+
+aws_create_ssh_key(){
+  AWS_KEY_NAME=${1:-my-key}
 
   # setup pub key
   SSH_KEY_PATH=${SSH_KEY_PATH:-${HOME}/.ssh/id_ed25519}
@@ -90,7 +96,9 @@ aws_get_ec2_rhel_hostname(){
     --filter "Name=instance-state-name,Values=running" \
     --query 'Reservations[].Instances[].PublicDnsName' \
     --output text)
+}
 
+aws_get_ec2_rhel_ssh_info(){
   echo "${EC2_HOSTNAME}"
 
   # ssh into instance
@@ -101,5 +109,6 @@ aws_get_ec2_rhel_hostname(){
 
 aws_get_default_vpc || aws_create_default_vpc
 aws_get_sg_ssh      || aws_create_sg_ssh
-aws_create_ssh_key
+aws_get_ssh_key     || aws_create_ssh_key
 aws_get_ec2_rhel_hostname || aws_create_ec2_rhel
+aws_get_ec2_rhel_ssh_info
