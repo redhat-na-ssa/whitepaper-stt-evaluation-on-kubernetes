@@ -12,9 +12,21 @@
 - https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 
 ```sh
-VPC_ID=$(aws ec2 create-default-vpc --query Vpc.VpcId --output text)
 SG_NAME=rhel-gpu-test
 
+# create and get default vpc id
+VPC_ID=$(aws ec2 create-default-vpc \
+  --query Vpc.VpcId \
+  --output text)
+
+# query default vpc id
+VPC_ID=$(aws ec2 describe-vpcs \
+  --filters Name=isDefault,Values=true \
+  --query 'Vpcs[*].VpcId' \
+  --output text)
+```
+
+```sh
 # create security group
 aws ec2 create-security-group \
   --group-name "${SG_NAME}" \
@@ -22,12 +34,21 @@ aws ec2 create-security-group \
   --vpc-id "$VPC_ID"
 
 # get security group
-SG_ID=$(aws ec2 describe-security-groups --filter Name=vpc-id,Values=${VPC_ID} Name=group-name,Values=${SG_NAME} --query 'SecurityGroups[*].[GroupId]' --output text)
+SG_ID=$(aws ec2 describe-security-groups \
+  --filter Name=vpc-id,Values=${VPC_ID} \
+  Name=group-name,Values=${SG_NAME} \
+  --query 'SecurityGroups[*].[GroupId]' \
+  --output text)
 
 # allow ssh on security group
 aws ec2 authorize-security-group-ingress \
   --group-id "${SG_ID}" \
   --ip-permissions '{"IpProtocol":"tcp","FromPort":22,"ToPort":22,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]}'
+```
+
+```sh
+# setup pub key
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIXLGAxOZLWpV1WWRu4GnFWEHVmLiSeXsMoChi4rXvDl cory@kowdora" > /tmp/id.pub
 
 # import ssh key
 aws ec2 import-key-pair --key-name my-key --public-key-material fileb:///tmp/id.pub
