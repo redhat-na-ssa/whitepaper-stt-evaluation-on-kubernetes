@@ -93,6 +93,8 @@ aws_create_ec2_rhel(){
 }
 
 aws_get_ec2_rhel_hostname(){
+  [ -z "$INSTANCE_NAME}" ] && return 0
+  
   # get instance dns name
   EC2_HOSTNAME=$(aws ec2 describe-instances \
     --filter "Name=tag:Name,Values=${INSTANCE_NAME}" \
@@ -116,5 +118,5 @@ aws_get_ec2_rhel_ssh_info(){
 aws_get_default_vpc       || aws_create_default_vpc
 aws_get_sg_ssh            || aws_create_sg_ssh
 aws_get_ssh_key           || aws_create_ssh_key
-aws_get_ec2_rhel_hostname || aws_create_ec2_rhel
+aws_get_ec2_rhel_hostname # || aws_create_ec2_rhel
 aws_get_ec2_rhel_ssh_info
