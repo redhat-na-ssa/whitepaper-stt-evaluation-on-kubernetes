@@ -26,8 +26,8 @@ aws ec2 create-security-group \
 
 # get security group
 SG_ID=$(aws ec2 describe-security-groups \
-  --filter Name=vpc-id,Values=${VPC_ID} \
-  Name=group-name,Values=${SG_NAME} \
+  --filter Name=vpc-id,Values="${VPC_ID}" \
+  Name=group-name,Values="${SG_NAME}" \
   --query 'SecurityGroups[*].[GroupId]' \
   --output text)
 
@@ -48,7 +48,7 @@ aws ec2 run-instances \
   --instance-type "${INSTANCE_TYPE}" \
   --key-name "my-key" \
   --block-device-mappings '{"DeviceName":"/dev/sda1","Ebs":{"Encrypted":false,"DeleteOnTermination":true,"Iops":3000,"SnapshotId":"snap-0a4b0a8e5fc325041","VolumeSize":100,"VolumeType":"gp3","Throughput":125}}' \
-  --network-interfaces '{"AssociatePublicIpAddress":true,"DeviceIndex":0,"Groups":["'${SG_ID}'"]}' \
+  --network-interfaces '{"AssociatePublicIpAddress":true,"DeviceIndex":0,"Groups":["'"${SG_ID}"'"]}' \
   --tag-specifications '{"ResourceType":"instance","Tags":[{"Key":"Name","Value":"'"${INSTANCE_NAME}"'"}]}' \
   --metadata-options '{"HttpEndpoint":"enabled","HttpPutResponseHopLimit":2,"HttpTokens":"required"}' \
   --private-dns-name-options '{"HostnameType":"ip-name","EnableResourceNameDnsARecord":true,"EnableResourceNameDnsAAAARecord":false}' \
