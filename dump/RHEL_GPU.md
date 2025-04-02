@@ -11,6 +11,8 @@
 
 Create [AWS Blank Open Environment (RHDS)](https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/sandboxes-gpte.sandbox-open.prod&utm_source=webapp&utm_medium=share-link)
 
+### AWS CloudShell / aws cli
+
 ```sh
 SG_NAME=ssh-ingress
 INSTANCE_NAME="RHEL GPU Instance"
