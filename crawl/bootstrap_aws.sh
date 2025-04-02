@@ -88,7 +88,7 @@ aws_create_ec2_rhel(){
     --query 'Reservations[].Instances[].InstanceId' \
     --output text)
   
-  aws start-instances \
+  aws ec2 start-instances \
     --instance-ids "${STOPPED_INSTANCE}" && return 0
 
   # create ec2 instance
