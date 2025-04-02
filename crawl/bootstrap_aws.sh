@@ -97,6 +97,7 @@ aws_get_ec2_rhel_hostname(){
   EC2_HOSTNAME=$(aws ec2 describe-instances \
     --filter "Name=tag:Name,Values=${INSTANCE_NAME}" \
     --filter "Name=instance-state-name,Values=running,stopped" \
+    --filter "Name=instance-state-name,Values=stopped" \
     --query 'Reservations[].Instances[].PublicDnsName' \
     --output text)
   
