@@ -93,6 +93,8 @@ aws_create_ec2_rhel(){
   aws ec2 start-instances \
     --instance-ids "${STOPPED_INSTANCE}" && return 0
 
+exit
+
   # create ec2 instance
   aws ec2 run-instances \
     --image-id "ami-002acc74c401fa86b" \
