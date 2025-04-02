@@ -106,7 +106,7 @@ aws_get_ec2_rhel_hostname(){
     --query 'Reservations[].Instances[].PublicDnsName' \
     --output text)
   
-  [ -n "${EC2_HOSTNAME}" ] && return 1
+  [ -n "${EC2_HOSTNAME}" ] || return 1
 }
 
 aws_get_ec2_rhel_ssh_info(){
