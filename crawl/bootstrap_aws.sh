@@ -5,6 +5,8 @@ INSTANCE_TYPE=${INSTANCE_TYPE:-g6.xlarge}
 SG_NAME=ssh-ingress
 AWS_KEY_NAME=my-key
 
+AWS_PAGER=""
+
 echo "This script is untested - hit <CTRL> + C to abort"
 sleep 6
 
@@ -55,8 +57,9 @@ aws_get_ssh_key(){
   AWS_KEY_NAME=${1:-my-key}
 
   aws ec2 describe-key-pairs \
-  --key-names "${AWS_KEY_NAME}" \
-  --output text
+    --key-names "${AWS_KEY_NAME}" \
+    --query 'KeyPairs[*].[KeyName]' \
+    --output text > /dev/null
 }
 
 aws_create_ssh_key(){
@@ -86,7 +89,8 @@ aws_create_ec2_rhel(){
     --tag-specifications '{"ResourceType":"instance","Tags":[{"Key":"Name","Value":"'"${INSTANCE_NAME}"'"}]}' \
     --metadata-options '{"HttpEndpoint":"enabled","HttpPutResponseHopLimit":2,"HttpTokens":"required"}' \
     --private-dns-name-options '{"HostnameType":"ip-name","EnableResourceNameDnsARecord":true,"EnableResourceNameDnsAAAARecord":false}' \
-    --count "1"
+    --count "1" \
+    --output 
 
     sleep 6
     aws_get_ec2_rhel_hostname
@@ -94,16 +98,15 @@ aws_create_ec2_rhel(){
 
 aws_get_ec2_rhel_hostname(){
   [ -z "$INSTANCE_NAME}" ] && return 0
-  
+
   # get instance dns name
   EC2_HOSTNAME=$(aws ec2 describe-instances \
     --filter "Name=tag:Name,Values=${INSTANCE_NAME}" \
     --filter "Name=instance-state-name,Values=running" \
-    --filter "Name=instance-state-name,Values=stopped" \
     --query 'Reservations[].Instances[].PublicDnsName' \
     --output text)
   
-  [ -z "${EC2_HOSTNAME}" ] && return 1
+  [ -n "${EC2_HOSTNAME}" ] && return 1
 }
 
 aws_get_ec2_rhel_ssh_info(){
@@ -115,8 +118,8 @@ aws_get_ec2_rhel_ssh_info(){
   "
 }
 
-aws_get_default_vpc       || aws_create_default_vpc
-aws_get_sg_ssh            || aws_create_sg_ssh
-aws_get_ssh_key           || aws_create_ssh_key
-aws_get_ec2_rhel_hostname # || aws_create_ec2_rhel
+aws_get_default_vpc         || aws_create_default_vpc
+aws_get_sg_ssh              || aws_create_sg_ssh
+aws_get_ssh_key             || aws_create_ssh_key
+aws_get_ec2_rhel_hostname   || aws_create_ec2_rhel
 aws_get_ec2_rhel_ssh_info
