@@ -93,9 +93,11 @@ aws_get_ec2_rhel_hostname(){
   # get instance dns name
   EC2_HOSTNAME=$(aws ec2 describe-instances \
     --filter "Name=tag:Name,Values=${INSTANCE_NAME}" \
-    --filter "Name=instance-state-name,Values=running" \
+    --filter "Name=instance-state-name,Values=running,stopped" \
     --query 'Reservations[].Instances[].PublicDnsName' \
     --output text)
+  
+  [ -z "${EC2_HOSTNAME}" ] && return 1
 }
 
 aws_get_ec2_rhel_ssh_info(){
@@ -107,8 +109,8 @@ aws_get_ec2_rhel_ssh_info(){
   "
 }
 
-aws_get_default_vpc || aws_create_default_vpc
-aws_get_sg_ssh      || aws_create_sg_ssh
-aws_get_ssh_key     || aws_create_ssh_key
+aws_get_default_vpc       || aws_create_default_vpc
+aws_get_sg_ssh            || aws_create_sg_ssh
+aws_get_ssh_key           || aws_create_ssh_key
 aws_get_ec2_rhel_hostname || aws_create_ec2_rhel
 aws_get_ec2_rhel_ssh_info
