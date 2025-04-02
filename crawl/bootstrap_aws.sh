@@ -89,12 +89,13 @@ aws_create_ec2_rhel(){
     --output text)
   
   # try to start a stopped instance
-  [ -z "${STOPPED_INSTANCE}" ] ||  \
-  aws ec2 start-instances \
-    --instance-ids "${STOPPED_INSTANCE}" \
-    --output table && return 0
-
-exit
+  if [ -z "${STOPPED_INSTANCE}" ]; then
+    aws ec2 start-instances \
+      --instance-ids "${STOPPED_INSTANCE}" \
+      --output table && sleep 6
+    
+    return 0
+  fi
 
   # create ec2 instance
   aws ec2 run-instances \
