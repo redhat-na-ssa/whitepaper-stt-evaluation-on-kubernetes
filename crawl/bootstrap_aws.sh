@@ -89,7 +89,7 @@ aws_create_ec2_rhel(){
     --output text)
   
   # try to start a stopped instance
-  [ -z "${STOPPED_INSTANCE}" ] &&  \
+  [ -z "${STOPPED_INSTANCE}" ] ||  \
   aws ec2 start-instances \
     --instance-ids "${STOPPED_INSTANCE}" && return 0
 
