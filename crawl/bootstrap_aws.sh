@@ -53,6 +53,9 @@ aws_create_sg_ssh(){
 aws_create_ssh_key(){
   AWS_KEY_NAME=${1:-my-key}
 
+  aws describe-key-pairs \
+    --key-names "${AWS_KEY_NAME}"
+
   # setup pub key
   SSH_KEY_PATH=${SSH_KEY_PATH:-${HOME}/.ssh/id_ed25519}
   [ -e "${SSH_KEY_PATH}" ] || ssh-keygen -t ed25519 -q -f "${SSH_KEY_PATH}" -N ""
