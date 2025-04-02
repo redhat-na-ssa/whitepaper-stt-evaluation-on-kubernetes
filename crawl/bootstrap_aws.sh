@@ -53,7 +53,7 @@ aws_create_sg_ssh(){
 aws_create_ssh_key(){
   AWS_KEY_NAME=${1:-my-key}
 
-  aws describe-key-pairs \
+  aws ec2 describe-key-pairs \
     --key-names "${AWS_KEY_NAME}" && return 0
 
   # setup pub key
