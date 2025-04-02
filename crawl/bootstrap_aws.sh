@@ -56,9 +56,8 @@ aws ec2 run-instances \
 
 # get instance dns name
 EC2_HOSTNAME=$(aws ec2 describe-instances \
-  --max-items 1 \
-  --filters "Name=tag:Name,Values=${INSTANCE_NAME}" \
-  --instance-id "${EC2_ID}" \
+  --filter "Name=tag:Name,Values=${INSTANCE_NAME}" \
+  --filter "Name=instance-state-name,Values=running" \
   --query 'Reservations[].Instances[].PublicDnsName' \
   --output text)
 
