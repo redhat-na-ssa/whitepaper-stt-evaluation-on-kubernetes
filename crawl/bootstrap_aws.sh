@@ -81,6 +81,16 @@ aws_create_ec2_rhel(){
   [ -z "${SG_ID}" ] && aws_get_sg_ssh
   AWS_KEY_NAME="${AWS_KEY_NAME:-my-key}"
 
+  # check for stopped instance
+  STOPPED_INSTANCE=$(aws ec2 describe-instances \
+    --filter "Name=tag:Name,Values=${INSTANCE_NAME}" \
+    --filter "Name=instance-state-name,Values=stopped" \
+    --query 'Reservations[].Instances[].InstanceId' \
+    --output text)
+  
+  aws start-instances \
+    --instance-ids "${STOPPED_INSTANCE}" && return 0
+
   # create ec2 instance
   aws ec2 run-instances \
     --image-id "ami-002acc74c401fa86b" \
