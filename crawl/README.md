@@ -67,8 +67,9 @@ done
 
 ## Review the data captured run `sort -u /tmp/*.csv`
 
-## Copy the .csv data to local output dir
+## Copy the .csv data to local output dir for downstream visualization
 sort -u /tmp/*.csv >> metrics/whisper_harvard_metrics.csv
+sh /data/evaluation-scripts/collapse-csvs.sh
 
 ## exit pod
 exit
