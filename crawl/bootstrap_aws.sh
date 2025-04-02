@@ -94,6 +94,8 @@ aws_create_ec2_rhel(){
       --instance-ids "${STOPPED_INSTANCE}" \
       --output table && sleep 6
     
+    sleep 6
+    aws_get_ec2_rhel_hostname
     return 0
   fi
 
