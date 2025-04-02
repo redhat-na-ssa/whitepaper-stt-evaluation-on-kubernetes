@@ -90,7 +90,7 @@ aws_create_ec2_rhel(){
     --metadata-options '{"HttpEndpoint":"enabled","HttpPutResponseHopLimit":2,"HttpTokens":"required"}' \
     --private-dns-name-options '{"HostnameType":"ip-name","EnableResourceNameDnsARecord":true,"EnableResourceNameDnsAAAARecord":false}' \
     --count "1" \
-    --output 
+    --output table
 
     sleep 6
     aws_get_ec2_rhel_hostname
