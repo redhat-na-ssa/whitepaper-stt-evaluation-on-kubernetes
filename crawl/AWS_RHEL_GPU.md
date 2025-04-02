@@ -83,8 +83,8 @@ sudo rpm --import https://developer.download.nvidia.com/compute/cuda/repos/fedor
 sudo dnf module -y install nvidia-driver:latest-dkms
 # dnf install nvidia-driver-cuda kmod-nvidia-latest-dkms
 
-dkms status
-dkms install nvidia/570.124.06
+sudo dkms status
+sudo dkms install nvidia/570.124.06
 ```
 
 ### Setup `podman`
@@ -92,18 +92,14 @@ dkms install nvidia/570.124.06
 ```sh
 sudo dnf upgrade -y
 sudo dnf install skopeo podman buildah gcc
-```
 
-```sh
 curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
   sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
 
 sudo dnf-config-manager --enable nvidia-container-toolkit-experimental
 
 sudo dnf install -y nvidia-container-toolkit
-```
 
-```sh
 sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
 nvidia-ctk cdi list
 ```
