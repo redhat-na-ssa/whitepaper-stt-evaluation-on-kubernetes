@@ -110,7 +110,7 @@ aws_get_ec2_rhel_hostname(){
 }
 
 aws_get_ec2_rhel_ssh_info(){
-  echo "${EC2_HOSTNAME}"
+  [ -z "${EC2_HOSTNAME}" ] && return 0
 
   # ssh into instance
   echo "Connect via...
