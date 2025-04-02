@@ -34,7 +34,7 @@ VPC_ID=$(aws ec2 describe-vpcs \
 # create security group
 aws ec2 create-security-group \
   --group-name "${SG_NAME}" \
-  --description "RHEL GPU TEST created at $(date)" \
+  --description "${INSTANCE_NAME} created at $(date)" \
   --vpc-id "$VPC_ID"
 
 # get security group
