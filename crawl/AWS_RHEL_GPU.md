@@ -18,7 +18,16 @@ export AWS_ACCESS_KEY_ID=
 export AWS_SECRET_ACCESS_KEY=
 ```
 
-NOTE: AWS CloudShell 
+run `aws` configure
+
+```output
+AWS Access Key ID [****************PFV5]: 
+AWS Secret Access Key [****************gD9Q]: 
+Default region name [us-east-2]: 
+Default output format [None]:
+```
+
+NOTE: AWS CloudShell is already pre-configured
 
 ### Setup EC2 RHEL GPU Instance
 
