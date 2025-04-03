@@ -11,6 +11,8 @@
 
 Create [AWS Blank Open Environment (RHDS)](https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/sandboxes-gpte.sandbox-open.prod&utm_source=webapp&utm_medium=share-link)
 
+`git clone` this repo into AWS CloudShell. CloudShell is pre-configured.
+
 ### Optional: Setup `aws` cli
 
 ```sh
@@ -27,24 +29,24 @@ Default region name [us-east-2]:
 Default output format [None]:
 ```
 
-NOTE: AWS CloudShell is already pre-configured
-
 ### Setup EC2 RHEL GPU Instance
 
-Optional: setup SSH key of choice
+#### Optional: setup SSH key of choice
 
-NOTE: `bootstrap_aws.sh` below will create ed25519 key
+NOTE: `bootstrap_aws.sh` below will create ed25519 key if it does not exist already
 
 ```sh
 # setup pub key
 echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIXLGAxOZLWpV1WWRu4GnFWEHVmLiSeXsMoChi4rXvDl cory@kowdora" > /tmp/id.pub
 
 # import ssh key
-aws ec2 import-key-pair --key-name "${AWS_KEY_NAME}" --public-key-material fileb:///tmp/id.pub
+aws ec2 import-key-pair --key-name "${AWS_KEY_NAME:-my-key}" --public-key-material fileb:///tmp/id.pub
 ```
 
 ```sh
 # create ec2 install with g6.xlarge
+export INSTANCE_TYPE=g6.xlarge
+
 ./bootstrap_aws.sh
 ```
 
