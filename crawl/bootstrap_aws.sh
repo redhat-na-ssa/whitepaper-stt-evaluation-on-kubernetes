@@ -10,8 +10,8 @@ export AWS_PAGER=""
 
 which aws > /dev/null || return 0
 
-echo "Hit <CTRL> + C to abort"
-sleep 6
+# echo "Hit <CTRL> + C to abort"
+# sleep 6
 
 aws_get_default_vpc(){
   # query default vpc id
@@ -20,6 +20,8 @@ aws_get_default_vpc(){
   --filters Name=isDefault,Values=true \
   --query 'Vpcs[*].VpcId' \
   --output text)
+
+  [ -n "${VPC_ID}" ] || return 1
 }
 
 aws_create_default_vpc(){
@@ -28,8 +30,6 @@ aws_create_default_vpc(){
   VPC_ID=$(aws ec2 create-default-vpc \
   --query Vpc.VpcId \
   --output text)
-
-  echo "${VPC_ID}"
 }
 
 aws_get_sg_ssh(){
@@ -40,14 +40,21 @@ aws_get_sg_ssh(){
     Name=group-name,Values="${SG_NAME}" \
     --query 'SecurityGroups[*].[GroupId]' \
     --output text)
+  
+  [ -n "${SG_ID}" ] || return 1
 }
 
 aws_create_sg_ssh(){
+  [ -z "${SG_NAME}" ] && return 0
+  [ -z "${INSTANCE_NAME}" ] && return 0
+  [ -z "${VPC_ID}" ] && return 0
+  [ -z "${SG_ID}" ] && aws_get_sg_ssh
+
   # create security group
   aws ec2 create-security-group \
     --group-name "${SG_NAME}" \
     --description "${INSTANCE_NAME} created at $(date)" \
-    --vpc-id "$VPC_ID"
+    --vpc-id "${VPC_ID}"
 
   # allow ssh on security group
   aws ec2 authorize-security-group-ingress \

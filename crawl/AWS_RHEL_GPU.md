@@ -1,15 +1,10 @@
-# Unstructured Notes
-
-## Links
-
-- https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html
-- https://docs.nvidia.com/cuda/cuda-installation-guide-linux
-- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html
-- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+# Setup RHEL with Nvidia GPU
 
 ## Create RHEL VM in AWS
 
 Create [AWS Blank Open Environment (RHDS)](https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/sandboxes-gpte.sandbox-open.prod&utm_source=webapp&utm_medium=share-link)
+
+`git clone` this repo into AWS CloudShell. CloudShell is pre-configured.
 
 ### Optional: Setup `aws` cli
 
@@ -18,24 +13,33 @@ export AWS_ACCESS_KEY_ID=
 export AWS_SECRET_ACCESS_KEY=
 ```
 
-NOTE: AWS CloudShell 
+run `aws` configure
+
+```output
+AWS Access Key ID [****************PFV5]: 
+AWS Secret Access Key [****************gD9Q]: 
+Default region name [us-east-2]: 
+Default output format [None]:
+```
 
 ### Setup EC2 RHEL GPU Instance
 
-Optional: setup SSH key of choice
+#### Optional: setup SSH key of choice
 
-NOTE: `bootstrap_aws.sh` below will create ed25519 key
+NOTE: `bootstrap_aws.sh` below will create ed25519 key if it does not exist already
 
 ```sh
 # setup pub key
 echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIXLGAxOZLWpV1WWRu4GnFWEHVmLiSeXsMoChi4rXvDl cory@kowdora" > /tmp/id.pub
 
 # import ssh key
-aws ec2 import-key-pair --key-name "${AWS_KEY_NAME}" --public-key-material fileb:///tmp/id.pub
+aws ec2 import-key-pair --key-name "${AWS_KEY_NAME:-my-key}" --public-key-material fileb:///tmp/id.pub
 ```
 
 ```sh
 # create ec2 install with g6.xlarge
+export INSTANCE_TYPE=g6.xlarge
+
 ./bootstrap_aws.sh
 ```
 
@@ -109,3 +113,10 @@ podman run --rm \
   --device nvidia.com/gpu=all \
   --security-opt=label=disable registry.access.redhat.com/ubi9 nvidia-smi -L
 ```
+
+## Links
+
+- https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html
+- https://docs.nvidia.com/cuda/cuda-installation-guide-linux
+- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html
+- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
