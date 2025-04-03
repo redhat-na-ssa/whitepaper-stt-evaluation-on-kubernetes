@@ -48,7 +48,6 @@ aws_create_sg_ssh(){
   [ -z "${SG_NAME}" ] && return 0
   [ -z "${INSTANCE_NAME}" ] && return 0
   [ -z "${VPC_ID}" ] && return 0
-  [ -z "${SG_ID}" ] && return 0
 
   # create security group
   aws ec2 create-security-group \
