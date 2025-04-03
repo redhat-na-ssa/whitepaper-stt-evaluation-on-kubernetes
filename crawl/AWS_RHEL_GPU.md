@@ -11,20 +11,20 @@
 
 Create [AWS Blank Open Environment (RHDS)](https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/sandboxes-gpte.sandbox-open.prod&utm_source=webapp&utm_medium=share-link)
 
-### AWS CloudShell / aws cli
-
-Setup `aws` cli
+### Optional: Setup `aws` cli
 
 ```sh
 export AWS_ACCESS_KEY_ID=
 export AWS_SECRET_ACCESS_KEY=
 ```
 
+NOTE: AWS CloudShell 
+
 ### Setup EC2 RHEL GPU Instance
 
 Optional: setup SSH key of choice
 
-*NOTE: `bootstrap_aws.sh` below will create ed25519 key*
+NOTE: `bootstrap_aws.sh` below will create ed25519 key
 
 ```sh
 # setup pub key
@@ -42,19 +42,13 @@ aws ec2 import-key-pair --key-name "${AWS_KEY_NAME}" --public-key-material fileb
 ### Setup NVIDIA Software / CUDA / Drivers
 
 ```sh
-sudo dnf install -y gcc
-```
-
-```sh
-lspci | grep -i nvidia
-uname -m && cat /etc/*release
-gcc --version
-```
-
-```sh
 # update all the things
 sudo dnf -y upgrade
 
+reboot
+```
+
+```sh
 # install kernel source
 sudo dnf -y install kernel-devel-matched kernel-headers
 
