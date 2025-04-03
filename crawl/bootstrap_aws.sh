@@ -1,6 +1,5 @@
 #!/bin/bash
 # shellcheck disable=SC2034,SC2120
-set -x
 
 INSTANCE_NAME="${INSTANCE_NAME:-RHEL GPU Instance}"
 INSTANCE_TYPE=${INSTANCE_TYPE:-g6.xlarge}
