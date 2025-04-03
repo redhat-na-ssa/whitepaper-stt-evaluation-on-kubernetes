@@ -20,13 +20,7 @@ export AWS_ACCESS_KEY_ID=
 export AWS_SECRET_ACCESS_KEY=
 ```
 
-Setup EC2 RHEL GPU Instance
-
-```sh
-export INSTANCE_TYPE=g6.xlarge
-export INSTANCE_NAME="RHEL GPU Instance"
-export AWS_SSH_KEY_NAME=my-key
-```
+### Setup EC2 RHEL GPU Instance
 
 Optional: setup SSH key of choice
 
@@ -58,6 +52,9 @@ gcc --version
 ```
 
 ```sh
+# update all the things
+sudo dnf -y upgrade
+
 # install kernel source
 sudo dnf -y install kernel-devel-matched kernel-headers
 
