@@ -2,7 +2,9 @@
 
 ## Create RHEL VM in AWS
 
-Create [AWS Blank Open Environment (RHDS)](https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/sandboxes-gpte.sandbox-open.prod&utm_source=webapp&utm_medium=share-link)
+[Red Hat Demo Platform](https://demo.redhat.com) options:
+
+- <a href="https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/sandboxes-gpte.sandbox-open.prod&utm_source=webapp&utm_medium=share-linktarget=" target="_blank">AWS Blank Open Environment</a>
 
 `git clone` this repo into AWS CloudShell. CloudShell is pre-configured.
 
