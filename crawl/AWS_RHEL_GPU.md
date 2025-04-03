@@ -27,7 +27,6 @@ Default output format [None]:
 
 `git clone` this repo into AWS CloudShell. CloudShell is pre-configured.
 
-
 ### Setup EC2 RHEL GPU Instance
 
 #### Optional: setup SSH key of choice
@@ -88,7 +87,7 @@ sudo dnf module -y install nvidia-driver:latest-dkms
 sudo dkms status
 sudo dkms install nvidia/570.124.06
 
-reboot
+sudo reboot
 ```
 
 ### Setup `podman`
