@@ -1,13 +1,16 @@
 #!/bin/bash
+# shellcheck disable=SC2034,SC2120
 
-INSTANCE_NAME="RHEL GPU Instance"
+INSTANCE_NAME="${INSTANCE_NAME:-RHEL GPU Instance}"
 INSTANCE_TYPE=${INSTANCE_TYPE:-g6.xlarge}
+AWS_KEY_NAME=${AWS_KEY_NAME:-my-key}
 SG_NAME=ssh-ingress
-AWS_KEY_NAME=my-key
 
 AWS_PAGER=""
 
-echo "This script is untested - hit <CTRL> + C to abort"
+which aws > /dev/null || return 0
+
+echo "Hit <CTRL> + C to abort"
 sleep 6
 
 aws_get_default_vpc(){
@@ -40,7 +43,6 @@ aws_get_sg_ssh(){
 }
 
 aws_create_sg_ssh(){
-
   # create security group
   aws ec2 create-security-group \
     --group-name "${SG_NAME}" \
@@ -70,14 +72,32 @@ aws_create_ssh_key(){
   [ -e "${SSH_KEY_PATH}" ] || ssh-keygen -t ed25519 -q -f "${SSH_KEY_PATH}" -N ""
 
   # import ssh key
-  aws ec2 import-key-pair --key-name "${AWS_KEY_NAME}" --public-key-material fileb://${SSH_KEY_PATH}.pub
+  aws ec2 import-key-pair --key-name "${AWS_KEY_NAME}" --public-key-material fileb://"${SSH_KEY_PATH}".pub
 }
 
 aws_create_ec2_rhel(){
-  [ -z "$INSTANCE_NAME}" ] && return 0
-  [ -z "$INSTANCE_TYPE}" ] && return 0
+  [ -z "${INSTANCE_NAME}" ] && return 0
+  [ -z "${INSTANCE_TYPE}" ] && return 0
   [ -z "${SG_ID}" ] && aws_get_sg_ssh
   AWS_KEY_NAME="${AWS_KEY_NAME:-my-key}"
+
+  # check for stopped instance
+  STOPPED_INSTANCE=$(aws ec2 describe-instances \
+    --filter "Name=tag:Name,Values=${INSTANCE_NAME}" \
+    --filter "Name=instance-state-name,Values=stopped" \
+    --query 'Reservations[].Instances[].InstanceId' \
+    --output text)
+  
+  # try to start a stopped instance
+  if [ -n "${STOPPED_INSTANCE}" ]; then
+    aws ec2 start-instances \
+      --instance-ids "${STOPPED_INSTANCE}" \
+      --output table && sleep 6
+    
+    sleep 6
+    aws_get_ec2_rhel_hostname
+    return 0
+  fi
 
   # create ec2 instance
   aws ec2 run-instances \
@@ -97,7 +117,7 @@ aws_create_ec2_rhel(){
 }
 
 aws_get_ec2_rhel_hostname(){
-  [ -z "$INSTANCE_NAME}" ] && return 0
+  [ -z "${INSTANCE_NAME}" ] && return 0
 
   # get instance dns name
   EC2_HOSTNAME=$(aws ec2 describe-instances \
