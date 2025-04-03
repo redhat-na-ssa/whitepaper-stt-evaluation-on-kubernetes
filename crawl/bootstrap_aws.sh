@@ -6,7 +6,7 @@ INSTANCE_TYPE=${INSTANCE_TYPE:-g6.xlarge}
 AWS_SSH_KEY_NAME=${AWS_SSH_KEY_NAME:-my-key}
 SG_NAME=ssh-ingress
 
-AWS_PAGER=""
+export AWS_PAGER=""
 
 which aws > /dev/null || return 0
 
