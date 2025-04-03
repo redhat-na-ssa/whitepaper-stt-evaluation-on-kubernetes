@@ -15,7 +15,7 @@ export AWS_ACCESS_KEY_ID=
 export AWS_SECRET_ACCESS_KEY=
 ```
 
-run `aws` configure
+run `aws configure`
 
 ```output
 AWS Access Key ID [****************PFV5]: 
