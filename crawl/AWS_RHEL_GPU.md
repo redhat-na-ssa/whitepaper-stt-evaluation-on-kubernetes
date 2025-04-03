@@ -28,6 +28,10 @@ export INSTANCE_NAME="RHEL GPU Instance"
 export AWS_SSH_KEY_NAME=my-key
 ```
 
+Optional: setup SSH key of choice
+
+*NOTE: `bootstrap_aws.sh` below will create ed25519 key*
+
 ```sh
 # setup pub key
 echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIXLGAxOZLWpV1WWRu4GnFWEHVmLiSeXsMoChi4rXvDl cory@kowdora" > /tmp/id.pub
@@ -39,18 +43,6 @@ aws ec2 import-key-pair --key-name "${AWS_KEY_NAME}" --public-key-material fileb
 ```sh
 # create ec2 install with g6.xlarge
 ./bootstrap_aws.sh
-```
-
-```sh
-# get instance dns name
-EC2_HOSTNAME=$(aws ec2 describe-instances \
-  --filter "Name=tag:Name,Values=${INSTANCE_NAME}" \
-  --filter "Name=instance-state-name,Values=running" \
-  --query 'Reservations[].Instances[].PublicDnsName' \
-  --output text)
-
-# ssh into instance
-echo "ssh ec2-user@${EC2_HOSTNAME}"
 ```
 
 ### Setup NVIDIA Software / CUDA / Drivers
