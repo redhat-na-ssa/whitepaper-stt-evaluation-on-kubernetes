@@ -23,9 +23,9 @@ export AWS_SECRET_ACCESS_KEY=
 Setup EC2 RHEL GPU Instance
 
 ```sh
-export INSTANCE_TYPE=${g6.xlarge}
-export INSTANCE_NAME=${RHEL GPU Instance}
-export AWS_SSH_KEY_NAME=${my-key}
+export INSTANCE_TYPE=g6.xlarge
+export INSTANCE_NAME="RHEL GPU Instance"
+export AWS_SSH_KEY_NAME=my-key
 ```
 
 ```sh
