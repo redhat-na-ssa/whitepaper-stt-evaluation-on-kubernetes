@@ -54,7 +54,7 @@ export INSTANCE_TYPE=g6.xlarge
 # update all the things
 sudo dnf -y upgrade
 
-reboot
+sudo reboot
 ```
 
 ```sh
