@@ -1,6 +1,6 @@
 # Unstructured Notes
 
-### Links
+## Links
 
 - https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html
 - https://docs.nvidia.com/cuda/cuda-installation-guide-linux
