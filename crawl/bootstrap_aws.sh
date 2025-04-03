@@ -48,13 +48,15 @@ aws_create_sg_ssh(){
   [ -z "${SG_NAME}" ] && return 0
   [ -z "${INSTANCE_NAME}" ] && return 0
   [ -z "${VPC_ID}" ] && return 0
-  [ -z "${SG_ID}" ] && aws_get_sg_ssh
+  [ -z "${SG_ID}" ] && return 0
 
   # create security group
   aws ec2 create-security-group \
     --group-name "${SG_NAME}" \
     --description "${INSTANCE_NAME} created at $(date)" \
     --vpc-id "${VPC_ID}"
+
+  aws_get_sg_ssh || return 1
 
   # allow ssh on security group
   aws ec2 authorize-security-group-ingress \

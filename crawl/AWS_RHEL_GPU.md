@@ -2,27 +2,31 @@
 
 ## Create RHEL VM in AWS
 
+### Get AWS Instance
+
 [Red Hat Demo Platform](https://demo.redhat.com) options:
 
 - <a href="https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/sandboxes-gpte.sandbox-open.prod&utm_source=webapp&utm_medium=share-linktarget=" target="_blank">AWS Blank Open Environment</a>
 
-`git clone` this repo into AWS CloudShell. CloudShell is pre-configured.
-
 ### Optional: Setup `aws` cli
 
-```sh
-export AWS_ACCESS_KEY_ID=
-export AWS_SECRET_ACCESS_KEY=
-```
+This section is optional and **not** required if using AWS CloudShell.
 
-run `aws configure`
+run `aws configure` and enter information
+
+example output
 
 ```output
-AWS Access Key ID [****************PFV5]: 
-AWS Secret Access Key [****************gD9Q]: 
-Default region name [us-east-2]: 
+AWS Access Key ID [****************PFV5]:
+AWS Secret Access Key [****************gD9Q]:
+Default region name [us-east-2]:
 Default output format [None]:
 ```
+
+### Clone repo
+
+`git clone` this repo into AWS CloudShell. CloudShell is pre-configured.
+
 
 ### Setup EC2 RHEL GPU Instance
 
