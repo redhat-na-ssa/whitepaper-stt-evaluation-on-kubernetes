@@ -1,11 +1,4 @@
-# Unstructured Notes
-
-## Links
-
-- https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html
-- https://docs.nvidia.com/cuda/cuda-installation-guide-linux
-- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html
-- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+# Setup RHEL with Nvidia GPU
 
 ## Create RHEL VM in AWS
 
@@ -120,3 +113,10 @@ podman run --rm \
   --device nvidia.com/gpu=all \
   --security-opt=label=disable registry.access.redhat.com/ubi9 nvidia-smi -L
 ```
+
+## Links
+
+- https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html
+- https://docs.nvidia.com/cuda/cuda-installation-guide-linux
+- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html
+- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
