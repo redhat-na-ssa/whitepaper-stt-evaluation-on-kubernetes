@@ -3,7 +3,7 @@
 
 INSTANCE_NAME="${INSTANCE_NAME:-RHEL GPU Instance}"
 INSTANCE_TYPE=${INSTANCE_TYPE:-g6.xlarge}
-AWS_KEY_NAME=${AWS_KEY_NAME:-my-key}
+AWS_SSH_KEY_NAME=${AWS_SSH_KEY_NAME:-my-key}
 SG_NAME=ssh-ingress
 
 AWS_PAGER=""
@@ -56,30 +56,30 @@ aws_create_sg_ssh(){
 }
 
 aws_get_ssh_key(){
-  AWS_KEY_NAME=${1:-my-key}
+  AWS_SSH_KEY_NAME=${1:-my-key}
 
   aws ec2 describe-key-pairs \
-    --key-names "${AWS_KEY_NAME}" \
+    --key-names "${AWS_SSH_KEY_NAME}" \
     --query 'KeyPairs[*].[KeyName]' \
     --output text > /dev/null
 }
 
 aws_create_ssh_key(){
-  AWS_KEY_NAME=${1:-my-key}
+  AWS_SSH_KEY_NAME=${1:-my-key}
 
   # setup pub key
   SSH_KEY_PATH=${SSH_KEY_PATH:-${HOME}/.ssh/id_ed25519}
   [ -e "${SSH_KEY_PATH}" ] || ssh-keygen -t ed25519 -q -f "${SSH_KEY_PATH}" -N ""
 
   # import ssh key
-  aws ec2 import-key-pair --key-name "${AWS_KEY_NAME}" --public-key-material fileb://"${SSH_KEY_PATH}".pub
+  aws ec2 import-key-pair --key-name "${AWS_SSH_KEY_NAME}" --public-key-material fileb://"${SSH_KEY_PATH}".pub
 }
 
 aws_create_ec2_rhel(){
   [ -z "${INSTANCE_NAME}" ] && return 0
   [ -z "${INSTANCE_TYPE}" ] && return 0
   [ -z "${SG_ID}" ] && aws_get_sg_ssh
-  AWS_KEY_NAME="${AWS_KEY_NAME:-my-key}"
+  AWS_SSH_KEY_NAME="${AWS_SSH_KEY_NAME:-my-key}"
 
   # check for stopped instance
   STOPPED_INSTANCE=$(aws ec2 describe-instances \
@@ -103,7 +103,7 @@ aws_create_ec2_rhel(){
   aws ec2 run-instances \
     --image-id "ami-002acc74c401fa86b" \
     --instance-type "${INSTANCE_TYPE}" \
-    --key-name "${AWS_KEY_NAME}" \
+    --key-name "${AWS_SSH_KEY_NAME}" \
     --block-device-mappings '{"DeviceName":"/dev/sda1","Ebs":{"Encrypted":false,"DeleteOnTermination":true,"Iops":3000,"SnapshotId":"snap-0a4b0a8e5fc325041","VolumeSize":100,"VolumeType":"gp3","Throughput":125}}' \
     --network-interfaces '{"AssociatePublicIpAddress":true,"DeviceIndex":0,"Groups":["'"${SG_ID}"'"]}' \
     --tag-specifications '{"ResourceType":"instance","Tags":[{"Key":"Name","Value":"'"${INSTANCE_NAME}"'"}]}' \

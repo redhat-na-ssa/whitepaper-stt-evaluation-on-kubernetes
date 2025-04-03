@@ -13,10 +13,19 @@ Create [AWS Blank Open Environment (RHDS)](https://catalog.demo.redhat.com/catal
 
 ### AWS CloudShell / aws cli
 
+Setup `aws` cli
+
 ```sh
-export INSTANCE_TYPE=${INSTANCE_TYPE:-g6.xlarge}
-export INSTANCE_NAME=${INSTANCE_NAME:-RHEL GPU Instance}
-export AWS_KEY_NAME=${AWS_KEY_NAME:-my-key}
+export AWS_ACCESS_KEY_ID=
+export AWS_SECRET_ACCESS_KEY=
+```
+
+Setup EC2 RHEL GPU Instance
+
+```sh
+export INSTANCE_TYPE=${g6.xlarge}
+export INSTANCE_NAME=${RHEL GPU Instance}
+export AWS_SSH_KEY_NAME=${my-key}
 ```
 
 ```sh
