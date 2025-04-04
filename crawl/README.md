@@ -8,45 +8,26 @@ In summary:
 
 1. Provision RHEL - [provision RHEL with GPU](provision_rhel_aws.sh)
 1. Test OpenAI Whisper - [build and run Whisper](openai-whisper/README.md)
-1. Test Faster-Whisper
-1. Test NVIDIA Riva
+1. Test Faster-Whisper - TODO
+1. Test NVIDIA Riva - TODO
 
 ## Goal
 
-Test 3x Models Architectures (Whisper, Faster-Whisper, Riva):
+Test 3x STT models:
 
-| **Model** | **Size** | **Parameters** | **VRAM (float32)** | **VRAM (int8)** | **Avg. Transcription Speed (RTF)** | **Notes** |
-|-|-|-|-|-|-|-|
-| **Whisper tiny** | Tiny | ~39M | ~1 GB | ~0.5 GB | ~32x real-time | OpenAI, multilingual |
-| **Whisper base** | Base | ~74M | ~1.5 GB | ~0.75 GB | ~16x real-time | OpenAI, multilingual |
-| **Whisper small** | Small | ~244M | ~2.6 GB | ~1.3 GB | ~6x real-time | OpenAI, multilingual |
-| **Whisper medium** | Medium | ~769M | ~5.5 GB | ~2.9 GB | ~2x real-time | OpenAI, multilingual |
-| **Whisper large-v2 / large-v3** | Large | ~1.55B | ~10 GB | ~4.7 GB | ~1x real-time  | v3 has better accuracy |
-| **Faster-Whisper (int8)** | All sizes  | same as above  | —  | 50–60% less | Up to **4x** faster than Whisper | Based on CTranslate2 |
-| **Riva Conformer-CTC English (en-US)**  | Large | ~120M | ~<2 GB* | ~<1 GB* | Real-time (low-latency GPU tuned) | Optimized for NVIDIA GPUs  |
-| **Riva Mandarin-English Code-Switching** | Large  | ~120M | ~<2 GB*  | ~<1 GB* | Real-time | Trained on 17K hrs code-switched data |
-| **Riva Spanish-English Code-Switching** | Large | ~120M | ~<2 GB* | ~<1 GB*  | Real-time | Trained on 20K hrs code-switched data |
+- Whisper
+- Faster-Whisper
+- NVIDIA Riva
 
+Test 2x Deployment setups:
 
-Test 2x model serving patterns:
+- Embedded inference microservices on Ubuntu, UBI9-platform, and UBI9-minimal (Linux & Kubernetes)
+- Decoupled model servers: vLLM, Faster-Whisper, NVIDIA Triton
 
-| Embedded Inference Microservice | Decoupled Model Serving |
-|-|-|
-|Ubuntu|-|
-|UBI9 Platform|-|
-|UBI9 minimal|-|
-|-|vLLM|
-|-|Faster Whisper|
-|-|NVIDIA Triton/TensorRT|
+Test on CPU and GPU Hardware:
 
-Test Transcription tasks on CPU and GPUs:
-
-| Instance	| GPU	| CPU | Type | Architecture	| Notes |
-|-|-|-|-|-|-|
-| g4dn	| T4	| Intel Cascade Lake	| x86	| Cost-effective, older |
-| g6	| L4	| AWS Graviton3	|Arm	| Power-efficient, modern, new in 2024 |
-| g5	| A10G	| AMD EPYC 7003 (Milan)	| x86	| Balanced performance |
-| p5	| H100	| Intel Sapphire Rapids	| x86	| Flagship training | workloads|
+- GPUs: T4, L4, A10, H100
+- CPUs: Intel Cascade Lake, Graviton3, AMD EPYC, Intel Sapphire Rapids
 
 Provided input files:
 
@@ -59,3 +40,39 @@ Provided ground truth transcriptions:
 1. Harvard.txt
 1. JFK Inaugural Address from Jan. 20, 1961 transcript from the White House
 1. JFK Rice University from Sept. 12, 1962 transcript from the White House
+
+## Questions to answer
+
+### Custom Configurations in OpenShift
+
+1. Reducing GPU Temperature: Are there any OpenShift configurations to help reduce GPU temperature during transcription?
+1. Reducing GPU Power Consumption: Is it possible to lower GPU power usage during transcription in OpenShift?
+1. Optimizing GPU Utilization: How can GPU utilization be optimized in OpenShift for transcription tasks?
+1. NTO Impact: Does NTO (Node Tuning Operator) provide any performance gains?
+1. PPC Effectiveness: Does PPC (Performance Profile Creator) offer any benefits in these scenarios?
+1. What other configurations are worth testing?
+
+### Concurrency and Scalability
+
+1. Increasing Concurrency: How can the number of concurrent audio files processed be increased in OpenShift?
+1. Handling Larger Audio Files: How does OpenShift scale with larger audio file sizes?
+1. Scaling Larger Models: Do larger models scale linearly, or do they hit memory/processing limits faster in OpenShift?
+
+### Resource Management
+
+1. Container Startup Times: How do container startup times impact resource usage?
+1. GPU Fractionalization: How does GPU fractionalization impact throughput and performance?
+1. Simultaneous Inference: How many concurrent inference tasks can a GPU handle at once, and how does this scale?
+1. MIG vs. No MIG: How does the presence or absence of MIG (Multi-Instance GPU) affect performance?
+1. Time-Slicing: What is the impact of time-slicing on GPU usage and throughput?
+1. MIG + Time-Slicing: What happens when MIG and time-slicing are used together?
+
+### Optimization
+
+1. Cost vs. Performance: What is the optimal GPU configuration for balancing cost and performance, considering different model sizes?
+1. Tokens Per Second: How does OpenShift affect tokens per second in transcription tasks?
+
+### Comparison to Linux
+
+1. Performance Comparison: Does OpenShift slow down transcription performance compared to running directly on Linux?
+1. Right-Sizing: How should model size and GPU configuration be right-sized for optimal performance in OpenShift?
