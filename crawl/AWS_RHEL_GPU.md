@@ -31,7 +31,7 @@ Default output format [None]:
 
 #### Optional: setup SSH key of choice
 
-NOTE: `bootstrap_aws.sh` below will create ed25519 key if it does not exist already
+NOTE: `provision_rhel_aws.sh` below will create ed25519 key if it does not exist already
 
 ```sh
 # setup pub key
@@ -45,7 +45,7 @@ aws ec2 import-key-pair --key-name "${AWS_KEY_NAME:-my-key}" --public-key-materi
 # create ec2 install with g6.xlarge
 export INSTANCE_TYPE=g6.xlarge
 
-./bootstrap_aws.sh
+./provision_rhel_aws.sh
 ```
 
 ### Setup NVIDIA Software / CUDA / Drivers
