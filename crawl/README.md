@@ -1,231 +1,61 @@
 # Crawl
 
-Crawl OpenAI Whisper STT model from Ubuntu on CPU to UBI on NVIDIA GPU
+Crawl Speech-to-Text models on CPU and GPU on Linux and OpenShift.
 
 ## Crawl procedure
 
 In summary:
 
-1. Clone this repo locally
-1. Build the container images from Dockerfile for Ubuntu and UBI
-1. TODO add the Gradio UI for Ubuntu and UBI
-1. Test the containers on CPU and GPU against a sample audio file
-1. Run evaluation experiments
-1. TODO visualization container
+1. Provision RHEL - [provision RHEL with GPU](provision_rhel_aws.sh)
+1. Test OpenAI Whisper - [build and run Whisper](openai-whisper/README.md)
+1. Test Faster-Whisper
+1. Test NVIDIA Riva
 
-## Quick Start
+## Goal
 
-```sh
-# build the images for whisper 
-podman build -t whisper:ubuntu crawl/openai-whisper/ubuntu/.
-podman build -t whisper:ubi9 crawl/openai-whisper/ubi/platform/.
-podman build -t whisper:ubi9-minimal crawl/openai-whisper/ubi/minimal/.
+Test 3x Models Architectures (Whisper, Faster-Whisper, Riva):
 
-# build the images for faster-whisper 
-podman build -t faster-whisper:ubuntu crawl/faster-whisper/ubuntu/.
-podman build -t faster-whisper:ubi9 crawl/faster-whisper/ubi/platform/.
-podman build -t faster-whisper:ubi9-minimal crawl/faster-whisper/ubi/minimal/.
-
-# TODO script
-```
-
-### Single Server
-
-```sh
-# Step 0: Access your machine
-ssh
-
-# Step 1: Clone this repo
-git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
-
-# Step 2: Move into repo
-cd whitepaper-stt-evaluation-on-kubernetes 
-```
-
-## Benchmarking
-
-TODO build UI scraper of the .csv to visualize the data
-
-### Harvard data
-
-```sh
-# Terminal 1 of 2
-# Run the host_metrics script in the background
-nohup python3 data/evaluation-scripts/host_metrics.py &
-
-# Terminal 2 of 2
-## 1 - Whisper Ubuntu CPU
-podman run --rm -it --name whisper-ubuntu-cpu -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
-
-## For loop through each model twice to capture pre-downloaded performance
-for model in tiny.en base.en small.en medium.en large turbo; do
-  # First run
-  python3 evaluation-scripts/evaluation.py --model_name $model
-  # Second run with models cached
-  python3 evaluation-scripts/evaluation.py --model_name $model
-done
-
-## Review the data captured run `sort -u /tmp/*.csv`
-
-## Copy the .csv data to local output dir for downstream visualization
-sort -u /tmp/*.csv >> metrics/whisper_harvard_metrics.csv
-sh /data/evaluation-scripts/collapse-csvs.sh
-
-## exit pod
-exit
-
-## 2 - Whisper Ubuntu GPU
-podman run --rm -it --name whisper-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubuntu /bin/bash
-
-## For loop through each model twice to capture pre-downloaded performance
-for model in tiny.en base.en small.en medium.en large turbo; do
-  # First run
-  python3 evaluation-scripts/evaluation.py --model_name $model
-  # Second run with models cached
-  python3 evaluation-scripts/evaluation.py --model_name $model
-done
-
-## Copy the .csv data to local output dir
-sort -u /tmp/*.csv >> metrics/whisper_harvard_metrics.csv
-
-## exit pod
-exit
-
-## 3 - Whisper UBI CPU
-podman run --rm -it --name whisper-ubi-cpu -v $(pwd)/data:/data:z localhost/whisper:ubi9 /bin/bash
-
-## For loop through each model twice to capture pre-downloaded performance
-for model in tiny.en base.en small.en medium.en large turbo; do
-  # First run
-  python3 evaluation-scripts/evaluation.py --model_name $model
-  # Second run with models cached
-  python3 evaluation-scripts/evaluation.py --model_name $model
-done
-
-## Copy the .csv data to local output dir
-## You may have to chmod 755 data/metrics/metrics/whisper_harvard_metrics.csv
-sort -u /tmp/*.csv >> metrics/whisper_harvard_metrics.csv
-
-## exit pod
-exit
-
-## 4 - Whisper UBI GPU
-podman run --rm -it --name whisper-ubi-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data:/data:z localhost/whisper:ubi9 /bin/bash
-
-## For loop through each model twice to capture pre-downloaded performance
-for model in tiny.en base.en small.en medium.en large turbo; do
-  # First run
-  python3 evaluation-scripts/evaluation.py --model_name $model
-  # Second run with models cached
-  python3 evaluation-scripts/evaluation.py --model_name $model
-done
-
-## Copy the .csv data to local output dir
-## You may have to chmod 777 data/output
-sort -u /tmp/*.csv >> metrics/whisper_harvard_metrics.csv
-
-## exit pod
-exit
-
-# Terminal 1 of 2
-# Copy output to host from pod
-cp metrics/pod_gpu_usage.csv .
-
-# Stop the host_metrics.py script
-ps aux | grep host_metrics
-```
-
-### Addtional examples
-#### JFK speeches
-```bash
-python3 evaluation-scripts/evaluation.py --model_name $model --input input-samples/jfk-audio-inaugural-address-20-january-1961.mp3  --reference_file ground-truth/jfk-audio-inaugural-address-20-january-1961.txt --hypothesis_file /tmp/jfk-audio-inaugural-address-20-january-1961.txt --log_level DEBUG
-```
-## Whisper Optimizations
-
-### Best Initial Test Command
-
-```sh
-whisper input-samples/harvard.wav \
-    --model large \
-    --language en \
-    --beam_size 10 \
-    --temperature 0 \
-    --patience 2 \
-    --suppress_tokens -1 \
-    --compression_ratio_threshold 2.0 \
-    --logprob_threshold -0.5 \
-    --no_speech_threshold 0.4
-```
-
-Initial experimentation parameters:
-
-- Try a larger model (medium or large) if you are using tiny, base, or small.
-- If you know the language, set it explicitly to avoid misdetections.
-- Adjust decoding:
-  - Beam Search (--beam_size): Increases accuracy by considering multiple possibilities.
-  - Temperature (--temperature): Lower values (0-0.2) make outputs more deterministic.
-  - Patience (--patience): Allows the model to explore better alternatives.
-- Avoids unwanted symbols that could lower accuracy.
-- Improve robustness against hallucinations:
-  - Compression Ratio Threshold (--compression_ratio_threshold): Filters out bad transcriptions.
-  - Log Probability Threshold (--logprob_threshold): Removes segments with low confidence.
-  - No Speech Threshold (--no_speech_threshold): Filters out silent parts.
-- Enable word timestamps:
-  - Useful for reviewing accuracy at the word level.
-
-### Here’s a breakdown of some key Whisper parameters and what they do:
-
-```sh
-# Basic Parameters
-audio: The input audio file(s) to be transcribed.
---model MODEL: Specifies which Whisper model to use. Example values: tiny, base, small, medium, large, turbo (default: turbo).
---model_dir MODEL_DIR: Path where model files are stored (default is ~/.cache/whisper).
---device DEVICE: Hardware for processing. Options:
-cpu (default) for CPU usage.
-cuda or mps for GPU acceleration (if available).
-Output Parameters
---output_dir OUTPUT_DIR: Where to save the output files.
---output_format {txt,vtt,srt,tsv,json,all}: Format of the transcription output.
-txt: Plain text.
-vtt: WebVTT (subtitles).
-srt: SubRip (subtitles).
-tsv: Tab-separated values.
-json: JSON format.
-all: Saves in all formats.
+| **Model** | **Size** | **Parameters** | **VRAM (float32)** | **VRAM (int8)** | **Avg. Transcription Speed (RTF)** | **Notes** |
+|-|-|-|-|-|-|-|
+| **Whisper tiny** | Tiny | ~39M | ~1 GB | ~0.5 GB | ~32x real-time | OpenAI, multilingual |
+| **Whisper base** | Base | ~74M | ~1.5 GB | ~0.75 GB | ~16x real-time | OpenAI, multilingual |
+| **Whisper small** | Small | ~244M | ~2.6 GB | ~1.3 GB | ~6x real-time | OpenAI, multilingual |
+| **Whisper medium** | Medium | ~769M | ~5.5 GB | ~2.9 GB | ~2x real-time | OpenAI, multilingual |
+| **Whisper large-v2 / large-v3** | Large | ~1.55B | ~10 GB | ~4.7 GB | ~1x real-time  | v3 has better accuracy |
+| **Faster-Whisper (int8)** | All sizes  | same as above  | —  | 50–60% less | Up to **4x** faster than Whisper | Based on CTranslate2 |
+| **Riva Conformer-CTC English (en-US)**  | Large | ~120M | ~<2 GB* | ~<1 GB* | Real-time (low-latency GPU tuned) | Optimized for NVIDIA GPUs  |
+| **Riva Mandarin-English Code-Switching** | Large  | ~120M | ~<2 GB*  | ~<1 GB* | Real-time | Trained on 17K hrs code-switched data |
+| **Riva Spanish-English Code-Switching** | Large | ~120M | ~<2 GB* | ~<1 GB*  | Real-time | Trained on 20K hrs code-switched data |
 
 
-# Transcription & Translation
---task {transcribe,translate}:
-    transcribe: Converts spoken audio to text in the same language.
-    translate: Translates non-English audio to English.
---language <language>: Manually specify the spoken language (e.g., en for English). If omitted, Whisper auto-detects.
+Test 2x model serving patterns:
 
-# Decoding Parameters (Affecting Accuracy & Speed)
---temperature TEMPERATURE: Controls randomness (default 0 means deterministic, higher values increase variation).
---best_of BEST_OF: Number of candidates when using sampling (temperature > 0).
---beam_size BEAM_SIZE: Number of beams for beam search (used when temperature = 0).
---patience PATIENCE: Affects beam search, allowing it to consider longer alternatives (default 1.0).
---length_penalty LENGTH_PENALTY: Adjusts preference for shorter or longer transcriptions.
+| Embedded Inference Microservice | Decoupled Model Serving |
+|-|-|
+|Ubuntu|-|
+|UBI9 Platform|-|
+|UBI9 minimal|-|
+|-|vLLM|
+|-|Faster Whisper|
+|-|NVIDIA Triton/TensorRT|
 
-# Error Handling & Robustness
---temperature_increment_on_fallback TEMPERATURE_INCREMENT_ON_FALLBACK: Increases temperature when decoding fails, making the model try different outputs.
---compression_ratio_threshold COMPRESSION_RATIO_THRESHOLD: Helps detect hallucinations (false transcriptions) by analyzing compression ratios.
---logprob_threshold LOGPROB_THRESHOLD: If average log probability of words is too low, the output is considered unreliable.
---no_speech_threshold NO_SPEECH_THRESHOLD: If the probability of silence (<|nospeech|>) is high, the segment is skipped.
+Test Transcription tasks on CPU and GPUs:
 
-# Formatting & Word Timing
---word_timestamps WORD_TIMESTAMPS: Enables word-level timestamps (default: False).
---prepend_punctuations & --append_punctuations: Defines how punctuation is attached to words when using --word_timestamps True.
---highlight_words HIGHLIGHT_WORDS: Underlines words in subtitles as they are spoken.
+| Instance	| GPU	| CPU | Type | Architecture	| Notes |
+|-|-|-|-|-|-|
+| g4dn	| T4	| Intel Cascade Lake	| x86	| Cost-effective, older |
+| g6	| L4	| AWS Graviton3	|Arm	| Power-efficient, modern, new in 2024 |
+| g5	| A10G	| AMD EPYC 7003 (Milan)	| x86	| Balanced performance |
+| p5	| H100	| Intel Sapphire Rapids	| x86	| Flagship training | workloads|
 
-# Performance Tweaks
---threads THREADS: Number of CPU threads to use.
---fp16 FP16: Uses 16-bit floating-point precision for inference (default: True for GPUs, False for CPU).
---clip_timestamps CLIP_TIMESTAMPS: Allows processing only specific audio segments.
-```
+Provided input files:
 
-## Resources
+1. Harvard.wav
+1. JFK Inaugural Address from Jan. 20, 1961
+1. JFK Rice University from Sept. 12, 1962
 
-- [Official NVIDIA docs](https://docs.nvidia.com/ai-enterprise/deployment/rhel-with-kvm/latest/podman.html)
-- [Allow access to host GPU](https://thenets.org/how-to-use-nvidia-gpu-on-podman-rhel-fedora/)
-- [Dataset](https://www.openslr.org/12)
+Provided ground truth transcriptions:
+
+1. Harvard.txt
+1. JFK Inaugural Address from Jan. 20, 1961 transcript from the White House
+1. JFK Rice University from Sept. 12, 1962 transcript from the White House

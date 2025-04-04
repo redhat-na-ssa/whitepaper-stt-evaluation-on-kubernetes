@@ -17,15 +17,11 @@ run `aws configure` and enter information
 example output
 
 ```output
-AWS Access Key ID [****************PFV5]:
-AWS Secret Access Key [****************gD9Q]:
-Default region name [us-east-2]:
-Default output format [None]:
+AWS Access Key ID [****************G6M5]: 
+AWS Secret Access Key [****************vzRg]: 
+Default region name [us-east-2]: 
+Default output format [text]:
 ```
-
-### Clone repo
-
-`git clone` this repo into AWS CloudShell. CloudShell is pre-configured.
 
 ### Setup EC2 RHEL GPU Instance
 
@@ -44,6 +40,11 @@ aws ec2 import-key-pair --key-name "${AWS_KEY_NAME:-my-key}" --public-key-materi
 ```sh
 # create ec2 install with g6.xlarge
 export INSTANCE_TYPE=g6.xlarge
+
+# other instances g4dn=T4, g5=A10, p5=H100
+# export INSTANCE_TYPE=g4dn.xlarge
+# export INSTANCE_TYPE=g5.xlarge
+# export INSTANCE_TYPE=p5.xlarge
 
 ./provision_rhel_aws.sh
 ```
@@ -106,6 +107,8 @@ sudo dnf install -y nvidia-container-toolkit
 sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
 nvidia-ctk cdi list
 ```
+
+### Test NVIDIA Software / CUDA / Drivers
 
 ```sh
 #  run with ubuntu
