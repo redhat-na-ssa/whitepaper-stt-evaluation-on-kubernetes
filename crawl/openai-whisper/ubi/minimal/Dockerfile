@@ -4,6 +4,11 @@ FROM ${IMAGE}
 
 ARG PYTHON_VER=3.11
 
+# ADDED you can use the same Dockerfile for:
+# Minimal builds with runtime model download
+# Preloaded models for faster startup or air-gapped environments
+ARG MODEL_SIZE  # Optional model download at build time
+
 # Switch to root for OS dependencies
 USER root
 
@@ -43,6 +48,14 @@ WORKDIR /data
 
 # Give group write permissions
 RUN chmod 0775 /data
+
+# ADDED Conditionally preload the whisper model if MODEL_SIZE is provided
+RUN if [ -n "$MODEL_SIZE" ]; then \
+      echo "Downloading Whisper model: $MODEL_SIZE" && \
+      python${PYTHON_VER} -c "import whisper; whisper.load_model('$MODEL_SIZE')"; \
+    else \
+      echo "No MODEL_SIZE provided. Skipping model download."; \
+    fi
 
 # Switch to non-root user
 USER 1001

@@ -107,7 +107,7 @@ From the root directory of whitepaper-stt-evaluation-on-kubernetes:
 1. build images
 
     ```sh
-    # build the images for whisper 
+    # Minimal builds with runtime model download
     podman build -t whisper:ubuntu crawl/openai-whisper/ubuntu/.
     podman build -t whisper:ubi9 crawl/openai-whisper/ubi/platform/.
     podman build -t whisper:ubi9-minimal crawl/openai-whisper/ubi/minimal/.
@@ -116,20 +116,7 @@ From the root directory of whitepaper-stt-evaluation-on-kubernetes:
     podman images
     ```
 
-    ```sh
-    # expected output
-    REPOSITORY                                   TAG           IMAGE ID      CREATED        SIZE
-    localhost/whisper                            ubi9-minimal  77083a3a2c43  1 second ago   1.57 GB
-    localhost/whisper                            ubi9          48da8e8ebebe  3 minutes ago  2.13 GB
-    localhost/whisper                            ubuntu        a6b833c42cac  7 minutes ago  1.56 GB
-    registry.access.redhat.com/ubi9/python-312   latest        9cd0f62fdb0e  6 days ago     1.03 GB
-    registry.access.redhat.com/ubi9              latest        0856b27c576b  13 days ago    230 MB
-    registry.access.redhat.com/ubi9/ubi-minimal  latest        b87862a6c8b1  13 days ago    105 MB
-    docker.io/library/ubuntu                     latest        c3d1a3432580  2 months ago   103 MB
-    docker.io/library/ubuntu                     22.04         560582227a09  2 months ago   71.8 MB
-    ```
-
-1. (optional) build images for each Whisper model size
+1. (optional) Preloaded models for faster startup or air-gapped environments
 
     ```sh
     # ubuntu whisper models
@@ -143,15 +130,16 @@ From the root directory of whitepaper-stt-evaluation-on-kubernetes:
     for model in tiny.en base.en small.en medium.en large turbo; do
     tag="whisper-${model}:ubi9"
     echo "🔧 Building image: $tag"
-    podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubi/platform.
+    podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubi/platform/.
     done
 
     # ubi9-minimal whisper
     for model in tiny.en base.en small.en medium.en large turbo; do
     tag="whisper-${model}:ubi9-minimal"
     echo "🔧 Building image: $tag"
-    podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubi/minimal.
+    podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubi/minimal/.
     done
     ```
+    
 
 1. 
