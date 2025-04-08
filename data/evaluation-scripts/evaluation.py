@@ -174,7 +174,7 @@ if __name__ == "__main__":
     parser.add_argument("--reference_file", default="ground-truth/harvard.txt", help="Path to the reference text file for accuracy evaluation.")
     parser.add_argument("--hypothesis_file", default="/tmp/harvard.txt", help="Path to the hypothesis text file.")
     parser.add_argument("--language", default="en", help="Language for Whisper transcription.")
-    parser.add_argument("--log_level", default="ERROR", help="Sets python logging to ERROR (default), WARNING, INFO or DEBUG")
+    parser.add_argument("--log_level", default="INFO", help="Sets python logging to ERROR, WARNING (default), INFO or DEBUG")
 
     
     args = parser.parse_args()
