@@ -206,6 +206,15 @@ Edit the `values.yaml` with
 
 1. `ngcCredentials` put in your `NGC_API_KEY` and `email`
 1. `persistentVolumeClaim` change `usePVC` to `true` and set `storageClassName` (e.g. `gp3-csi` in AWS) and set `storageAccessMode` to `ReadWriteOnce`
+1. Append the following models under `ngcModelConfigs.triton0.models`:
+
+> Note: Uncomment the model you want loaded into Riva. In the example below, we are loading the [Canary 1B](https://build.nvidia.com/nvidia/canary-1b-asr) model:
+
+```text
+      - nvidia/riva/rmir_asr_canary_1b_ofl:2.18.0
+      # - nvidia/riva/rmir_asr_canary_0-6b_turbo_ofl:2.18.0
+      # - nvidia/riva/rmir_asr_whisper_large_ofl:2.18.0
+```
 
 Create project
 
