@@ -131,7 +131,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     csv_temp_path = os.path.join(output_dir, csv_filename)
     file_exists = os.path.isfile(csv_temp_path)
     
-    executed_command = f"{PYTHON_EXECUTABLE} evaluation-scripts/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language}"
+    executed_command = f"{PYTHON_EXECUTABLE} evaluation-scripts/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language} --output_dir {output_dir}"
     
     #
     # Write out the benchmark results. 
