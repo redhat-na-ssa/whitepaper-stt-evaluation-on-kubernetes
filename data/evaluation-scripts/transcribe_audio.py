@@ -46,7 +46,7 @@ if __name__ == "__main__":
     transcribe_audio(
         model="whisper",
         input_file="input-samples/harvard.wav",
-        output_dir="/tmp/",
+        output_dir="metrics/",
         model_name="medium.en",
         model_dir="/tmp/",
         output_format="txt",
