@@ -43,7 +43,7 @@ def get_gpu_info():
 
 def write_to_csv(pod_name, gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage,
                  startup_time=None, task_time=None, shutdown_time=None):
-    output_dir = 'data/output'
+    output_dir = 'data/metrics/'
     os.makedirs(output_dir, exist_ok=True)
     file_path = os.path.join(output_dir, 'pod_host_usage.csv')
 
