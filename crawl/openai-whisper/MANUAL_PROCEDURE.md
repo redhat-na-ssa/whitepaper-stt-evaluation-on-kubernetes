@@ -104,7 +104,62 @@ From the root directory of whitepaper-stt-evaluation-on-kubernetes:
 1. install git `sudo yum install -y git`
 1. clone the repo `git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git`
 1. move to directory `cd whitepaper-stt-evaluation-on-kubernetes/`
-1. build images
+1. log in to Quay.io `podman login quay.io`
+
+### Evaluating Whisper on Ubuntu
+
+1. pull all the Ubuntu images
+
+    ```sh
+    for tag in ubuntu tiny.en-ubuntu base.en-ubuntu small.en-ubuntu medium.en-ubuntu large-ubuntu turbo-ubuntu; do podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag; done
+    ```
+
+1. from terminal 1 of 2, run the host metrics
+
+    ```sh
+    # Terminal 1 of 2
+    # Run the host_metrics script in the background
+    nohup python3 data/evaluation-scripts/host_metrics.py &
+    ```
+
+1. from terminal 2 of 2, run the container
+
+    ```sh
+    podman run --rm -it \
+    --name whisper-ubuntu-cpu \
+    -v $(pwd)/data:/data:z \
+    whisper:tiny.en-ubuntu /bin/bash
+    ```
+
+1. execute the transcribe task
+
+    ```sh
+    whisper input-samples/harvard.wav
+    ```
+
+1. cleanup disk space
+
+    ```sh
+    podman rmi -fa
+    ```
+
+### Evaluating Whisper on UBI9
+
+1. pull all the UBI9 images
+
+    ```sh
+    for tag in ubi9 tiny.en-ubi9 base.en-ubi9 small.en-ubi9 medium.en-ubi9 large-ubi9 turbo-ubi9; do podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag; done
+    ```
+
+### Evaluating Whisper on UBI9-minimal
+
+1. pull all the Ubuntu images
+
+    ```sh
+    for tag in ubi9-minimal tiny.en-ubi9-minimal base.en-ubi9-minimal small.en-ubi9-minimal medium.en-ubi9-minimal large-ubi9-minimal turbo-ubi9-minimal; do podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag; done
+    ```
+
+1. (optional) build images
 
     ```sh
     # Minimal builds with runtime model download

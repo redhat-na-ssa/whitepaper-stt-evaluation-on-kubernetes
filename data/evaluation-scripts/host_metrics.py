@@ -41,20 +41,36 @@ def get_gpu_info():
         gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage = get_cpu_info() + (None, None, None)
     return gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage
 
-def write_timing_to_csv(start_time, task_time, shutdown_time, pod_name):
+def write_to_csv(pod_name, gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage,
+                 startup_time=None, task_time=None, shutdown_time=None):
     output_dir = 'data/output'
     os.makedirs(output_dir, exist_ok=True)
-    file_path = os.path.join(output_dir, 'pod_timing.csv')
+    file_path = os.path.join(output_dir, 'pod_host_usage.csv')
 
     file_exists = os.path.isfile(file_path)
 
     with open(file_path, mode='a', newline='') as file:
         writer = csv.writer(file)
         if not file_exists:
-            writer.writerow(['date', 'timestamp', 'pod name', 'startup time (s)', 'task time (s)', 'shutdown time (s)', 'total time (s)'])
+            writer.writerow([
+                'date', 'timestamp', 'pod name',
+                'processor/gpu name', 'core/gpu count', 'max usage (%)',
+                'max gpu temperature (C)', 'max pwr:usage/cap (%)', 'max vram usage (%)',
+                'startup time (s)', 'task time (s)', 'shutdown time (s)', 'total time (s)'
+            ])
         now = datetime.now()
-        total_time = start_time + task_time + shutdown_time
-        writer.writerow([now.strftime("%Y-%m-%d"), now.strftime("%H%M%S"), pod_name, f"{start_time:.3f}", f"{task_time:.3f}", f"{shutdown_time:.3f}", f"{total_time:.3f}"])
+        total_time = None
+        if all(v is not None for v in [startup_time, task_time, shutdown_time]):
+            total_time = startup_time + task_time + shutdown_time
+        writer.writerow([
+            now.strftime("%Y-%m-%d"), now.strftime("%H%M%S"), pod_name,
+            gpu_name, gpu_count, max_utilization,
+            max_temperature, max_power_usage, max_vram_usage,
+            f"{startup_time:.3f}" if startup_time else None,
+            f"{task_time:.3f}" if task_time else None,
+            f"{shutdown_time:.3f}" if shutdown_time else None,
+            f"{total_time:.3f}" if total_time else None
+        ])
 
 def run_container_and_measure(image, task_command):
     start_all = time.time()
@@ -74,10 +90,14 @@ def run_container_and_measure(image, task_command):
     subprocess.run(['podman', 'rm', '-f', 'timed-container'], check=True)
     shutdown_time = time.time() - start
 
-    # Get pod name just for reference
     pod_name = get_pod_info()
+    gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage = get_gpu_info()
 
-    write_timing_to_csv(startup_time, task_time, shutdown_time, pod_name)
+    write_to_csv(
+        pod_name, gpu_name, gpu_count, max_utilization,
+        max_temperature, max_power_usage, max_vram_usage,
+        startup_time, task_time, shutdown_time
+    )
 
     return {
         'startup_time': startup_time,
@@ -86,7 +106,6 @@ def run_container_and_measure(image, task_command):
         'total_time': time.time() - start_all
     }
 
-# Example usage:
 if __name__ == '__main__':
     image_name = 'python:3.11-slim'
     task = ['python3', '-c', 'print("Hello from inside container")']

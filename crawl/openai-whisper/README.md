@@ -1,5 +1,16 @@
 # OpenAI Whisper
 
+|cmd|model|size|image|processor|input|deployment|platform|
+|-|-|-|-|-|-|-|-|
+|default|whisper|base|ubuntu|T4|Harvard|Embedded inference microservices|Linux|
+|optimized| |tiny.en|ubi9|L4|JFK Inaugural Address|Decoupled model servers|Kubernetes|
+| | |base.en|ubi9-minimal|A10G|JFK Rice University| | |
+| | |small.en| |H100| | | |
+| | |medium.en| |Intel Cascade Lake| | | |
+| | |large| |AWS Graviton3| | | |
+| | |turbo| |AMD EPYC 7003 (Milan)| | | |
+| | | | |Intel Sapphire Rapids| | | |
+
 ## Process
 
 1. Build Dockerfiles for Whisper on Ubuntu and UBI
