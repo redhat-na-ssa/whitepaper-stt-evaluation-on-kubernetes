@@ -118,6 +118,8 @@ From the root directory of whitepaper-stt-evaluation-on-kubernetes:
 
 1. (optional) Preloaded models for faster startup or air-gapped environments
 
+    IMPORTANT: you may run out of disk space if you attempt to run all of the builds.
+
     ```sh
     # ubuntu whisper models
     for model in tiny.en base.en small.en medium.en large turbo; do
@@ -125,14 +127,18 @@ From the root directory of whitepaper-stt-evaluation-on-kubernetes:
     echo "🔧 Building image: $tag"
     podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubuntu/.
     done
+    ```
 
+    ```sh
     # ubi9-platform whisper
     for model in tiny.en base.en small.en medium.en large turbo; do
     tag="whisper-${model}:ubi9"
     echo "🔧 Building image: $tag"
     podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubi/platform/.
     done
+    ```
 
+    ```sh
     # ubi9-minimal whisper
     for model in tiny.en base.en small.en medium.en large turbo; do
     tag="whisper-${model}:ubi9-minimal"
@@ -140,6 +146,6 @@ From the root directory of whitepaper-stt-evaluation-on-kubernetes:
     podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubi/minimal/.
     done
     ```
-    
 
-1. 
+1. launch host metrics
+1. execute base test
