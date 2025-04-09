@@ -181,5 +181,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logger = logging.getLogger()
     logging.basicConfig(level=args.log_level)
-    run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language, args.hypothesis_file)
+    run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language, args.hypothesis_file, args.output_dir, args.output_format)
 
