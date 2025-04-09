@@ -131,7 +131,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     csv_temp_path = os.path.join(output_dir, csv_filename)
     file_exists = os.path.isfile(csv_temp_path)
     
-    executed_command = f"{PYTHON_EXECUTABLE} evaluation-scripts/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language} --output_dir {output_dir}"
+    executed_command = f"{PYTHON_EXECUTABLE} evaluation-scripts/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language} --output_dir {output_dir} --output_format txt"
     
     #
     # Write out the benchmark results. 
@@ -170,9 +170,10 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", default="tiny.en", help="Name of the Whisper model to use.")
     parser.add_argument("--input", default="input-samples/harvard.wav", help="Path to the input audio file.")
     parser.add_argument("--model_dir", default="/tmp/", help="Directory for storing the model.")
-    parser.add_argument("--output_dir", default="/metrics/", help="Directory for storing the output.")
+    parser.add_argument("--output_dir", default="metrics/", help="Directory for storing the output.")
+    parser.add_argument("--output_format", default="txt", help="Format of the output file.")
     parser.add_argument("--reference_file", default="ground-truth/harvard.txt", help="Path to the reference text file for accuracy evaluation.")
-    parser.add_argument("--hypothesis_file", default="/metrics/harvard.txt", help="Path to the hypothesis text file.")
+    parser.add_argument("--hypothesis_file", default="metrics/harvard.txt", help="Path to the hypothesis text file.")
     parser.add_argument("--language", default="en", help="Language for Whisper transcription.")
     parser.add_argument("--log_level", default="INFO", help="Sets python logging to ERROR, WARNING (default), INFO or DEBUG")
 
