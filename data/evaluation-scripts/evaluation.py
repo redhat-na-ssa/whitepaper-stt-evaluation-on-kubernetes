@@ -170,7 +170,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", default="tiny.en", help="Name of the Whisper model to use.")
     parser.add_argument("--input", default="input-samples/harvard.wav", help="Path to the input audio file.")
     parser.add_argument("--model_dir", default="/tmp/", help="Directory for storing the model.")
-    parser.add_argument("--output_dir", default="/tmp/", help="Directory for storing the output.")
+    parser.add_argument("--output_dir", default="/metrics/", help="Directory for storing the output.")
     parser.add_argument("--reference_file", default="ground-truth/harvard.txt", help="Path to the reference text file for accuracy evaluation.")
     parser.add_argument("--hypothesis_file", default="/tmp/harvard.txt", help="Path to the hypothesis text file.")
     parser.add_argument("--language", default="en", help="Language for Whisper transcription.")
