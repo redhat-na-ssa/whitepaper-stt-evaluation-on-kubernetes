@@ -93,6 +93,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     logger.debug(f'{current_function_name}: model_name = {model_name}')
     logger.debug(f'{current_function_name}: model_dir = {model_dir}')
     logger.debug(f'{current_function_name}: output_dir = {output_dir}')
+    logger.debug(f'{current_function_name}: output_dir = {output_format}')
     logger.debug(f'{current_function_name}: reference_file = {reference_file}')
     logger.debug(f'{current_function_name}: language = {language}')
     logger.debug(f'{current_function_name}: hypothesis_file = {hypothesis_file}')
@@ -181,5 +182,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logger = logging.getLogger()
     logging.basicConfig(level=args.log_level)
-    run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language, args.hypothesis_file, args.output_dir, args.output_format)
+    run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language, args.hypothesis_file, args.output_format)
 
