@@ -7,7 +7,7 @@
 #       collapse-csvs.sh input_directory
 #
 # This script is intended to be run from the command line.
-# It is assumed that the CSV files are in /tmp and have a .csv extension.
+# It is assumed that the CSV files are in the input_directory and have a .csv extension.
 # 
 
 if [ $# -ne 1 ];
