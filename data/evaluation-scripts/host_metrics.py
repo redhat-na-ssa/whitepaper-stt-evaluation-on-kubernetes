@@ -7,10 +7,10 @@ from datetime import datetime
 def get_pod_info():
     try:
         pod_info = subprocess.check_output(['podman', 'ps', '--format', '{{.Names}}']).decode().strip()
-        pod_name = pod_info if pod_info else 'No Pod'
+        pod_names = pod_info.split('\n') if pod_info else ['No Pod']
     except subprocess.CalledProcessError:
-        pod_name = 'Error Retrieving Pod'
-    return pod_name
+        pod_names = ['Error Retrieving Pods']
+    return pod_names
 
 def get_cpu_info():
     try:
