@@ -85,7 +85,7 @@ def evaluate_accuracy(hypothesis_path, reference_path):
 
 from transcribe_audio import transcribe_audio
 
-def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_file, language, hypothesis_file):
+def run_whisper(model, input_file, model_name, model_dir, output_dir, output_format, reference_file, language, hypothesis_file):
 
     current_function_name = sys._getframe().f_code.co_name
     logger.debug(f'{current_function_name}: model = {model}')
@@ -93,7 +93,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     logger.debug(f'{current_function_name}: model_name = {model_name}')
     logger.debug(f'{current_function_name}: model_dir = {model_dir}')
     logger.debug(f'{current_function_name}: output_dir = {output_dir}')
-    logger.debug(f'{current_function_name}: output_dir = {output_format}')
+    logger.debug(f'{current_function_name}: output_format = {output_format}')
     logger.debug(f'{current_function_name}: reference_file = {reference_file}')
     logger.debug(f'{current_function_name}: language = {language}')
     logger.debug(f'{current_function_name}: hypothesis_file = {hypothesis_file}')
