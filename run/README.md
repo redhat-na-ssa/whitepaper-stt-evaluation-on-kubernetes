@@ -305,8 +305,6 @@ oc exec $RIVA_CLIENT -- python3 examples/transcribe_file.py --model-name parakee
   --input-file /opt/riva/wav/en-US_sample.wav --server riva-api:50051
 ```
 
-> TODO: Add optimized Whisper and Canary
-
 **Optional: Transcribe live with an audio mic**
 
 > Note: This requires you to download the repo to your machine that has an audio mic
