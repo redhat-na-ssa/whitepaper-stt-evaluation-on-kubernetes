@@ -23,7 +23,10 @@ def get_cpu_info():
 
 def get_gpu_info():
     try:
-        gpu_data = subprocess.check_output(['nvidia-smi', '--query-gpu=name,count,utilization.gpu,temperature.gpu,power.draw,power.limit,memory.used,memory.total', '--format=csv,noheader']).decode().strip()
+        gpu_data = subprocess.check_output([
+            'nvidia-smi',
+            '--query-gpu=name,count,utilization.gpu,temperature.gpu,power.draw,power.limit,memory.used,memory.total',
+            '--format=csv,noheader']).decode().strip()
         if gpu_data:
             gpu_info = [line.split(', ') for line in gpu_data.split('\n')]
             gpu_name = gpu_info[0][0]
@@ -38,26 +41,73 @@ def get_gpu_info():
         gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage = get_cpu_info() + (None, None, None)
     return gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage
 
-def write_to_csv(pod_name, gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage):
+def write_to_csv(pod_name, gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage,
+                 startup_time=None, task_time=None, shutdown_time=None):
     output_dir = 'data/output'
     os.makedirs(output_dir, exist_ok=True)
     file_path = os.path.join(output_dir, 'pod_host_usage.csv')
-    
+
     file_exists = os.path.isfile(file_path)
-    
+
     with open(file_path, mode='a', newline='') as file:
         writer = csv.writer(file)
         if not file_exists:
-            writer.writerow(['date', 'timestamp', 'pod name', 'processor/gpu name', 'core/gpu count', 'max usage (%)', 'max gpu temperature (C)', 'max pwr:usage/cap (%)', 'max vram usage (%)'])
+            writer.writerow([
+                'date', 'timestamp', 'pod name',
+                'processor/gpu name', 'core/gpu count', 'max usage (%)',
+                'max gpu temperature (C)', 'max pwr:usage/cap (%)', 'max vram usage (%)',
+                'startup time (s)', 'task time (s)', 'shutdown time (s)', 'total time (s)'
+            ])
         now = datetime.now()
-        writer.writerow([now.strftime("%Y-%m-%d"), now.strftime("%H%M%S"), pod_name, gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage])
+        total_time = None
+        if all(v is not None for v in [startup_time, task_time, shutdown_time]):
+            total_time = startup_time + task_time + shutdown_time
+        writer.writerow([
+            now.strftime("%Y-%m-%d"), now.strftime("%H%M%S"), pod_name,
+            gpu_name, gpu_count, max_utilization,
+            max_temperature, max_power_usage, max_vram_usage,
+            f"{startup_time:.3f}" if startup_time else None,
+            f"{task_time:.3f}" if task_time else None,
+            f"{shutdown_time:.3f}" if shutdown_time else None,
+            f"{total_time:.3f}" if total_time else None
+        ])
 
-def main():
-    while True:
-        pod_name = get_pod_info()
-        gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage = get_gpu_info()
-        write_to_csv(pod_name, gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage)
-        time.sleep(10)  # Adjust the interval as needed
+def run_container_and_measure(image, task_command):
+    start_all = time.time()
+
+    # Start container
+    start = time.time()
+    subprocess.run(['podman', 'run', '-d', '--name', 'timed-container', image, 'sleep', '60'], check=True)
+    startup_time = time.time() - start
+
+    # Execute task inside container
+    start = time.time()
+    subprocess.run(['podman', 'exec', 'timed-container'] + task_command, check=True)
+    task_time = time.time() - start
+
+    # Stop and remove container
+    start = time.time()
+    subprocess.run(['podman', 'rm', '-f', 'timed-container'], check=True)
+    shutdown_time = time.time() - start
+
+    pod_name = get_pod_info()
+    gpu_name, gpu_count, max_utilization, max_temperature, max_power_usage, max_vram_usage = get_gpu_info()
+
+    write_to_csv(
+        pod_name, gpu_name, gpu_count, max_utilization,
+        max_temperature, max_power_usage, max_vram_usage,
+        startup_time, task_time, shutdown_time
+    )
+
+    return {
+        'startup_time': startup_time,
+        'task_time': task_time,
+        'shutdown_time': shutdown_time,
+        'total_time': time.time() - start_all
+    }
 
 if __name__ == '__main__':
-    main()
+    image_name = 'python:3.11-slim'
+    task = ['python3', '-c', 'print("Hello from inside container")']
+    times = run_container_and_measure(image_name, task)
+    print("Timing:", times)

@@ -85,7 +85,7 @@ def evaluate_accuracy(hypothesis_path, reference_path):
 
 from transcribe_audio import transcribe_audio
 
-def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_file, language, hypothesis_file):
+def run_whisper(model, input_file, model_name, model_dir, output_dir, output_format, reference_file, language, hypothesis_file):
 
     current_function_name = sys._getframe().f_code.co_name
     logger.debug(f'{current_function_name}: model = {model}')
@@ -93,6 +93,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     logger.debug(f'{current_function_name}: model_name = {model_name}')
     logger.debug(f'{current_function_name}: model_dir = {model_dir}')
     logger.debug(f'{current_function_name}: output_dir = {output_dir}')
+    logger.debug(f'{current_function_name}: output_format = {output_format}')
     logger.debug(f'{current_function_name}: reference_file = {reference_file}')
     logger.debug(f'{current_function_name}: language = {language}')
     logger.debug(f'{current_function_name}: hypothesis_file = {hypothesis_file}')
@@ -131,7 +132,7 @@ def run_whisper(model, input_file, model_name, model_dir, output_dir, reference_
     csv_temp_path = os.path.join(output_dir, csv_filename)
     file_exists = os.path.isfile(csv_temp_path)
     
-    executed_command = f"{PYTHON_EXECUTABLE} evaluation-scripts/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language}"
+    executed_command = f"{PYTHON_EXECUTABLE} evaluation-scripts/evaluation.py --model_name {model_name} --input {input_file} --reference_file {reference_file} --language {language} --output_dir {output_dir} --output_format txt"
     
     #
     # Write out the benchmark results. 
@@ -170,9 +171,10 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", default="tiny.en", help="Name of the Whisper model to use.")
     parser.add_argument("--input", default="input-samples/harvard.wav", help="Path to the input audio file.")
     parser.add_argument("--model_dir", default="/tmp/", help="Directory for storing the model.")
-    parser.add_argument("--output_dir", default="/tmp/", help="Directory for storing the output.")
+    parser.add_argument("--output_dir", default="metrics/", help="Directory for storing the output.")
+    parser.add_argument("--output_format", default="txt", help="Format of the output file.")
     parser.add_argument("--reference_file", default="ground-truth/harvard.txt", help="Path to the reference text file for accuracy evaluation.")
-    parser.add_argument("--hypothesis_file", default="/tmp/harvard.txt", help="Path to the hypothesis text file.")
+    parser.add_argument("--hypothesis_file", default="metrics/harvard.txt", help="Path to the hypothesis text file.")
     parser.add_argument("--language", default="en", help="Language for Whisper transcription.")
     parser.add_argument("--log_level", default="INFO", help="Sets python logging to ERROR, WARNING (default), INFO or DEBUG")
 
@@ -180,5 +182,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logger = logging.getLogger()
     logging.basicConfig(level=args.log_level)
-    run_whisper(args.model, args.input, args.model_name, args.model_dir, args.output_dir, args.reference_file, args.language, args.hypothesis_file)
+    run_whisper(
+        model=args.model,
+        input_file=args.input,
+        model_name=args.model_name,
+        model_dir=args.model_dir,
+        output_dir=args.output_dir,
+        output_format=args.output_format,
+        reference_file=args.reference_file,
+        language=args.language,
+        hypothesis_file=args.hypothesis_file
+    )
 
