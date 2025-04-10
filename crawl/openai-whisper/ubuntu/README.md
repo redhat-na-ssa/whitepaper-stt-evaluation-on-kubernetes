@@ -40,7 +40,8 @@ podman images
 podman run --rm -it \
   --name whisper-ubuntu-cpu \
   -v $(pwd)/data:/data:z \
-  localhost/whisper:ubuntu /bin/bash
+  whisper:tiny.en-ubuntu
+  /bin/bash
 
 # TODO set umask to 0002
 

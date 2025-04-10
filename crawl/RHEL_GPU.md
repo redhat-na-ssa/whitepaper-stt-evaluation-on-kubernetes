@@ -2,21 +2,33 @@
 
 ## Create RHEL VM in AWS
 
-### Get AWS Instance
+From your browser:
 
-[Red Hat Demo Platform](https://demo.redhat.com) options:
-
-- <a href="https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/sandboxes-gpte.sandbox-open.prod&utm_source=webapp&utm_medium=share-linktarget=" target="_blank">AWS Blank Open Environment</a>
+1. go to demo Catalog at (demo.redhat.com)[demo.redhat.com]
+1. select (Open Environments)[https://catalog.demo.redhat.com/catalog?category=Open_Environments]
+1. request (AWS Blank Open Environment)[https://catalog.demo.redhat.com/catalog?category=Open_Environments&item=babylon-catalog-test%2Fsandboxes-gpte.rosa.test]
+1. set `Activity` to `Practice / Enablement`
+1. set `Purpose` to `Trying out a technical solution`
+1. `check` the cost disclaimer
+1. select `Order`
+1. wait for environment to provision - e-mail subject `RHDP service AWS Blank Open Environment ---- is ready`
 
 ### Optional: Setup `aws` cli
 
 This section is optional and **not** required if using AWS CloudShell.
 
-run `aws configure` and enter information
+Prerequisite the github repository is cloned.
 
-example output
+From the root directory of whitepaper-stt-evaluation-on-kubernetes:
+
+1. run `aws configure` and enter information
+1. update your `AWS Access Key ID` and `AWS Secret Access Key` from the confirmation e-mail
+1. (optional) change the `INSTANCE_TYPE=g6.xlarge` variable
+1. execute the provisioning script `./crawl/provision_rhel_aws.sh`
+1. wait for completion to get `ssh` login command
 
 ```output
+# example output
 AWS Access Key ID [****************G6M5]: 
 AWS Secret Access Key [****************vzRg]: 
 Default region name [us-east-2]: 
@@ -89,6 +101,15 @@ sudo dkms status
 sudo dkms install nvidia/570.124.06
 
 sudo reboot
+```
+
+### Install `psutil`
+
+(source)[https://github.com/giampaolo/psutil/blob/master/INSTALL.rst]
+
+```sh
+sudo yum install gcc python3-devel
+pip install --no-binary :all: psutil
 ```
 
 ### Setup `podman`
