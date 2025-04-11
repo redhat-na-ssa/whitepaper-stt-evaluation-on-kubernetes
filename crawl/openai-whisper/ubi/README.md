@@ -1,24 +1,6 @@
 # Whisper on UBI
 
-Some key changes in the Dockerfiles:
-
-Overall
-    -(RHEL 9)[https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/building_running_and_managing_containers/index#con_configuring-container-registries_working-with-container-registries] is more like Ubuntu 22.04 than RHEL 8 in terms of package versions, kernel, and security features.
-        - ships with Linux kernel 5.14, which is closer to Ubuntu 22.04’s Linux kernel 5.15.
-        - Uses glibc 2.34 (same as Ubuntu 22.04).
-        - RHEL 9 and Ubuntu 22.04: OpenSSL 3, system-wide cryptographic policies.
-        - RHEL 9 and Ubuntu 22.04 both include newer versions of Python (Python 3.9+), Node.js, and container tools.
-    - Basic tooling, gcc gcc-c++ make automake autoconf libtool git diffutils
-    - Built ffmpeg from source
-    - Change permissions in order to share the volume with sample  audio files.
-Minimal
-    - Install Python 3.12
-Platform
-    - Using the Python 3.12 prebuilt language image.
-
-## Whisper UBI on CPU
-
-What is (UBI)[https://catalog.redhat.com/software/base-images]? 
+## What is (UBI)[https://catalog.redhat.com/software/base-images]? 
 
 - **Built from a subset of RHEL content:** Red Hat Universal Base images are built from a subset of normal Red Hat Enterprise Linux content.
 - **Redistributable:** UBI images allow standardization for Red Hat customers, partners, ISVs, and others. With UBI images, you can build your container images on a foundation of official Red Hat software that can be freely shared and deployed.
@@ -30,129 +12,188 @@ What is (UBI)[https://catalog.redhat.com/software/base-images]?
   - **Adding UBI RPMs:** You can add RPM packages to UBI images from preconfigured UBI repositories. If you happen to be in a disconnected environment, you must allowlist the UBI Content Delivery Network (https://cdn-ubi.redhat.com) to use that feature. For more information, see the Red Hat Knowledgebase solution Connect to https://cdn-ubi.redhat.com.
 - **Licensing:** You are free to use and redistribute UBI images, provided you adhere to the Red Hat Universal Base Image End User Licensing Agreement.
 
-## Whisper Platform Python UBI
+# Whisper on UBI
+
+Some of the packages that were as simple as a `pip install` on Ubuntu are not available and require a little more effort:
+
+1. ffmpeg
+1. Python
+1. Openai-whisper
+
+We also have the option of building a minimal container.
+
+## Review the Dockerfiles
+
+Some key changes in the Dockerfiles:
+
+Overall
+    -(RHEL 9)[https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/building_running_and_managing_containers/index#con_configuring-container-registries_working-with-container-registries] is more like Ubuntu 22.04 than RHEL 8 in terms of package versions, kernel, and security features.
+        - ships with Linux kernel 5.14, which is closer to Ubuntu 22.04’s Linux kernel 5.15.
+        - Uses glibc 2.34 (same as Ubuntu 22.04).
+        - RHEL 9 and Ubuntu 22.04: OpenSSL 3, system-wide cryptographic policies.
+        - RHEL 9 and Ubuntu 22.04 both include newer versions of Python (Python 3.9+), Node.js, and container tools.
+    - Basic tooling, gcc gcc-c++ make automake autoconf libtool git diffutils
+    - Built ffmpeg from source
+    - Change permissions in order to share the volume with sample  audio files
 
 ```sh
-# Terminal 1 of 2
-# Step 0: watch NVIDIA consumption
-watch -n 0.1 nvidia-smi
-
-# Step 0: Review the UBI Dockerfile
-cat crawl/openai-whisper/ubi/Dockerfile
-
-# Step 1: Build an UBI container image
-podman build -t whisper:ubi9 crawl/openai-whisper/ubi/platform/.
-
-# Step 2: Review the available images
-podman images
-
-# Expected output
-# REPOSITORY                                 TAG         IMAGE ID      CREATED             SIZE
-# localhost/whisper                          ubi         bf845e793179  About a minute ago  7.06 GB
-# localhost/whisper                          ubuntu      23908f6da923  11 minutes ago      6.65 GB
-# registry.access.redhat.com/ubi8/python-39  <none>      b88c25db9cfd  2 weeks ago         917 MB
-# docker.io/library/ubuntu                   22.04       a24be041d957  5 weeks ago         80.4 MB
-
-# Step 3: Run the image on CPU
-podman run --rm -it --name whisper-ubi-cpu \
-    -v $(pwd)/data:/data:z \
-    localhost/whisper:ubi9 /bin/bash
-
-# Step 4: Test transcription and view the output
-time whisper input-samples/harvard.wav --output_dir /tmp/ --model_dir /tmp/ --output_format txt --language en --task transcribe
-
-# Expected output
-# 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
-# /usr/local/lib/python3.10/dist-packages/whisper/transcribe.py:126: UserWarning: FP16 is not supported on CPU; using FP32 instead
-#   warnings.warn("FP16 is not supported on CPU; using FP32 instead")
-# Detecting language using up to the first 30 seconds. Use `--language` to specify the language
-# Detected language: English
-# [00:00.800 --> 00:03.620]  The stale smell of old beer lingers.
-# [00:04.420 --> 00:06.200]  It takes heat to bring out the odor.
-# [00:07.040 --> 00:09.360]  A cold dip restores health and zest.
-# [00:09.980 --> 00:12.060]  A salt pickle tastes fine with ham.
-# [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
-# [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
-
-# Step 5: Compare output against ground truth
-diff ground-truth/harvard.txt /tmp/harvard.txt
-
-# Expected output
-# 1,6c1,8
-# < The stale smell of old beer lingers.
-# < It takes heat to bring out the odor.
-# < A cold dip restores health and zest.
-# < A salt pickle tastes fine with ham.
-# < Tacos al pastor are my favorite.
-# < A zestful food is the hot cross bun.
-# \ No newline at end of file
-# ---
-# > Detecting language using up to the first 30 seconds. Use `--language` to specify the language
-# > Detected language: English
-# > [00:00.800 --> 00:03.620]  The stale smell of old beer lingers.
-# > [00:04.420 --> 00:06.200]  It takes heat to bring out the odor.
-# > [00:07.040 --> 00:09.360]  A cold dip restores health and zest.
-# > [00:09.980 --> 00:12.060]  A salt pickle tastes fine with ham.
-# > [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
-# > [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
-
-# Step 6: Observations
-- Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
-- Whisper adds timestamps before each transcribed line the ground-truth file does not have. 
+# review the platform dockerfile
+cat crawl/openai-whisper/ubi/platform/Dockerfile  
 ```
 
-## Whisper Platform Python UBI on GPU
-
+## Build the Dockerfile embedding the model
+    
 ```sh
-# Step 0: Terminal 1 of 2 - watch NVIDIA consumption
-watch -n 0.1 nvidia-smi
-
-# Step 0: Terminal 2 of 2 - Run the image on GPU
-podman run --rm -it --name whisper-ubi-gpu-harvard \
-    --security-opt=label=disable \
-    --device nvidia.com/gpu=all \
-    -v $(pwd)/data:/data:z \
-    localhost/whisper:ubi /bin/bash
-
-# Step 1: Test transcription and view the output
-time whisper input-samples/harvard.wav --output_dir /tmp/ --output_format txt --language en --task transcribe
-
-# Expected output
-# 100%|█████████████████████████████████████| 1.51G/1.51G [00:46<00:00, 35.1MiB/s]
-# /usr/local/lib/python3.10/dist-packages/whisper/transcribe.py:126: UserWarning: FP16 is not supported on CPU; using FP32 instead
-#   warnings.warn("FP16 is not supported on CPU; using FP32 instead")
-# Detecting language using up to the first 30 seconds. Use `--language` to specify the language
-# Detected language: English
-# [00:00.800 --> 00:03.620]  The stale smell of old beer lingers.
-# [00:04.420 --> 00:06.200]  It takes heat to bring out the odor.
-# [00:07.040 --> 00:09.360]  A cold dip restores health and zest.
-# [00:09.980 --> 00:12.060]  A salt pickle tastes fine with ham.
-# [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
-# [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
-
-# Step 5: Compare output against ground truth
-diff ground-truth/harvard.txt /tmp/harvard.txt
-
-# Expected output
-# 1,6c1,8
-# < The stale smell of old beer lingers.
-# < It takes heat to bring out the odor.
-# < A cold dip restores health and zest.
-# < A salt pickle tastes fine with ham.
-# < Tacos al pastor are my favorite.
-# < A zestful food is the hot cross bun.
-# \ No newline at end of file
-# ---
-# > Detecting language using up to the first 30 seconds. Use `--language` to specify the language
-# > Detected language: English
-# > [00:00.800 --> 00:03.620]  The stale smell of old beer lingers.
-# > [00:04.420 --> 00:06.200]  It takes heat to bring out the odor.
-# > [00:07.040 --> 00:09.360]  A cold dip restores health and zest.
-# > [00:09.980 --> 00:12.060]  A salt pickle tastes fine with ham.
-# > [00:12.660 --> 00:14.360]  Tacos al pastor are my favorite.
-# > [00:15.120 --> 00:17.500]  A zestful food is the hot cross bun.
-
-# Step 6: Observations
-- Whisper prints metadata `Detecting language`  at the beginning, not part of the actual transcription but Whisper's internal logging
-- Whisper adds timestamps before each transcribed line the ground-truth file does not have.
+# build the platform dockerfile
+for model in tiny.en base.en small.en medium.en large turbo; do
+    tag="whisper:${model}-ubi9-minimal"
+    echo "🔧 Building image: $tag"
+    podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubi/platform/.
+done
 ```
+
+## Test the UBI9 containers
+
+### Harvard
+
+#### tiny.en
+
+1. whisper tiny.en ubi9 cpu harvard fast
+
+    ```sh
+    # start the container on cpu
+    podman run --rm -it --name whisper-tiny-en-ubi9 -v $(pwd)/data/:/data/:z whisper:tiny.en-ubi9 /bin/bash
+
+    # default whisper command
+    time whisper input-samples/harvard.wav \
+    --model tiny.en \
+    --model_dir /tmp/ \
+    --output_dir metrics/ \
+    --output_format txt \
+    --language en \
+    --task transcribe \
+    --fp16 False
+
+    # calculate WER 0.00% means the transcription matches the ground truth exactly
+    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    
+    # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
+    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+
+    # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
+    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+
+    # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
+    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+
+    # stop the container
+    exit
+    ```
+
+1. whisper tiny.en ubi9 cpu harvard complex
+
+    ```sh
+    # start the container on cpu
+    podman run --rm -it --name whisper-tiny-en-ubi9 -v $(pwd)/data/:/data/:z whisper:tiny.en-ubi9 /bin/bash
+
+    # default whisper command
+    time whisper input-samples/harvard.wav \
+    --model tiny.en \
+    --model_dir /tmp/ \
+    --output_dir metrics/ \
+    --output_format txt \
+    --language en \
+    --task transcribe \
+    --fp16 False \
+    --beam_size 10 \
+    --temperature 0 \
+    --patience 2 \
+    --suppress_tokens -1 \
+    --compression_ratio_threshold 2.0 \
+    --logprob_threshold -0.5 \
+    --no_speech_threshold 0.4
+
+    # calculate WER 0.00% means the transcription matches the ground truth exactly
+    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    
+    # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
+    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+
+    # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
+    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+
+    # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
+    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+
+    # stop the container
+    exit
+    ```
+
+1. whisper tiny.en ubi9 gpu harvard fast
+
+    ```sh
+    # start the container on gpu
+    podman run --rm -it --name whisper-tiny-en-ubi9-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/data/:z whisper:tiny.en-ubi9 /bin/bash
+
+    # default whisper command
+    whisper input-samples/harvard.wav \
+    --model tiny.en \
+    --model_dir /tmp/ \
+    --output_dir metrics/ \
+    --output_format txt \
+    --language en \
+    --task transcribe
+
+    # calculate WER 0.00% means the transcription matches the ground truth exactly
+    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    
+    # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
+    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+
+    # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
+    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+
+    # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
+    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+
+    # stop the container
+    exit
+    ```
+
+1. whisper tiny.en ubi9 gpu harvard complex
+
+    ```sh
+    # start the container on gpu
+    podman run --rm -it --name whisper-tiny-en-ubi9-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/data/:z whisper:tiny.en-ubi9 /bin/bash
+
+    # default whisper command
+    whisper input-samples/harvard.wav \
+    --model tiny.en \
+    --model_dir /tmp/ \
+    --output_dir metrics/ \
+    --output_format txt \
+    --language en \
+    --task transcribe \
+    --beam_size 10 \
+    --temperature 0 \
+    --patience 2 \
+    --suppress_tokens -1 \
+    --compression_ratio_threshold 2.0 \
+    --logprob_threshold -0.5 \
+    --no_speech_threshold 0.4
+
+    # calculate WER 0.00% means the transcription matches the ground truth exactly
+    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    
+    # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
+    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+
+    # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
+    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+
+    # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
+    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+
+    # stop the container
+    exit
+    ```

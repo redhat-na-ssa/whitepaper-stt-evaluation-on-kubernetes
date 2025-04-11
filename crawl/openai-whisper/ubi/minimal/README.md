@@ -1,38 +1,61 @@
-# Whisper on Ubuntu
+# Whisper on UBI
 
-If you follow the steps from https://github.com/openai/whisper?tab=readme-ov-file#setup, there are some basic packages to install:
+## What is (UBI)[https://catalog.redhat.com/software/base-images]? 
+
+- **Built from a subset of RHEL content:** Red Hat Universal Base images are built from a subset of normal Red Hat Enterprise Linux content.
+- **Redistributable:** UBI images allow standardization for Red Hat customers, partners, ISVs, and others. With UBI images, you can build your container images on a foundation of official Red Hat software that can be freely shared and deployed.
+- **Provide a set of four base images:** micro, minimal, standard, and init.
+- **Provide a set of pre-built language runtime container images:** The runtime images based on Application Streams provide a foundation for applications that can benefit from standard, supported runtimes such as python, perl, php, dotnet, nodejs, and ruby.
+- **Provide a set of associated DNF repositories:** DNF repositories include RPM packages and updates that allow you to add application dependencies and rebuild UBI container images.
+  - The ubi-9-baseos repository holds the redistributable subset of RHEL packages you can include in your container.
+  - The ubi-9-appstream repository holds Application streams packages that you can add to a UBI image to help you standardize the environments you use with applications that require particular runtimes.
+  - **Adding UBI RPMs:** You can add RPM packages to UBI images from preconfigured UBI repositories. If you happen to be in a disconnected environment, you must allowlist the UBI Content Delivery Network (https://cdn-ubi.redhat.com) to use that feature. For more information, see the Red Hat Knowledgebase solution Connect to https://cdn-ubi.redhat.com.
+- **Licensing:** You are free to use and redistribute UBI images, provided you adhere to the Red Hat Universal Base Image End User Licensing Agreement.
+
+# Whisper on UBI
+
+Some of the packages that were as simple as a `pip install` on Ubuntu are not available and require a little more effort:
 
 1. ffmpeg
 1. Python
 1. Openai-whisper
 
-## Review the Dockerfile
+We also have the option of building a minimal container.
 
-  ```sh
-  cat crawl/openai-whisper/ubuntu/Dockerfile 
-  ```
+## Review the Dockerfiles
+
+Some key changes in the Dockerfiles:
+
+Overall
+    - TBP
+
+```sh
+# review the minimal dockerfile
+cat crawl/openai-whisper/ubi/minimal/Dockerfile  
+```
 
 ## Build the Dockerfile embedding the model
-
-  ```sh
-  for model in tiny.en base.en small.en medium.en large turbo; do
-    tag="whisper:${model}-ubuntu"
+    
+```sh
+# build the minimal dockerfile
+for model in tiny.en base.en small.en medium.en large turbo; do
+    tag="whisper:${model}-ubi9-minimal-minimal"
     echo "🔧 Building image: $tag"
-    podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubuntu/.
-  done
-  ```
+    podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubi/minimal/.
+done
+```
 
-## Test the containers
+## Test the UBI9 containers
 
 ### Harvard
 
 #### tiny.en
 
-1. whisper tiny.en ubuntu cpu harvard fast
+1. whisper tiny.en ubi9 cpu harvard fast
 
     ```sh
     # start the container on cpu
-    podman run --rm -it --name whisper-tiny-en-ubuntu -v $(pwd)/data/:/data/:z whisper:tiny.en-ubuntu /bin/bash
+    podman run --rm -it --name whisper-tiny-en-ubi9-minimal -v $(pwd)/data/:/data/:z whisper:tiny.en-ubi9-minimal /bin/bash
 
     # default whisper command
     time whisper input-samples/harvard.wav \
@@ -60,11 +83,11 @@ If you follow the steps from https://github.com/openai/whisper?tab=readme-ov-fil
     exit
     ```
 
-1. whisper tiny.en ubuntu cpu harvard complex
+1. whisper tiny.en ubi9 cpu harvard complex
 
     ```sh
     # start the container on cpu
-    podman run --rm -it --name whisper-tiny-en-ubuntu -v $(pwd)/data/:/data/:z whisper:tiny.en-ubuntu /bin/bash
+    podman run --rm -it --name whisper-tiny-en-ubi9-minimal -v $(pwd)/data/:/data/:z whisper:tiny.en-ubi9-minimal /bin/bash
 
     # default whisper command
     time whisper input-samples/harvard.wav \
@@ -99,11 +122,11 @@ If you follow the steps from https://github.com/openai/whisper?tab=readme-ov-fil
     exit
     ```
 
-1. whisper tiny.en ubuntu gpu harvard fast
+1. whisper tiny.en ubi9 gpu harvard fast
 
     ```sh
     # start the container on gpu
-    podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/data/:z whisper:tiny.en-ubuntu /bin/bash
+    podman run --rm -it --name whisper-tiny-en-ubi9-minimal-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/data/:z whisper:tiny.en-ubi9-minimal /bin/bash
 
     # default whisper command
     whisper input-samples/harvard.wav \
@@ -130,11 +153,11 @@ If you follow the steps from https://github.com/openai/whisper?tab=readme-ov-fil
     exit
     ```
 
-1. whisper tiny.en ubuntu gpu harvard complex
+1. whisper tiny.en ubi9 gpu harvard complex
 
     ```sh
     # start the container on gpu
-    podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/data/:z whisper:tiny.en-ubuntu /bin/bash
+    podman run --rm -it --name whisper-tiny-en-ubi9-minimal-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/data/:z whisper:tiny.en-ubi9-minimal /bin/bash
 
     # default whisper command
     whisper input-samples/harvard.wav \

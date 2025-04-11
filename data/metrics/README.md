@@ -1,6 +1,15 @@
 # Evaluation Output
 
-Directory files:
+Location for output from the podman_container_monitor.py and run-whisper-benchmark.sh scripts.
 
-1. host_metrics.csv - from the evaluation-scripts/host_metrics.py script
-1. whisper_metrics.csv - from the evaluation-scripts/evaluation.py script
+Example podman_container_monitor.py
+
+```sh
+container_metrics.csv 
+```
+
+Example run-whisper-benchmark.sh
+
+```sh
+experiment_metrics.csv 
+```
