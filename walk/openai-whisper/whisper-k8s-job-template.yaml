@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: whisper-transcribe-job
+spec:
+  template:
+    metadata:
+      labels:
+        app: whisper-benchmark
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: whisper
+          image: quay.io/redhat_na_ssa/speech-to-text/whisper:tiny.en-ubuntu  # <-- Replace with desired model tag
+          command: ["whisper"]
+          args:
+            - "/data/input/harvard.wav"  # <-- Replace with target input
+            - "--model_dir=/tmp"
+            - "--output_dir=/data/metrics"
+            - "--output_format=txt"
+            - "--language=en"
+            - "--task=transcribe"
+            - "--beam_size=10"
+            - "--temperature=0"
+            - "--patience=2"
+            - "--suppress_tokens=-1"
+            - "--compression_ratio_threshold=2.0"
+            - "--logprob_threshold=-0.5"
+            - "--no_speech_threshold=0.4"
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: whisper-data
+              mountPath: /data
+      volumes:
+        - name: whisper-data
+          persistentVolumeClaim:
+            claimName: whisper-data-pvc
