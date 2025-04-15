@@ -45,11 +45,16 @@ Total Transcription Files Calculation:
 
 ## Whisper Transcription Experiment
 
-```sh
-./crawl/provision_rhel_aws.sh 
-```
+Recommend launching 3 terminal sessions on the same VM:
+
+1. to the monitor NVIDIA Usage `watch nvidia-smi`
+1. to launch the `podman_container_monitor.py` in the background
+1. to monitor the output of the `run-whisper-benchmark.sh` script
+
+[Provision the RHEL VM w/GPUs](https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes/blob/main/crawl/RHEL_GPU.md)
 
 Pull six Ubuntu Whisper images from Quay.io.
+- p5.48xlarge
 
 ```sh
 # login to quay.io
@@ -59,46 +64,75 @@ podman login quay.io
 for tag in ubuntu tiny.en-ubuntu base.en-ubuntu small.en-ubuntu medium.en-ubuntu large-ubuntu turbo-ubuntu; do podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag; done
 ```
 
+Clone the repo
+
+```sh
+# clone
+git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
+```
+
+Start monitoring GPU and CPU Usage
+
+```sh
+# watch -n 1 — Runs the full block every second
+# -t — Removes the header timestamp from watch to make output cleaner
+# nvidia-smi — Displays GPU utilization
+# mpstat -P ALL 1 1 — Samples CPU core usage over 1 second
+
+You can change the 1 1 to 0.5 1 for faster snapshots
+watch -n 1 -t '
+  echo "== NVIDIA GPU Usage ==";
+  nvidia-smi;
+  echo "";
+  echo "== CPU Core Usage ==";
+  mpstat -P ALL 1 1 | tail -n +4
+'
+
+```
+
 Start container monitoring in the background
 
 ```sh
-# terminal 1 of 2
+# terminal 2 of 3
 # run the podman_container_monitor script in the background
 nohup python3 data/evaluation-scripts/podman_container_monitor.py &
 ```
 
-For each of the six container images
-- Launch a new container using the image and transcribe the sample on the host CPU with
-
-Summary of this bash script:
-
-- Total runs per image: 6 (3 samples × 2 modes)
-- Containers are named uniquely and removed after each run
-- Output files in data/metrics/ are uniquely tagged: tiny_en_ubuntu_jfk_audio_gpu_fast.txt, etc.
+Loop through all of the experiments for Ubuntu: model size, audio file, cpu, gpu, fast and complex command
 
 ```sh
-# terminal 2 of 2
-# run the run-whisper-benchmark 
-./data/evaluation-scripts/run-whisper-benchmark.sh
+# terminal 3 of 3
+# run the run-whisper-benchmark in parallel
+./data/evaluation-scripts/run-whisper-benchmark.sh --flavor=ubuntu --instance=g5.12xlarge
+
+# just in case to stop this job if it freezes
+podman ps -a -q | xargs podman rm -f
 ```
 
-1. from terminal 1 of 2, stop the host metrics
+Stop watching NVIDIA
 
-    ```sh
-    # terminal 1 of 2
-    Ctrl+C
+```sh
+  # terminal 1 of 3
+  Ctrl+C
+```
 
-    # find the process
-    ps aux | grep podman_container_monitor.py
+Stop the host metrics
 
-    # stop the process via id (i.e. pid 12345)
-    kill 12345
-    ```
+  ```sh
+  # terminal 2 of 3
+  Ctrl+C
+
+  # find the process
+  ps aux | grep podman_container_monitor.py
+
+  # stop the process via id (i.e. pid 12345)
+  kill 12345
+  ```
 
 1. cleanup disk space
 
 ```sh
-on-scripts/cleanup-benchmark-results.sh
+./data/evaluation-scripts/cleanup-benchmark-results.sh
 ```
 
 ## Initial experimentation arguments:

@@ -18,7 +18,15 @@ echo "🧹 Cleaning up benchmark results..."
 # Remove metrics CSVs and transcripts
 rm -f data/metrics/*.{csv,txt}
 
-# Remove logs
-rm -f data/logs/*
+# Delete unused Podman images
+#podman image prune -a
+
+# Clear unused container volumes
+#podman volume prune
+
+# Clear /var/tmp, /tmp, and logs
+sudo rm -rf /var/tmp/*
+sudo rm -rf /tmp/*
+sudo journalctl --vacuum-time=1d
 
 echo "✅ Cleanup complete."

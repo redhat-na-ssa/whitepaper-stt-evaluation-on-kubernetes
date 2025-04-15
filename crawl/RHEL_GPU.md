@@ -51,14 +51,14 @@ aws ec2 import-key-pair --key-name "${AWS_KEY_NAME:-my-key}" --public-key-materi
 
 ```sh
 # create ec2 install with g6.xlarge
-export INSTANCE_TYPE=g6.xlarge
+export INSTANCE_TYPE=g6.12xlarge
 
 # other instances g4dn=T4, g5=A10, p5=H100
-# export INSTANCE_TYPE=g4dn.xlarge
-# export INSTANCE_TYPE=g5.xlarge
-# export INSTANCE_TYPE=p5.xlarge
+# export INSTANCE_TYPE=g4dn.12xlarge
+# export INSTANCE_TYPE=g5.12xlarge
+# export INSTANCE_TYPE=p5.48xlarge
 
-./provision_rhel_aws.sh
+./crawl/provision_rhel_aws.sh
 ```
 
 ### Setup NVIDIA Software / CUDA / Drivers
@@ -103,13 +103,19 @@ sudo dkms install nvidia/570.124.06
 sudo reboot
 ```
 
-### Install `psutil`
+### Install `psutil` `git` `screen`
 
 (source)[https://github.com/giampaolo/psutil/blob/master/INSTALL.rst]
 
 ```sh
-sudo yum install gcc python3-devel
+sudo yum install -y gcc python3-devel git screen
 pip install --no-binary :all: psutil
+```
+
+### Install `sysstat`
+
+```sh
+sudo yum install -y sysstat
 ```
 
 ### Setup `podman`
