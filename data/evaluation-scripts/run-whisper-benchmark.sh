@@ -17,7 +17,7 @@
 # - Evaluates WER, MER, CER, RTF, and TPS
 #
 # USAGE:
-#   ./data/evaluation-scripts/run-whisper-benchmark.sh \
+#   ./run-whisper-benchmark.sh \
 #     [--flavor=ubuntu|ubi9|ubi9-minimal] \
 #     [--instance=g4dn.xlarge|g6.12xlarge|...] \
 #     [--max-cpu-jobs=4]
@@ -67,10 +67,6 @@ else
   IMAGES=(
     "$BASE:tiny.en-${IMAGE_FLAVOR}"
     "$BASE:base.en-${IMAGE_FLAVOR}"
-    "$BASE:small.en-${IMAGE_FLAVOR}"
-    "$BASE:medium.en-${IMAGE_FLAVOR}"
-    "$BASE:large-${IMAGE_FLAVOR}"
-    "$BASE:turbo-${IMAGE_FLAVOR}"
   )
 fi
 

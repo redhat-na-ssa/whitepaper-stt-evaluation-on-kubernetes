@@ -74,12 +74,13 @@ git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernet
 Start monitoring GPU and CPU Usage
 
 ```sh
+# terminal 1 of 3
 # watch -n 1 — Runs the full block every second
 # -t — Removes the header timestamp from watch to make output cleaner
 # nvidia-smi — Displays GPU utilization
 # mpstat -P ALL 1 1 — Samples CPU core usage over 1 second
 
-You can change the 1 1 to 0.5 1 for faster snapshots
+# You can change the 1 1 to 0.5 1 for faster snapshots
 watch -n 1 -t '
   echo "== NVIDIA GPU Usage ==";
   nvidia-smi;
