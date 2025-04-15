@@ -3,7 +3,7 @@
 """
 Podman Container Monitor Script
 
-This script continuously polls running Podman containers every 0.5 seconds.
+This script continuously polls running Podman containers every 0.1 seconds.
 When a container with a name starting with 'whisper-' is detected, it records
 system and GPU usage metrics and appends them to a CSV file.
 
@@ -16,7 +16,7 @@ Metrics captured:
 
 USAGE:
 Run this script in the background:
-  nohup python3 .data/evaluation-scripts/podman_container_monitor.py &
+  nohup python3 podman_container_monitor.py &
 
 Or from a screen session:
   screen -S whisper-monitor
@@ -77,31 +77,31 @@ def get_gpu_metrics():
         ], capture_output=True, text=True, check=True)
 
         metrics = result.stdout.strip().split('\n')[0].split(', ')
-        gpu_name = metrics[0]
-        core_count = psutil.cpu_count(logical=False)
-        max_usage = metrics[2]  # GPU utilization %
-        max_temperature = metrics[3]  # in Celsius
+        gpu_name = metrics[0]                                 # GPU model name
+        core_count = psutil.cpu_count(logical=False)         # Number of physical CPU cores
+        max_usage = metrics[2]                               # GPU utilization (%)
+        max_temperature = metrics[3]                         # GPU temperature in Celsius
         power_draw = float(metrics[4])
         power_limit = float(metrics[5])
-        max_pwr_usage = round((power_draw / power_limit) * 100, 2)
+        max_pwr_usage = round((power_draw / power_limit) * 100, 2)  # Power usage as percentage of cap
         mem_used = float(metrics[6])
         mem_total = float(metrics[7])
-        max_vram_usage = round((mem_used / mem_total) * 100, 2)
+        max_vram_usage = round((mem_used / mem_total) * 100, 2)     # VRAM usage as percentage
 
         return gpu_name, core_count, max_usage, max_temperature, max_pwr_usage, max_vram_usage
 
     except subprocess.CalledProcessError:
         return "Unknown GPU", 0, 0, 0, 0, 0
 
-# Get formatted time string
+# Get formatted time string for current timestamp
 def get_timestamp():
     return datetime.now().strftime('%H:%M:%S')
 
-# Poll Podman containers every 0.5 seconds and capture metrics for containers starting with 'whisper-'
+# Poll Podman containers every 0.1 seconds and capture metrics for containers starting with 'whisper-'
 def monitor_containers():
     write_csv_header()
-    seen = set()
-    print("📡 Polling running containers every 0.5 seconds...")
+    seen = set()  # Track already seen container names to avoid duplicate logging
+    print("\U0001F4E1 Polling running containers every 0.1 seconds...")
     while True:
         try:
             result = subprocess.run(["podman", "ps", "--format", "{{.Names}}"], capture_output=True, text=True)
@@ -110,12 +110,12 @@ def monitor_containers():
                 # Only monitor new containers starting with 'whisper-'
                 if container_name.startswith("whisper-") and container_name not in seen:
                     seen.add(container_name)
-                    print(f"📦 Detected running container: {container_name}")
-                    time.sleep(1)  # allow time for the container to initialize
+                    print(f"\U0001F4E6 Detected running container: {container_name}")
+                    time.sleep(0.2)  # Short delay to allow container startup
                     capture_metrics(container_name)
         except Exception as e:
             print(f"❌ Error polling containers: {e}")
-        time.sleep(0.5)
+        time.sleep(0.1)
 
 # Collect and log metrics for the given container
 # Includes CPU, memory, GPU usage, and timing metrics
@@ -130,7 +130,7 @@ def capture_metrics(container_name):
     total_time = shutdown_time
 
     try:
-        cpu_usage = psutil.cpu_percent(interval=0.5)  # CPU usage sampled over 0.5 seconds
+        cpu_usage = psutil.cpu_percent(interval=0.1)  # CPU usage sampled over 0.1 seconds
         mem_info = psutil.virtual_memory()
         memory_usage = round(mem_info.used / 1024 / 1024, 2)  # Convert from bytes to MB
     except Exception:
