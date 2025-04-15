@@ -67,6 +67,10 @@ else
   IMAGES=(
     "$BASE:tiny.en-${IMAGE_FLAVOR}"
     "$BASE:base.en-${IMAGE_FLAVOR}"
+    "$BASE:small.en-${IMAGE_FLAVOR}"
+    "$BASE:medium.en-${IMAGE_FLAVOR}"
+    "$BASE:large-${IMAGE_FLAVOR}"
+    "$BASE:turbo-${IMAGE_FLAVOR}"
   )
 fi
 
