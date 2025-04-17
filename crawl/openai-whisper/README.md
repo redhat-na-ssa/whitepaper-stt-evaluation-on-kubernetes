@@ -40,6 +40,8 @@ git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernet
 
 Run the following command in Terminal 1 to monitor GPU and CPU usage:
 
+- The complex config (beam size, patience, etc.) takes significantly longer, especially on CPU — this can be 5x–10x slower than fast mode.
+
 ```sh
 watch -n 1 -t '
   echo "== NVIDIA GPU Usage ==";
@@ -48,7 +50,17 @@ watch -n 1 -t '
   echo "== CPU Core Usage (mpstat -P ALL 1 1) ==";
   mpstat -P ALL 1 1 | awk "NR==3 || NR>4"
 '
+# Use this to keep an eye on file output progress:
+ls -lhtr data/metrics/whisper-*.txt
+
+# And track live updates to the CSV: If you see files growing or new CSV lines appear — it’s working!
+tail -f data/metrics/experiment_metrics.csv
+
+# a thread-level view of CPU usage within each Whisper containerized process
+watch "ps -T -p \$(pgrep -d',' -f whisper) -o pid,tid,pcpu,pmem,comm | sort -k3 -nr | head -20"
+
 ```
+
 You can adjust the frequency by changing 1 1 to 0.5 1 for faster snapshots.
 
 ### Start Container Monitoring
@@ -64,13 +76,12 @@ nohup python3 data/evaluation-scripts/podman_container_monitor.py &
 In Terminal 3, loop through all experiments by running the benchmark script in parallel:
 
 ```sh
-screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh --flavor=ubuntu --instance=g6.12xlarge
+screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh --flavor=ubuntu --instance=g6.12xlarge --cpu-threads=4
 
 # Detach the screen session with Ctrl+A D
 # Reattach with: screen -r whisper-benchmark
 # To stop the job if it freezes:
 podman ps -a -q | xargs podman rm -f
-
 ```
 
 ### Stop Monitoring
