@@ -43,22 +43,20 @@ Run the following command in Terminal 1 to monitor GPU and CPU usage:
 - The complex config (beam size, patience, etc.) takes significantly longer, especially on CPU — this can be 5x–10x slower than fast mode.
 
 ```sh
-watch -n 1 -t '
+# combine both nvidia-smi and thread-level CPU stats in one watch command
+watch -n 2 -t '
   echo "== NVIDIA GPU Usage ==";
   nvidia-smi;
   echo "";
-  echo "== CPU Core Usage (mpstat -P ALL 1 1) ==";
-  mpstat -P ALL 1 1 | awk "NR==3 || NR>4"
+  echo "== Top Whisper Threads by CPU Usage ==";
+  ps -T -p $(pgrep -d"," -f whisper) -o pid,tid,pcpu,pmem,comm | sort -k3 -nr | head -20
 '
+
 # Use this to keep an eye on file output progress:
 ls -lhtr data/metrics/whisper-*.txt
 
-# And track live updates to the CSV: If you see files growing or new CSV lines appear — it’s working!
+# Track live updates to the CSV: If you see files growing or new CSV lines appear — it’s working!
 tail -f data/metrics/experiment_metrics.csv
-
-# a thread-level view of CPU usage within each Whisper containerized process
-watch "ps -T -p \$(pgrep -d',' -f whisper) -o pid,tid,pcpu,pmem,comm | sort -k3 -nr | head -20"
-
 ```
 
 You can adjust the frequency by changing 1 1 to 0.5 1 for faster snapshots.
