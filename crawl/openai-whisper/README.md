@@ -1,169 +1,97 @@
 # OpenAI Whisper
 
-This README covers the steps to the container combinations for whisper model. Individual and manual steps can be found under the respective sub-dir:
+This README provides instructions for experimenting with Whisper models in containerized environments. Follow the steps in the respective directories for detailed setup:
 
-1. [Ubuntu w/Whisper](ubuntu/README.md)
-1. [UBI9 w/Whisper](ubi/platform/README.md)
-1. [UBI9-minimal w/Whisper](ubi/minimal/README.md)
-
-The following steps cover what AI teams might be experimenting with to make decisions about security, storage, resources, accuracy and optimization.
+- [Ubuntu with Whisper](ubuntu/README.md)
+- [UBI9 with Whisper](ubi/platform/README.md)
+- [UBI9-minimal with Whisper](ubi/minimal/README.md)
 
 ## Whisper Transcription Experiment Benchmark
 
-Recommend launching 3 terminal sessions on the same VM:
+Follow these steps to benchmark Whisper transcription. It is recommended to open 3 terminal sessions on the same VM:
 
-1. to the monitor NVIDIA Usage `watch nvidia-smi`
-1. to launch the `podman_container_monitor.py` in the background
-1. to monitor the output of the `run-whisper-benchmark.sh` script
+1. **Monitor NVIDIA GPU usage** (`watch nvidia-smi`)
+2. **Run the container monitoring script** (`podman_container_monitor.py`)
+3. **Monitor the benchmark output** (`run-whisper-benchmark.sh`)
 
-[Provision the RHEL VM w/GPUs](https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes/blob/main/crawl/RHEL_GPU.md)
+### Provision RHEL VM with GPUs
 
-Pull six Ubuntu Whisper images from Quay.io.
+Follow the [instructions here](https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes/blob/main/crawl/RHEL_GPU.md) to provision the RHEL VM with GPUs.
+
+### Pull Ubuntu Whisper Images
+
+Log in to Quay.io and pull the necessary Whisper images:
 
 ```sh
-# login to quay.io
+# Login to quay.io
 podman login quay.io
 
-# pull all the ubuntu images
+# Pull Ubuntu images
 screen -S download-images bash -c 'for tag in tiny.en-ubuntu base.en-ubuntu small.en-ubuntu medium.en-ubuntu large-ubuntu turbo-ubuntu; do podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag; done'
 ```
 
-Clone the repo
+### Clone the Repository
 
 ```sh
-# clone
 git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
 ```
 
-Start monitoring GPU and CPU Usage
+### Start Monitoring GPU and CPU Usage
+
+Run the following command in Terminal 1 to monitor GPU and CPU usage:
 
 ```sh
-# terminal 1 of 3
-# watch -n 1 — Runs the full block every second
-# -t — Removes the header timestamp from watch to make output cleaner
-# nvidia-smi — Displays GPU utilization
-# mpstat -P ALL 1 1 — Samples CPU core usage over 1 second
-
-# You can change the 1 1 to 0.5 1 for faster snapshots
 watch -n 1 -t '
   echo "== NVIDIA GPU Usage ==";
   nvidia-smi;
   echo "";
-  echo "== CPU Core Usage ==";
-  mpstat -P ALL 1 1 | tail -n +4
+  echo "== CPU Core Usage (mpstat -P ALL 1 1) ==";
+  mpstat -P ALL 1 1 | awk "NR==3 || NR>4"
 '
-
 ```
+You can adjust the frequency by changing 1 1 to 0.5 1 for faster snapshots.
 
-Start container monitoring in the background
+### Start Container Monitoring
+
+In Terminal 2, run the podman_container_monitor script in the background:
 
 ```sh
-# terminal 2 of 3
-# run the podman_container_monitor script in the background
 nohup python3 data/evaluation-scripts/podman_container_monitor.py &
 ```
 
-Loop through all of the experiments for Ubuntu: model size, audio file, cpu, gpu, fast and complex command
+### Run Benchmark Experiments
+
+In Terminal 3, loop through all experiments by running the benchmark script in parallel:
 
 ```sh
-# terminal 3 of 3
-# run the run-whisper-benchmark in parallel
 screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh --flavor=ubuntu --instance=g6.12xlarge
 
-# just in case to stop this job if it freezes
+# Detach the screen session with Ctrl+A D
+# Reattach with: screen -r whisper-benchmark
+# To stop the job if it freezes:
 podman ps -a -q | xargs podman rm -f
+
 ```
 
-Stop watching NVIDIA
+### Stop Monitoring
+
+To stop the monitoring processes:
+
+- Terminal 1: Press Ctrl+C to stop GPU monitoring.
+- Terminal 2: Press Ctrl+C to stop the container monitoring script. Then, find and kill the process:
 
 ```sh
-  # terminal 1 of 3
-  Ctrl+C
-```
-
-Stop the host metrics
-
-```sh
-# terminal 2 of 3
-Ctrl+C
-
-# find the process
 ps aux | grep podman_container_monitor.py
-
-# stop the process via id (i.e. pid 12345)
-kill 12345
+kill <pid>
 ```
 
-1. cleanup disk space
+### Cleanup Disk Space
+
+Run the cleanup script to free up disk space:
 
 ```sh
 ./data/evaluation-scripts/cleanup-benchmark-results.sh
 ```
-
-## Initial experimentation arguments:
-
-- Adjust decoding:
-  - Beam Search (--beam_size): Increases accuracy by considering multiple possibilities.
-  - Temperature (--temperature): Lower values (0-0.2) make outputs more deterministic.
-  - Patience (--patience): Allows the model to explore better alternatives.
-- Avoids unwanted symbols that could lower accuracy.
-- Improve robustness against hallucinations:
-  - Compression Ratio Threshold (--compression_ratio_threshold): Filters out bad transcriptions.
-  - Log Probability Threshold (--logprob_threshold): Removes segments with low confidence.
-  - No Speech Threshold (--no_speech_threshold): Filters out silent parts.
-- Enable word timestamps:
-  - Useful for reviewing accuracy at the word level.
-
-### Here’s a breakdown of some key Whisper parameters and what they do:
-
-```sh
-# Basic Parameters
-audio: The input audio file(s) to be transcribed.
---model MODEL: Specifies which Whisper model to use. Example values: tiny, base, small, medium, large, turbo (default: turbo).
---model_dir MODEL_DIR: Path where model files are stored (default is ~/.cache/whisper).
---device DEVICE: Hardware for processing. Options:
-cpu (default) for CPU usage.
-cuda or mps for GPU acceleration (if available).
-Output Parameters
---output_dir OUTPUT_DIR: Where to save the output files.
---output_format {txt,vtt,srt,tsv,json,all}: Format of the transcription output.
-txt: Plain text.
-vtt: WebVTT (subtitles).
-srt: SubRip (subtitles).
-tsv: Tab-separated values.
-json: JSON format.
-all: Saves in all formats.
-
-# Transcription & Translation
---task {transcribe,translate}:
-    transcribe: Converts spoken audio to text in the same language.
-    translate: Translates non-English audio to English.
---language <language>: Manually specify the spoken language (e.g., en for English). If omitted, Whisper auto-detects.
-
-# Decoding Parameters (Affecting Accuracy & Speed)
---temperature TEMPERATURE: Controls randomness (default 0 means deterministic, higher values increase variation).
---best_of BEST_OF: Number of candidates when using sampling (temperature > 0).
---beam_size BEAM_SIZE: Number of beams for beam search (used when temperature = 0).
---patience PATIENCE: Affects beam search, allowing it to consider longer alternatives (default 1.0).
---length_penalty LENGTH_PENALTY: Adjusts preference for shorter or longer transcriptions.
-
-# Error Handling & Robustness
---temperature_increment_on_fallback TEMPERATURE_INCREMENT_ON_FALLBACK: Increases temperature when decoding fails, making the model try different outputs.
---compression_ratio_threshold COMPRESSION_RATIO_THRESHOLD: Helps detect hallucinations (false transcriptions) by analyzing compression ratios.
---logprob_threshold LOGPROB_THRESHOLD: If average log probability of words is too low, the output is considered unreliable.
---no_speech_threshold NO_SPEECH_THRESHOLD: If the probability of silence (<|nospeech|>) is high, the segment is skipped.
-
-# Formatting & Word Timing
---word_timestamps WORD_TIMESTAMPS: Enables word-level timestamps (default: False).
---prepend_punctuations & --append_punctuations: Defines how punctuation is attached to words when using --word_timestamps True.
---highlight_words HIGHLIGHT_WORDS: Underlines words in subtitles as they are spoken.
-
-# Performance Tweaks
---threads THREADS: Number of CPU threads to use.
---fp16 FP16: Uses 16-bit floating-point precision for inference (default: True for GPUs, False for CPU).
---clip_timestamps CLIP_TIMESTAMPS: Allows processing only specific audio segments.
-```
-
 
 ## Whisper Transcription Experiment Workflow
 
