@@ -8,42 +8,7 @@ This README covers the steps to the container combinations for whisper model. In
 
 The following steps cover what AI teams might be experimenting with to make decisions about security, storage, resources, accuracy and optimization.
 
-## Whisper Transcription Experiment Workflow
-
-1. Provision one of four RHEL VMs with a GPU.
-1. Pull six Ubuntu Whisper images from Quay.io.
-1. Start container monitoring in the background.
-1. For each of the six container images:
-    - For each of the three audio samples:
-        - Launch a new container using the image and transcribe the sample on the host CPU with:
-            1. A fast command, saving the output with a unique filename.
-            1. A complex command, saving the output with a unique filename.
-        - Launch a new container using the image and transcribe the sample on the host GPU with: 
-            1. A fast command, saving the output with a unique filename.
-            1. A complex command, saving the output with a unique filename.
-1. Stop container monitoring.
-1. Remove the six Ubuntu Whisper images from the host.
-1. Repeat steps 2–6 for the six UBI9 then UBI9-minimal Whisper images from Quay.io.
-1. Repeat the entire process for all four RHEL VMs.
-
-TODO build UI scraper of the .csv to visualize the data
-
-Total Transcription Files Calculation:
-
-- 4 VMs
-- 18 container images total
-- 3 audio samples per container
-- 2 command types (fast, complex)
-- 2 modes (CPU, GPU)
-
-```sh
-4 VMs × 18 containers × 3 samples × 2 commands × 2 modes
-= 864 transcription files per VM
-× 4 VMs
-= 3,456 transcription files total
-```
-
-## Whisper Transcription Experiment
+## Whisper Transcription Experiment Benchmark
 
 Recommend launching 3 terminal sessions on the same VM:
 
@@ -54,14 +19,13 @@ Recommend launching 3 terminal sessions on the same VM:
 [Provision the RHEL VM w/GPUs](https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes/blob/main/crawl/RHEL_GPU.md)
 
 Pull six Ubuntu Whisper images from Quay.io.
-- p5.48xlarge
 
 ```sh
 # login to quay.io
 podman login quay.io
 
 # pull all the ubuntu images
-for tag in ubuntu tiny.en-ubuntu base.en-ubuntu small.en-ubuntu medium.en-ubuntu large-ubuntu turbo-ubuntu; do podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag; done
+screen -S download-images bash -c 'for tag in tiny.en-ubuntu base.en-ubuntu small.en-ubuntu medium.en-ubuntu large-ubuntu turbo-ubuntu; do podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag; done'
 ```
 
 Clone the repo
@@ -104,7 +68,7 @@ Loop through all of the experiments for Ubuntu: model size, audio file, cpu, gpu
 ```sh
 # terminal 3 of 3
 # run the run-whisper-benchmark in parallel
-./data/evaluation-scripts/run-whisper-benchmark.sh --flavor=ubuntu --instance=g5.12xlarge
+screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh --flavor=ubuntu --instance=g6.12xlarge
 
 # just in case to stop this job if it freezes
 podman ps -a -q | xargs podman rm -f
@@ -119,16 +83,16 @@ Stop watching NVIDIA
 
 Stop the host metrics
 
-  ```sh
-  # terminal 2 of 3
-  Ctrl+C
+```sh
+# terminal 2 of 3
+Ctrl+C
 
-  # find the process
-  ps aux | grep podman_container_monitor.py
+# find the process
+ps aux | grep podman_container_monitor.py
 
-  # stop the process via id (i.e. pid 12345)
-  kill 12345
-  ```
+# stop the process via id (i.e. pid 12345)
+kill 12345
+```
 
 1. cleanup disk space
 
@@ -198,6 +162,32 @@ all: Saves in all formats.
 --threads THREADS: Number of CPU threads to use.
 --fp16 FP16: Uses 16-bit floating-point precision for inference (default: True for GPUs, False for CPU).
 --clip_timestamps CLIP_TIMESTAMPS: Allows processing only specific audio segments.
+```
+
+
+## Whisper Transcription Experiment Workflow
+
+1. Provision one of four RHEL VMs with a GPU.
+1. Pull six Ubuntu Whisper images from Quay.io.
+1. Start container monitoring in the background.
+1. For each of the six container images:
+    - For each of the three audio samples:
+        - Launch a new container using the image and transcribe the sample on the host CPU with:
+            1. A fast command, saving the output with a unique filename.
+            1. A complex command, saving the output with a unique filename.
+        - Launch a new container using the image and transcribe the sample on the host GPU with: 
+            1. A fast command, saving the output with a unique filename.
+            1. A complex command, saving the output with a unique filename.
+1. Stop container monitoring.
+1. Remove the six Ubuntu Whisper images from the host.
+1. Repeat steps 2–6 for the six UBI9 then UBI9-minimal Whisper images from Quay.io.
+1. Repeat the entire process for all four RHEL VMs.
+
+```sh
+4 VMs × 18 containers × 3 samples × 2 commands × 2 modes
+= 864 transcription files per VM
+× 4 VMs
+= 3,456 transcription files total
 ```
 
 ## Resources
