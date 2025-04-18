@@ -58,28 +58,38 @@ nohup python3 data/evaluation-scripts/podman_container_monitor.py &
 ```
 
 ### Terminal 3: Run Benchmark Experiments
+
 Run the appropriate benchmark based on your instance type:
+
+|Instance Type|	Threads per Job (--cpu-threads)|	Max Concurrent CPU Jobs (--max-cpu-jobs)|	Total vCPUs|
+|-|-|-|-|
+|g6.12xlarge|	4|	12|	48|
+|p5.48xlarge|	4|	48|	192|
+|g5.48xlarge|	4|	48|	192|
+|g5.12xlarge|	4|	12|	48|
+|g4dn.12xlarge|	3|	12|	48|
+
+💡 --cpu-threads controls threads inside the container.
+
+💡 --max-cpu-jobs limits parallel jobs on the host.
+
 ```sh
-# g6.12xlarge (48 vCPUs)
-screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
-  --flavor=ubi9 --instance=g6.12xlarge --cpu-threads=4 --max-cpu-jobs=12
+# Set your parameters
+FLAVOR=ubi9                       # Options: ubuntu, ubi9, ubi9-minimal
+INSTANCE=g6.12xlarge              # Set your instance type
+THREADS=4                         # CPU threads per container
+JOBS=12                           # Max parallel CPU jobs
+MODELS="medium.en,large,turbo"    # Comma-separated list (no spaces)
 
-# p5.48xlarge (192 vCPUs)
+# Launch the benchmark using screen
 screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
-  --flavor=ubuntu --instance=p5.48xlarge --cpu-threads=4 --max-cpu-jobs=48
-
-# g5.48xlarge (192 vCPUs)
-screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
-  --flavor=ubuntu --instance=g5.48xlarge --cpu-threads=4 --max-cpu-jobs=48
-
-# g5.12xlarge (48 vCPUs)
-screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
-  --flavor=ubi9 --instance=g5.12xlarge --cpu-threads=4 --max-cpu-jobs=12
-
-# g4dn.12xlarge (48 vCPUs)
-screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
-  --flavor=ubi9 --instance=g4dn.12xlarge --cpu-threads=3 --max-cpu-jobs=12
+  --flavor="$FLAVOR" \
+  --instance="$INSTANCE" \
+  --cpu-threads=$THREADS \
+  --max-cpu-jobs=$JOBS \
+  --model-size="$MODELS"
 ```
+
 Detach with `Ctrl+A D`, reattach with `screen -r whisper-benchmark`.
 
 To stop a frozen job:
@@ -105,11 +115,28 @@ kill <pid>
 
 ---
 
-## Step 4: Collect Results
-Use `sftp` to retrieve the following files:
+## Step 4: Collect Results from `container` and `experiment` metrics
+
+Use `sftp` to retrieve the following files, review, append and move the results as needed:
 - `data/metrics/container_metrics.csv`
 - `data/metrics/experiment_metrics.csv`
 
+```sh
+# sftp from your machine to the host
+sftp user@ec2-N-NNN-NNN-NNN.us-east-2.compute.amazonaws.com
+
+# move to directory
+cd whitepaper-stt-evaluation-on-kubernetes/data/metrics/
+
+# get CSV files
+get *.csv
+
+# one-liner to merge without duplicate headers or rows
+FILE="container"  # or "experiment"
+(head -n 1 data/metrics/${FILE}_metrics.csv && tail -n +2 -q data/metrics/${FILE}_metrics.csv data/metrics/g6-12xlarge/${FILE}_metrics.csv | sort -u) > data/metrics/merged_${FILE}_metrics.csv
+
+# replace the original file
+mv data/metrics/merged_${FILE}_metrics.csv data/metrics/g6-12xlarge/${FILE}_metrics.csv
 ---
 
 ## Step 5: Cleanup
