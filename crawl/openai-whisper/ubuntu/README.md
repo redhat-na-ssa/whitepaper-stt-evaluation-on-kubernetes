@@ -22,6 +22,8 @@ for model in tiny.en base.en small.en medium.en large turbo; do
 done
 ```
 
+NOTE: models will be saved in `/root/.cache/whisper/` in each container image
+
 ## Test the containers
 
 ### Harvard
