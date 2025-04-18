@@ -31,6 +31,12 @@ RUN apt update && \
 RUN pip${PYTHON_VER} install --no-cache-dir --upgrade pip==25.* && \
     pip${PYTHON_VER} install --no-cache-dir openai-whisper==20240930 jiwer==3.1.*
 
+# Create and set working directory
+WORKDIR /data
+ENV HOME=/data
+
+# Give group write permissions
+RUN chmod 0775 /data
 
 # ADDED Conditionally preload the whisper model if MODEL_SIZE is provided
 RUN if [ -n "$MODEL_SIZE" ]; then \
@@ -39,13 +45,6 @@ RUN if [ -n "$MODEL_SIZE" ]; then \
     else \
       echo "No MODEL_SIZE provided. Skipping model download."; \
     fi
-
-# Create and set working directory
-WORKDIR /data
-ENV HOME=/data
-
-# Give group write permissions
-RUN chmod 0775 /data
 
 # Default command to process the audio file using ffmpeg & whisper
 #CMD ["/bin/bash", "umask", "0002"]
