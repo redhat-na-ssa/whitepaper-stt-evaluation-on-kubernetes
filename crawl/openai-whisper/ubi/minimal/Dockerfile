@@ -2,7 +2,8 @@ ARG OS_VER=9
 ARG IMAGE=registry.access.redhat.com/ubi${OS_VER}/ubi-minimal
 FROM ${IMAGE}
 
-ARG PYTHON_VER=3.11
+# Python 3.11 is not included in the base UBI 9 repositories
+ARG PYTHON_VER=3.9
 
 # ADDED you can use the same Dockerfile for:
 # Minimal builds with runtime model download
@@ -14,7 +15,7 @@ USER root
 
 # Install OS dependencies in a single step to reduce layers
 RUN microdnf -y install python${PYTHON_VER} python${PYTHON_VER}-pip \
-      gcc gcc-c++ make automake autoconf libtool git diffutils  && \
+    gcc gcc-c++ make automake autoconf libtool git diffutils  && \
     microdnf clean all && \
     rm -rf /var/cache/yum
 
