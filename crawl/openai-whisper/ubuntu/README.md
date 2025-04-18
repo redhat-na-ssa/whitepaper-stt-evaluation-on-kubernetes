@@ -34,17 +34,20 @@ whisper tiny.en ubuntu cpu harvard fast
 
 ```sh
 # start the container on cpu
-podman run --rm -it --name whisper-tiny-en-ubuntu -v $(pwd)/data/:/data/:z whisper:tiny.en-ubuntu /bin/bash
+podman run --rm -it \
+  --name whisper-tiny-en-ubuntu \
+  -v $(pwd)/data/:/data/:z \
+  whisper:tiny.en-ubuntu /bin/bash
 
 # default whisper command
 time whisper input-samples/harvard.wav \
---model tiny.en \
---model_dir /tmp/ \
---output_dir metrics/ \
---output_format txt \
---language en \
---task transcribe \
---fp16 False
+  --model tiny.en \
+  --model_dir /tmp/ \
+  --output_dir metrics/ \
+  --output_format txt \
+  --language en \
+  --task transcribe \
+  --fp16 False
 
 # calculate WER 0.00% means the transcription matches the ground truth exactly
 python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"

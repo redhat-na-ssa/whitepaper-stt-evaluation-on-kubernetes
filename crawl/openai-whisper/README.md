@@ -5,6 +5,7 @@ This guide provides instructions for evaluating OpenAI Whisper models using cont
 ## Prepare Your Environment
 
 ### Provision a RHEL VM with GPUs
+
 Follow the [provisioning guide](https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes/blob/main/crawl/RHEL_GPU.md) to set up your RHEL VM.
 
 ### Clone the Repository
