@@ -20,7 +20,8 @@
 #   ./run-whisper-benchmark.sh \
 #     [--flavor=ubuntu|ubi9|ubi9-minimal] \
 #     [--instance=g4dn.xlarge|g6.12xlarge|...] \
-#     [--max-cpu-jobs=4]
+#     [--max-cpu-jobs=4]                # How many CPU jobs run concurrently	| Affects = On the host (parallelism)
+#     [--threads 4|8|12|24]             # Number of CPU threads used per container job | Affects = Inside the container
 #
 # RECOMMENDED INSTANCES:
 #   p5.48xlarge

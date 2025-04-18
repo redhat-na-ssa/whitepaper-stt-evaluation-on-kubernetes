@@ -72,7 +72,8 @@ done
     --output_format txt \
     --language en \
     --task transcribe \
-    --fp16 False
+    --fp16 False \
+    --threads 8
 
     # calculate WER 0.00% means the transcription matches the ground truth exactly
     python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"

@@ -1,105 +1,128 @@
-# OpenAI Whisper
+# OpenAI Whisper Benchmark Guide
 
-This README provides instructions for experimenting with Whisper models in containerized environments. Follow the steps in the respective directories for detailed setup:
+This guide provides instructions for evaluating OpenAI Whisper models using containerized environments. Each directory contains setup details for a specific base image:
 
 - [Ubuntu with Whisper](ubuntu/README.md)
 - [UBI9 with Whisper](ubi/platform/README.md)
 - [UBI9-minimal with Whisper](ubi/minimal/README.md)
 
-## Whisper Transcription Experiment Benchmark
+---
 
-Follow these steps to benchmark Whisper transcription. It is recommended to open 3 terminal sessions on the same VM:
+## Step 1: Prepare Your Environment
 
-1. **Monitor NVIDIA GPU usage** (`watch nvidia-smi`)
-2. **Run the container monitoring script** (`podman_container_monitor.py`)
-3. **Monitor the benchmark output** (`run-whisper-benchmark.sh`)
-
-### Provision RHEL VM with GPUs
-
-Follow the [instructions here](https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes/blob/main/crawl/RHEL_GPU.md) to provision the RHEL VM with GPUs.
-
-### Pull Ubuntu Whisper Images
-
-Log in to Quay.io and pull the necessary Whisper images:
-
-```sh
-# Login to quay.io
-podman login quay.io
-
-# Pull Ubuntu images
-screen -S download-images bash -c 'for tag in tiny.en-ubuntu base.en-ubuntu small.en-ubuntu medium.en-ubuntu large-ubuntu turbo-ubuntu; do podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag; done'
-```
+### Provision a RHEL VM with GPUs
+Follow the [provisioning guide](https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes/blob/main/crawl/RHEL_GPU.md) to set up your RHEL VM.
 
 ### Clone the Repository
-
 ```sh
 git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
 ```
 
-### Start Monitoring GPU and CPU Usage
-
-Run the following command in Terminal 1 to monitor GPU and CPU usage:
-
-- The complex config (beam size, patience, etc.) takes significantly longer, especially on CPU — this can be 5x–10x slower than fast mode.
-
+### Pull Whisper Images
 ```sh
-# combine both nvidia-smi and thread-level CPU stats in one watch command
+podman login quay.io
+
+FLAVOR=ubuntu
+screen -S download-images bash -c '
+  for tag in tiny.en-$FLAVOR base.en-$FLAVOR small.en-$FLAVOR medium.en-$FLAVOR large-$FLAVOR turbo-$FLAVOR; do
+    echo "📦 Pulling quay.io/redhat_na_ssa/speech-to-text/whisper:$tag"
+    podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag
+  done'
+```
+
+---
+
+## Step 2: Monitor and Benchmark
+
+### Terminal 1: GPU and CPU Monitoring
+```sh
 watch -n 2 -t '
-  echo "== NVIDIA GPU Usage ==";
-  nvidia-smi;
-  echo "";
-  echo "== Top Whisper Threads by CPU Usage ==";
+  echo "== NVIDIA GPU Usage =="
+  nvidia-smi
+  echo "\n== Top Whisper Threads by CPU Usage =="
   ps -T -p $(pgrep -d"," -f whisper) -o pid,tid,pcpu,pmem,comm | sort -k3 -nr | head -20
 '
-
-# Use this to keep an eye on file output progress:
+```
+Monitor file output progress:
+```sh
 ls -lhtr data/metrics/whisper-*.txt
-
-# Track live updates to the CSV: If you see files growing or new CSV lines appear — it’s working!
+```
+Monitor CSV updates:
+```sh
 tail -f data/metrics/experiment_metrics.csv
 ```
 
-You can adjust the frequency by changing 1 1 to 0.5 1 for faster snapshots.
-
-### Start Container Monitoring
-
-In Terminal 2, run the podman_container_monitor script in the background:
-
+### Terminal 2: Start Container Monitoring
 ```sh
 nohup python3 data/evaluation-scripts/podman_container_monitor.py &
 ```
 
-### Run Benchmark Experiments
-
-In Terminal 3, loop through all experiments by running the benchmark script in parallel:
-
+### Terminal 3: Run Benchmark Experiments
+Run the appropriate benchmark based on your instance type:
 ```sh
-screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh --flavor=ubuntu --instance=g6.12xlarge --cpu-threads=4
+# g6.12xlarge (48 vCPUs)
+screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
+  --flavor=ubi9 --instance=g6.12xlarge --cpu-threads=4 --max-cpu-jobs=12
 
-# Detach the screen session with Ctrl+A D
-# Reattach with: screen -r whisper-benchmark
-# To stop the job if it freezes:
+# p5.48xlarge (192 vCPUs)
+screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
+  --flavor=ubuntu --instance=p5.48xlarge --cpu-threads=4 --max-cpu-jobs=48
+
+# g5.48xlarge (192 vCPUs)
+screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
+  --flavor=ubuntu --instance=g5.48xlarge --cpu-threads=4 --max-cpu-jobs=48
+
+# g5.12xlarge (48 vCPUs)
+screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
+  --flavor=ubi9 --instance=g5.12xlarge --cpu-threads=4 --max-cpu-jobs=12
+
+# g4dn.12xlarge (48 vCPUs)
+screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
+  --flavor=ubi9 --instance=g4dn.12xlarge --cpu-threads=3 --max-cpu-jobs=12
+```
+Detach with `Ctrl+A D`, reattach with `screen -r whisper-benchmark`.
+
+To stop a frozen job:
+```sh
 podman ps -a -q | xargs podman rm -f
 ```
 
-### Stop Monitoring
+---
 
-To stop the monitoring processes:
+## Step 3: Stop Monitoring
 
-- Terminal 1: Press Ctrl+C to stop GPU monitoring.
-- Terminal 2: Press Ctrl+C to stop the container monitoring script. Then, find and kill the process:
-
+### Terminal 1
 ```sh
+# Press Ctrl+C to stop GPU/CPU monitoring
+```
+
+### Terminal 2
+```sh
+# Press Ctrl+C, then clean up:
 ps aux | grep podman_container_monitor.py
 kill <pid>
 ```
 
-### Cleanup Disk Space
+---
 
-Run the cleanup script to free up disk space:
+## Step 4: Collect Results
+Use `sftp` to retrieve the following files:
+- `data/metrics/container_metrics.csv`
+- `data/metrics/experiment_metrics.csv`
+
+---
+
+## Step 5: Cleanup
 
 ```sh
+# Remove benchmark results
 ./data/evaluation-scripts/cleanup-benchmark-results.sh
+
+# Remove all local images
+podman rmi -a
+
+# Ensure proper permissions if using UBI images
+chmod 775 data/metrics
 ```
 
 ## Whisper Transcription Experiment Workflow
