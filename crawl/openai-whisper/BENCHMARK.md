@@ -7,20 +7,62 @@ Complete the steps from [README](./README.md)
 ```sh
 podman login quay.io
 
-FLAVOR=ubuntu # or ubi9 or ubi9-minimal
+export FLAVOR=ubuntu # or ubi9 or ubi9-minimal
 
 screen -S download-images bash -c '
-  for tag in tiny.en-$FLAVOR base.en-$FLAVOR small.en-$FLAVOR medium.en-$FLAVOR large-$FLAVOR turbo-$FLAVOR; do
+  set -e
+  for tag in tiny.en-'$FLAVOR' base.en-'$FLAVOR' small.en-'$FLAVOR' medium.en-'$FLAVOR' large-'$FLAVOR' turbo-'$FLAVOR'; do
     echo "📦 Pulling quay.io/redhat_na_ssa/speech-to-text/whisper:$tag"
-    podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag
-  done'
+    podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag || echo "❌ Failed to pull $tag"
+  done
+'
 ```
 
 ---
 
 ## Step 2: Monitor and Benchmark
 
-### Terminal 1: GPU and CPU Monitoring
+### Terminal 1: Start Container Monitoring
+
+```sh
+# start the container monitoring
+nohup python3 data/evaluation-scripts/podman_container_monitor.py &
+```
+
+### Terminal 1: Run Benchmark Experiments
+
+Run the appropriate benchmark based on your instance type:
+
+|Instance Type|	Threads per Job (--cpu-threads)|	Max Concurrent CPU Jobs (--max-cpu-jobs)|	Total vCPUs|
+|-|-|-|-|
+|g6.12xlarge|	4|	12|	48|
+|p5.48xlarge|	4|	48|	192|
+|g5.48xlarge|	4|	48|	192|
+|g5.12xlarge|	4|	12|	48|
+|g4dn.12xlarge|	3|	12|	48|
+
+💡 --cpu-threads controls threads inside the container.
+
+💡 --max-cpu-jobs limits parallel jobs on the host.
+
+```sh
+# Set your parameters
+FLAVOR=ubi9-minimal               # Options: ubuntu, ubi9, ubi9-minimal
+INSTANCE=g6.12xlarge              # Set your instance type
+THREADS=4                         # CPU threads per container
+JOBS=12                           # Max parallel CPU jobs
+
+# Launch the benchmark using screen
+screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
+  --flavor="$FLAVOR" \
+  --instance="$INSTANCE" \
+  --cpu-threads=$THREADS \
+  --max-cpu-jobs=$JOBS 
+```
+
+Detach with `Ctrl+A D`, reattach with `screen -r whisper-benchmark`.
+
+### Terminal 3: GPU and CPU Monitoring
 
 ```sh
 watch -n 2 -t '
@@ -44,58 +86,18 @@ Monitor CSV updates:
 tail -f data/metrics/experiment_metrics.csv
 
 # watch the container logs
-tail -f data/metrics/experiment_metrics.csv
-```
-
-### Terminal 2: Start Container Monitoring
-
-```sh
-# start the container monitoring
-nohup python3 data/evaluation-scripts/podman_container_monitor.py &
-```
-
-### Terminal 3: Run Benchmark Experiments
-
-Run the appropriate benchmark based on your instance type:
-
-|Instance Type|	Threads per Job (--cpu-threads)|	Max Concurrent CPU Jobs (--max-cpu-jobs)|	Total vCPUs|
-|-|-|-|-|
-|g6.12xlarge|	4|	12|	48|
-|p5.48xlarge|	4|	48|	192|
-|g5.48xlarge|	4|	48|	192|
-|g5.12xlarge|	4|	12|	48|
-|g4dn.12xlarge|	3|	12|	48|
-
-💡 --cpu-threads controls threads inside the container.
-
-💡 --max-cpu-jobs limits parallel jobs on the host.
-
-```sh
-# Set your parameters
-FLAVOR=ubi9                       # Options: ubuntu, ubi9, ubi9-minimal
-INSTANCE=g6.12xlarge              # Set your instance type
-THREADS=4                         # CPU threads per container
-JOBS=12                           # Max parallel CPU jobs
-
-# Launch the benchmark using screen
-screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
-  --flavor="$FLAVOR" \
-  --instance="$INSTANCE" \
-  --cpu-threads=$THREADS \
-  --max-cpu-jobs=$JOBS 
-```
-
-Detach with `Ctrl+A D`, reattach with `screen -r whisper-benchmark`.
-
-To stop a frozen job:
-
-```sh
-podman ps -a -q | xargs podman rm -f
+tail -f data/metrics/container_metrics.csv
 ```
 
 ---
 
 ## Step 3: Stop Monitoring
+
+To stop a frozen job (if failure/freezing occurs):
+
+```sh
+podman ps -a -q | xargs podman rm -f
+```
 
 ### Terminal 1
 
@@ -125,7 +127,7 @@ Use `sftp` to retrieve the following files, review, append and move the results 
 sftp user@ec2-N-NNN-NNN-NNN.us-east-2.compute.amazonaws.com
 
 # move to directory
-cd whitepaper-stt-evaluation-on-kubernetes/data/metrics/
+cd whitepaper-stt-evaluation-on-kubernetes/data/metrics/g6-12xlarge/
 
 # get CSV files
 get *.csv

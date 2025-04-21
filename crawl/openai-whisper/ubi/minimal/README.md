@@ -39,7 +39,7 @@ cat crawl/openai-whisper/ubi/minimal/Dockerfile
 ```sh
 # build the minimal dockerfile
 for model in tiny.en base.en small.en medium.en large turbo; do
-    tag="whisper:${model}-ubi9-minimal-minimal"
+    tag="whisper:${model}-ubi9-minimal"
     echo "🔧 Building image: $tag"
     podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubi/minimal/.
 done
