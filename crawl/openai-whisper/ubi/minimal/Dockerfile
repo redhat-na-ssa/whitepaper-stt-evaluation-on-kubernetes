@@ -46,6 +46,7 @@ COPY --chmod=0755 bin /usr/local/bin
 
 # Setup: working dir
 WORKDIR /data
+ENV HOME=/data
 
 # Give group write permissions
 RUN chmod 0775 /data
