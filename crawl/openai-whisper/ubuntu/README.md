@@ -38,11 +38,11 @@ whisper tiny.en ubuntu cpu harvard fast
 # start the container on cpu
 podman run --rm -it \
   --name whisper-tiny-en-ubuntu \
-  -v $(pwd)/data/:/data/:z \
+  -v $(pwd)/data/:/outside/:z \
   whisper:tiny.en-ubuntu /bin/bash
 
 # default whisper command
-time whisper input-samples/harvard.wav \
+time whisper /outside/input-samples/harvard.wav \
   --model tiny.en \
   --model_dir /tmp/ \
   --output_dir metrics/ \
@@ -71,10 +71,10 @@ exit
 
     ```sh
     # start the container on cpu
-    podman run --rm -it --name whisper-tiny-en-ubuntu -v $(pwd)/data/:/data/:z whisper:tiny.en-ubuntu /bin/bash
+    podman run --rm -it --name whisper-tiny-en-ubuntu -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 
     # default whisper command
-    time whisper input-samples/harvard.wav \
+    time whisper /outside/input-samples/harvard.wav \
     --model tiny.en \
     --model_dir /tmp/ \
     --output_dir metrics/ \
@@ -110,7 +110,7 @@ exit
 
     ```sh
     # start the container on gpu
-    podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/data/:z whisper:tiny.en-ubuntu /bin/bash
+    podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 
     # default whisper command
     whisper input-samples/harvard.wav \
@@ -141,7 +141,7 @@ exit
 
     ```sh
     # start the container on gpu
-    podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/data/:z whisper:tiny.en-ubuntu /bin/bash
+    podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 
     # default whisper command
     whisper input-samples/harvard.wav \

@@ -17,10 +17,6 @@ This project evaluates various Speech-to-Text (STT) configurations for both stre
 - GPU Types: 4
 - CMD Types: 2
 
-Now multiply them:
-
-3 × 3 × 2 × 3 × 4 × 4 x 2 = 1,728
-
 Test 3x general-purpose speech recognition models:
 
 1. Whisper

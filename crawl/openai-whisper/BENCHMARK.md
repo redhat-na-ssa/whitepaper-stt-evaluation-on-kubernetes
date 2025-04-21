@@ -53,7 +53,7 @@ THREADS=4                         # CPU threads per container
 JOBS=12                           # Max parallel CPU jobs
 
 # Launch the benchmark using screen
-screen -S whisper-benchmark ./data/evaluation-scripts/run-whisper-benchmark.sh \
+screen -S whisper-benchmark /outside/evaluation-scripts/run-whisper-benchmark.sh \
   --flavor="$FLAVOR" \
   --instance="$INSTANCE" \
   --cpu-threads=$THREADS \
@@ -76,17 +76,17 @@ watch -n 2 -t '
 Monitor file output progress:
 
 ```sh
-ls -lhtr data/metrics/whisper-*.txt
+ls -lhtr /outside/metrics/whisper-*.txt
 ```
 
 Monitor CSV updates:
 
 ```sh
 # watch the experiment logs
-tail -f data/metrics/experiment_metrics.csv
+tail -f /outside/metrics/experiment_metrics.csv
 
 # watch the container logs
-tail -f data/metrics/container_metrics.csv
+tail -f /outside/metrics/container_metrics.csv
 ```
 
 ---
@@ -119,15 +119,15 @@ kill <pid>
 
 Use `sftp` to retrieve the following files, review, append and move the results as needed:
 
-- `data/metrics/container_metrics.csv`
-- `data/metrics/experiment_metrics.csv`
+- `/outside/metrics/container_metrics.csv`
+- `/outside/metrics/experiment_metrics.csv`
 
 ```sh
 # sftp from your machine to the host
 sftp user@ec2-N-NNN-NNN-NNN.us-east-2.compute.amazonaws.com
 
 # move to directory
-cd whitepaper-stt-evaluation-on-kubernetes/data/metrics/g6-12xlarge/
+cd whitepaper-stt-evaluation-on-kubernetes//outside/metrics/g6-12xlarge/
 
 # get CSV files
 get *.csv
@@ -135,10 +135,10 @@ get *.csv
 # one-liner to merge without duplicate headers or rows
 FILE="container"  # or "experiment"
 INSTANCE="g6.12xlarge"
-(head -n 1 data/metrics/${FILE}_metrics.csv && tail -n +2 -q data/metrics/${FILE}_metrics.csv data/metrics/{$INSTANCE}/${FILE}_metrics.csv | sort -u) > data/metrics/merged_${FILE}_metrics.csv
+(head -n 1 /outside/metrics/${FILE}_metrics.csv && tail -n +2 -q /outside/metrics/${FILE}_metrics.csv /outside/metrics/{$INSTANCE}/${FILE}_metrics.csv | sort -u) > /outside/metrics/merged_${FILE}_metrics.csv
 
 # replace the original file
-mv data/metrics/merged_${FILE}_metrics.csv data/metrics/g6-12xlarge/${FILE}_metrics.csv
+mv /outside/metrics/merged_${FILE}_metrics.csv /outside/metrics/g6-12xlarge/${FILE}_metrics.csv
 ---
 
 ## Step 5: Cleanup
