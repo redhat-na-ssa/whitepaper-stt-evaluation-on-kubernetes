@@ -72,12 +72,24 @@ GPU_COUNT=${#GPU_IDS[@]}
 GPU_INDEX=0
 
 # Select container images based on instance and flavor
-BASE="quay.io/redhat_na_ssa/speech-to-text/whisper"
-if [[ "$INSTANCE_TYPE" == "g4dn.xlarge" || "$INSTANCE_TYPE" == "g4dn.12xlarge" ]]; then
-  IMAGES=("$BASE:tiny.en-${IMAGE_FLAVOR}" "$BASE:base.en-${IMAGE_FLAVOR}")
-else
-  IMAGES=("$BASE:tiny.en-${IMAGE_FLAVOR}" "$BASE:base.en-${IMAGE_FLAVOR}" "$BASE:small.en-${IMAGE_FLAVOR}" "$BASE:medium.en-${IMAGE_FLAVOR}" "$BASE:large-${IMAGE_FLAVOR}" "$BASE:turbo-${IMAGE_FLAVOR}")
+# Determine whether to use localhost or quay.io images
+function image_exists_locally() {
+  podman image exists "localhost/whisper:$1"
+}
+
+IMAGE_NAMES=("tiny.en-${IMAGE_FLAVOR}" "base.en-${IMAGE_FLAVOR}")
+if [[ "$INSTANCE_TYPE" != "g4dn.xlarge" && "$INSTANCE_TYPE" != "g4dn.12xlarge" ]]; then
+  IMAGE_NAMES+=("small.en-${IMAGE_FLAVOR}" "medium.en-${IMAGE_FLAVOR}" "large-${IMAGE_FLAVOR}" "turbo-${IMAGE_FLAVOR}")
 fi
+
+IMAGES=()
+for IMAGE_NAME in "${IMAGE_NAMES[@]}"; do
+  if image_exists_locally "$IMAGE_NAME"; then
+    IMAGES+=("localhost/whisper:$IMAGE_NAME")
+  else
+    IMAGES+=("quay.io/redhat_na_ssa/speech-to-text/whisper:$IMAGE_NAME")
+  fi
+done
 
 # Arguments for higher-accuracy (complex) transcriptions
 COMPLEX_ARGS="--beam_size 10 --temperature 0 --patience 2 --suppress_tokens -1 --compression_ratio_threshold 2.0 --logprob_threshold -0.5 --no_speech_threshold 0.4"
@@ -132,9 +144,10 @@ run_job() {
   SECONDS=0
   podman run --rm --pull=never \
     --name "$CONTAINER_NAME" \
+    --userns=keep-id \ t# he container run with the same UID/GID as your host user
     $GPU_FLAGS \
     $ENV_FLAGS \
-    -v "$(pwd)/data:/outside:z" \
+    -v "$(pwd)/data:/outside:Z" \ # SELinux label to the volume avoids cross-container access conflicts.
     "$IMAGE" \
     whisper "input-samples/$SAMPLE_FILE" \
       --model_dir /tmp \

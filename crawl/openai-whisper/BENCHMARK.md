@@ -22,14 +22,14 @@ screen -S download-images bash -c '
 
 ## Step 2: Monitor and Benchmark
 
-### Terminal 1: Start Container Monitoring
+### Terminal 1: Start System Monitoring
 
 ```sh
 # start the container monitoring
 nohup python3 data/evaluation-scripts/system_non_functional_monitoring.py &
 ```
 
-### Terminal 1: Run Benchmark Experiments
+### Terminal 2: Run Benchmark Experiments
 
 Run the appropriate benchmark based on your instance type:
 
@@ -52,7 +52,26 @@ INSTANCE=g6.12xlarge              # Set your instance type
 THREADS=4                         # CPU threads per container
 JOBS=12                           # Max parallel CPU jobs
 
-# Launch the benchmark using screen
+# Individual test
+podman run --rm \
+  --name whisper-tiny-en-test \
+  --userns=keep-id \
+  -e OPENBLAS_NUM_THREADS=$THREADS \
+  -e OMP_NUM_THREADS=$THREADS \
+  -e MKL_NUM_THREADS=$THREADS \
+  -v "$(pwd)/data:/outside:Z" \
+  localhost/whisper:tiny.en-${FLAVOR} \
+  whisper /outside/input-samples/harvard.wav \
+    --model_dir /tmp \
+    --output_dir /outside/metrics/ \
+    --output_format txt \
+    --language en \
+    --task transcribe \
+    --threads $THREADS \
+    --fp16 False
+
+
+# Launch the bulk benchmark using screen
 screen -S whisper-benchmark ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
   --flavor="$FLAVOR" \
   --instance="$INSTANCE" \
