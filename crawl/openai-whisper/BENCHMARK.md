@@ -83,7 +83,7 @@ Monitor CSV updates:
 
 ```sh
 # watch the experiment logs
-tail -f /outside/metrics/experiment_metrics.csv
+tail -f /outside/metrics/aiml_functional_metrics.csv
 
 # watch the container logs
 tail -f /outside/metrics/container_metrics.csv
@@ -120,7 +120,7 @@ kill <pid>
 Use `sftp` to retrieve the following files, review, append and move the results as needed:
 
 - `/outside/metrics/container_metrics.csv`
-- `/outside/metrics/experiment_metrics.csv`
+- `/outside/metrics/aiml_functional_metrics.csv`
 
 ```sh
 # sftp from your machine to the host

@@ -11,5 +11,5 @@ container_metrics.csv
 Example run-whisper-benchmark.sh
 
 ```sh
-experiment_metrics.csv 
+aiml_functional_metrics.csv 
 ```

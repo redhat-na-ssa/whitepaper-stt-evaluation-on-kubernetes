@@ -13,7 +13,7 @@
 # - Assigns each GPU job to a unique GPU (no duplication)
 # - Supports "safe mode" for resource-constrained instances (e.g. g4dn.xlarge)
 # - Runs CPU and GPU jobs concurrently
-# - Writes metrics to ./data/metrics/experiment_metrics.csv
+# - Writes metrics to ./data/metrics/aiml_functional_metrics.csv
 # - Evaluates WER, MER, CER, RTF, and TPS
 #
 # USAGE:
@@ -87,7 +87,7 @@ INPUT_SAMPLES=("harvard.wav" "jfk-audio-inaugural-address-20-january-1961.mp3" "
 
 # Prepare metrics output file
 mkdir -p ./data/metrics
-METRIC_FILE="./data/metrics/experiment_metrics.csv"
+METRIC_FILE="./data/metrics/aiml_functional_metrics.csv"
 [[ ! -f "$METRIC_FILE" ]] && echo "date,timestamp,container_name,token_count,tokens_per_second,audio_duration,real_time_factor,container_runtime_sec,wer,mer,wil,wip,cer,threads" > "$METRIC_FILE"
 
 SCRIPT_START_TIME=$(date +%s)

@@ -37,7 +37,7 @@ Read the CSV File: Use Python's pandas library to load your CSV data.​
 ```python
 import pandas as pd
 
-df = pd.read_csv('../data/metrics/experiment_metrics.csv')
+df = pd.read_csv('../data/metrics/aiml_functional_metrics.csv')
 
 df.head()
 ```
@@ -79,7 +79,7 @@ Prepare Prompts from Your DataFrame
 import pandas as pd
 
 # Load your benchmark results
-df = pd.read_csv('../data/metrics/experiment_metrics.csv')
+df = pd.read_csv('../data/metrics/aiml_functional_metrics.csv')
 
 # Create prompts for analysis
 prompts = []
