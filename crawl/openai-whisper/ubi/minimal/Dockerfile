@@ -17,7 +17,7 @@ USER root
 RUN microdnf -y install \
     python${PYTHON_VER} python${PYTHON_VER}-pip \
     gcc gcc-c++ make automake autoconf libtool git diffutils \
-    time perf iotop strace numactl sysstat bc ffmpeg && \
+    time strace numactl bc && \
     microdnf clean all && \
     rm -rf /var/cache/yum
 

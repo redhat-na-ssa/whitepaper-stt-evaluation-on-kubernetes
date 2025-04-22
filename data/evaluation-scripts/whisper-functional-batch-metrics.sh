@@ -108,9 +108,17 @@ run_job() {
     GPU_INDEX=$(((GPU_INDEX + 1) % GPU_COUNT))
   fi
 
-  # Get audio duration for RTF calculation
+  # Get audio duration for RTF calculation using ffprobe inside the container
   AUDIO_DURATION_RAW=$(podman run --rm --pull=never -v "$(pwd)/data:/outside:Z" "$IMAGE" \
     ffprobe -v error -show_entries format=duration -of csv=p=0 "/outside/input-samples/$SAMPLE_FILE" 2>/dev/null)
+
+  # Validate duration result
+  if [[ "$AUDIO_DURATION_RAW" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+    AUDIO_DURATION=$(awk "BEGIN {printf \"%.3f\", $AUDIO_DURATION_RAW}")
+  else
+    echo "⚠️  Warning: Could not determine audio duration for $SAMPLE_FILE"
+    AUDIO_DURATION="0.000"
+  fi
   
   # Use fallback if empty or invalid
   if [[ "$AUDIO_DURATION_RAW" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
