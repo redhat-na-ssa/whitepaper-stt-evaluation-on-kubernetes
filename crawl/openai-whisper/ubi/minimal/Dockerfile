@@ -14,8 +14,10 @@ ARG MODEL_SIZE  # Optional model download at build time
 USER root
 
 # Install OS dependencies in a single step to reduce layers
-RUN microdnf -y install python${PYTHON_VER} python${PYTHON_VER}-pip \
-    gcc gcc-c++ make automake autoconf libtool git diffutils  && \
+RUN microdnf -y install \
+    python${PYTHON_VER} python${PYTHON_VER}-pip \
+    gcc gcc-c++ make automake autoconf libtool git diffutils \
+    time perf iotop strace numactl sysstat bc ffmpeg && \
     microdnf clean all && \
     rm -rf /var/cache/yum
 
@@ -29,7 +31,7 @@ RUN git clone https://git.ffmpeg.org/ffmpeg.git \
       ./configure \
         --enable-gpl \
         --disable-ffplay \
-        --disable-ffprobe \
+        #--disable-ffprobe \
         --disable-doc \
         --disable-x86asm && \
       make -j"$(nproc)" && \
