@@ -2,7 +2,7 @@
 
 There are three scripts that capture the following metrics.
 
-1. podman_container_monitor.py
+1. system_non_functional_monitoring.py
 1. run-whisper-benchmark.sh
 1. compare_transcripts.py
 

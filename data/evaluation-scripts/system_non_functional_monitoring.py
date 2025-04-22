@@ -13,8 +13,8 @@ Captures:
 - Timing: startup, task, shutdown, and total durations
 
 USAGE:
-  nohup python3 podman_container_monitor.py &
-  screen -S whisper-monitor && python3 podman_container_monitor.py
+  nohup python3 system_non_functional_monitoring.py &
+  screen -S whisper-monitor && python3 system_non_functional_monitoring.py
 """
 
 import time

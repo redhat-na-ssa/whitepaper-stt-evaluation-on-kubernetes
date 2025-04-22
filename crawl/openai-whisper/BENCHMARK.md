@@ -26,7 +26,7 @@ screen -S download-images bash -c '
 
 ```sh
 # start the container monitoring
-nohup python3 data/evaluation-scripts/podman_container_monitor.py &
+nohup python3 data/evaluation-scripts/system_non_functional_monitoring.py &
 ```
 
 ### Terminal 1: Run Benchmark Experiments
@@ -109,7 +109,7 @@ podman ps -a -q | xargs podman rm -f
 
 ```sh
 # Press Ctrl+C, then clean up:
-ps aux | grep podman_container_monitor.py
+ps aux | grep system_non_functional_monitoring.py
 kill <pid>
 ```
 

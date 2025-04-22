@@ -1,8 +1,8 @@
 # Evaluation Output
 
-Location for output from the podman_container_monitor.py and run-whisper-benchmark.sh scripts.
+Location for output from the system_non_functional_monitoring.py and run-whisper-benchmark.sh scripts.
 
-Example podman_container_monitor.py
+Example system_non_functional_monitoring.py
 
 ```sh
 container_metrics.csv 
