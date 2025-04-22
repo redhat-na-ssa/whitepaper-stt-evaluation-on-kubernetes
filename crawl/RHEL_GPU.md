@@ -67,10 +67,13 @@ export INSTANCE_TYPE=g6.12xlarge
 # update all the things
 sudo dnf -y upgrade
 
-sudo reboot
-```
+# install python things
+sudo dnf -y install gcc python3-devel
+pip install --no-binary :all: psutil
 
-```sh
+# install other software
+sudo dnf -y install git screen sysstat
+
 # install kernel source
 sudo dnf -y install kernel-devel-matched kernel-headers
 
@@ -101,21 +104,6 @@ sudo dkms status
 sudo dkms install nvidia/570.124.06
 
 sudo reboot
-```
-
-### Install `psutil` `git` `screen`
-
-(source)[https://github.com/giampaolo/psutil/blob/master/INSTALL.rst]
-
-```sh
-sudo yum install -y gcc python3-devel git screen
-pip install --no-binary :all: psutil
-```
-
-### Install `sysstat`
-
-```sh
-sudo yum install -y sysstat
 ```
 
 ### Setup `podman`
