@@ -59,7 +59,7 @@ podman run --rm \
   -e OPENBLAS_NUM_THREADS=$THREADS \
   -e OMP_NUM_THREADS=$THREADS \
   -e MKL_NUM_THREADS=$THREADS \
-  -v "$(pwd)/data:/outside:Z" \
+  -v "$(pwd)/data:/outside:z" \
   localhost/whisper:tiny.en-ubi9-minimal \
   whisper /outside/input-samples/harvard.wav \
     --model_dir /outside/models \
@@ -76,6 +76,9 @@ screen -S whisper-benchmark ./data/evaluation-scripts/whisper-functional-batch-m
   --instance="$INSTANCE" \
   --cpu-threads=$THREADS \
   --max-cpu-jobs=$JOBS 
+
+  # Optional flag if you only want to test a model size or sizes comma separated no spaces
+  # --model=tiny.en
 ```
 
 Detach with `Ctrl+A D`, reattach with `screen -r whisper-benchmark`.
