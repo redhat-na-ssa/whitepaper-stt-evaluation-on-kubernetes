@@ -17,7 +17,7 @@
 # - Evaluates WER, MER, CER, RTF, and TPS
 #
 # USAGE:
-#   ./run-whisper-benchmark.sh \
+#   ./whisper-functional-batch-metrics.sh \
 #     [--flavor=ubuntu|ubi9|ubi9-minimal] \
 #     [--instance=g4dn.xlarge|g6.12xlarge|...] \
 #     [--max-cpu-jobs=4]                # How many CPU jobs run concurrently	| Affects = On the host (parallelism)
@@ -32,7 +32,7 @@
 #
 # EXAMPLE WITH SCREEN:
 #   screen -S benchmark-ubuntu-whisper \
-#     ./data/evaluation-scripts/run-whisper-benchmark.sh \
+#     ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
 #     --flavor=ubuntu \
 #     --instance=g5.12xlarge
 #

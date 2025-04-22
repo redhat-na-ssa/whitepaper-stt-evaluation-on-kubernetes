@@ -1,6 +1,6 @@
 # Evaluation Output
 
-Location for output from the system_non_functional_monitoring.py and run-whisper-benchmark.sh scripts.
+Location for output from the system_non_functional_monitoring.py and whisper-functional-batch-metrics.sh scripts.
 
 Example system_non_functional_monitoring.py
 
@@ -8,7 +8,7 @@ Example system_non_functional_monitoring.py
 container_metrics.csv 
 ```
 
-Example run-whisper-benchmark.sh
+Example whisper-functional-batch-metrics.sh
 
 ```sh
 aiml_functional_metrics.csv 

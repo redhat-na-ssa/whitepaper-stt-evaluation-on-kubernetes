@@ -53,7 +53,7 @@ THREADS=4                         # CPU threads per container
 JOBS=12                           # Max parallel CPU jobs
 
 # Launch the benchmark using screen
-screen -S whisper-benchmark /outside/evaluation-scripts/run-whisper-benchmark.sh \
+screen -S whisper-benchmark /outside/evaluation-scripts/whisper-functional-batch-metrics.sh \
   --flavor="$FLAVOR" \
   --instance="$INSTANCE" \
   --cpu-threads=$THREADS \

@@ -3,10 +3,10 @@
 There are three scripts that capture the following metrics.
 
 1. system_non_functional_monitoring.py
-1. run-whisper-benchmark.sh
+1. whisper-functional-batch-metrics.sh
 1. compare_transcripts.py
 
-## run-whisper-benchmark.sh script
+## whisper-functional-batch-metrics.sh script
 
 How many containers are launched at once on a `g6.12xlarge`?
 
