@@ -1,10 +1,6 @@
 # Whisper on Ubuntu
 
-If you follow the steps from https://github.com/openai/whisper?tab=readme-ov-file#setup, there are some basic packages to install:
-
-1. ffmpeg
-1. Python
-1. Openai-whisper
+If you follow the steps from https://github.com/openai/whisper?tab=readme-ov-file#setup, there are some basic packages to install: ffmpeg, Python, Openai-whisper, etc.
 
 ## Review the Dockerfile
 
@@ -12,7 +8,7 @@ If you follow the steps from https://github.com/openai/whisper?tab=readme-ov-fil
 cat crawl/openai-whisper/ubuntu/Dockerfile 
 ```
 
-## Build the Dockerfile embedding the model
+## Build the Dockerfile embedding the model in the `/data` directory
 
 ```sh
 for model in tiny.en base.en small.en medium.en large turbo; do
@@ -22,7 +18,7 @@ for model in tiny.en base.en small.en medium.en large turbo; do
 done
 ```
 
-NOTE: models will be saved in `/root/.cache/whisper/` in each container image
+NOTE: models will be saved in `/data/.cache/whisper/` in each container image
 
 ## Test the containers
 
@@ -33,6 +29,17 @@ NOTE: models will be saved in `/root/.cache/whisper/` in each container image
 #### tiny.en
 
 whisper tiny.en ubuntu cpu harvard fast
+
+Basic Arguments:
+
+- `/outside/input-samples/harvard.wav`	Path to the input audio file
+- `--model tiny.en`	Use the English-only Tiny model
+- `--model_dir /tmp/`	Location to cache/load downloaded models
+- `--output_dir metrics/`	Where to write the transcription result
+- `--output_format txt`	Output format: plain text (can also be vtt, json, etc.)
+- `--language en`	Language code (e.g., en for English)
+- `--task transcribe`	Task type: transcribe or translate
+- `--fp16 False`	Force FP32 inference (useful on CPU or unsupported GPUs)
 
 ```sh
 # start the container on cpu
@@ -67,110 +74,122 @@ python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-trut
 exit
 ```
 
-1. whisper tiny.en ubuntu cpu harvard complex
+whisper tiny.en ubuntu cpu harvard complex
 
-    ```sh
-    # start the container on cpu
-    podman run --rm -it --name whisper-tiny-en-ubuntu -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
+Hyperparameter explanation:
 
-    # default whisper command
-    time whisper /outside/input-samples/harvard.wav \
-    --model tiny.en \
-    --model_dir /tmp/ \
-    --output_dir metrics/ \
-    --output_format txt \
-    --language en \
-    --task transcribe \
-    --fp16 False \
-    --beam_size 10 \
-    --temperature 0 \
-    --patience 2 \
-    --suppress_tokens -1 \
-    --compression_ratio_threshold 2.0 \
-    --logprob_threshold -0.5 \
-    --no_speech_threshold 0.4
+- `--beam_size 10`	Number of beams used in beam search (improves quality but slower)
+- `--temperature 0`	Sampling temperature (0 = deterministic; higher = more random)
+- `--patience 2`	Allowed delay in selecting a less confident token (used in beam search)
+- `--suppress_tokens -1`	Disable default token suppression; decode all tokens
+- `--compression_ratio_threshold 2.0`	Threshold for flagging repetitive audio artifacts
+- `--logprob_threshold -0.5`	Minimum average log probability per segment to accept
+- `--no_speech_threshold 0.4`	Threshold for skipping non-speech segments
 
-    # calculate WER 0.00% means the transcription matches the ground truth exactly
-    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-    
-    # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+```sh
+# start the container on cpu
+podman run --rm -it --name whisper-tiny-en-ubuntu -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 
-    # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+# default whisper command
+time whisper /outside/input-samples/harvard.wav \
+--model tiny.en \
+--model_dir /tmp/ \
+--output_dir metrics/ \
+--output_format txt \
+--language en \
+--task transcribe \
+--fp16 False \
+--beam_size 10 \
+--temperature 0 \
+--patience 2 \
+--suppress_tokens -1 \
+--compression_ratio_threshold 2.0 \
+--logprob_threshold -0.5 \
+--no_speech_threshold 0.4
 
-    # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+# calculate WER 0.00% means the transcription matches the ground truth exactly
+python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
-    # stop the container
-    exit
-    ```
+# calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
+python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
-1. whisper tiny.en ubuntu gpu harvard fast
+# calculate WIL 0.00% means the hypothesis is a perfect match with the reference
+python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
-    ```sh
-    # start the container on gpu
-    podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
+# calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
+python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
 
-    # default whisper command
-    whisper input-samples/harvard.wav \
-    --model tiny.en \
-    --model_dir /tmp/ \
-    --output_dir metrics/ \
-    --output_format txt \
-    --language en \
-    --task transcribe
+# stop the container
+exit
+```
 
-    # calculate WER 0.00% means the transcription matches the ground truth exactly
-    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-    
-    # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+whisper tiny.en ubuntu gpu harvard fast
 
-    # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+```sh
+# start the container on gpu
+podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 
-    # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+# default whisper command
+whisper input-samples/harvard.wav \
+--model tiny.en \
+--model_dir /tmp/ \
+--output_dir metrics/ \
+--output_format txt \
+--language en \
+--task transcribe
 
-    # stop the container
-    exit
-    ```
+# calculate WER 0.00% means the transcription matches the ground truth exactly
+python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
-1. whisper tiny.en ubuntu gpu harvard complex
+# calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
+python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
-    ```sh
-    # start the container on gpu
-    podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
+# calculate WIL 0.00% means the hypothesis is a perfect match with the reference
+python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
-    # default whisper command
-    whisper input-samples/harvard.wav \
-    --model tiny.en \
-    --model_dir /tmp/ \
-    --output_dir metrics/ \
-    --output_format txt \
-    --language en \
-    --task transcribe \
-    --beam_size 10 \
-    --temperature 0 \
-    --patience 2 \
-    --suppress_tokens -1 \
-    --compression_ratio_threshold 2.0 \
-    --logprob_threshold -0.5 \
-    --no_speech_threshold 0.4
+# calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
+python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
 
-    # calculate WER 0.00% means the transcription matches the ground truth exactly
-    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-    
-    # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+# stop the container
+exit
+```
 
-    # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+whisper tiny.en ubuntu gpu harvard complex
 
-    # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+```sh
+# start the container on gpu
+podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 
-    # stop the container
-    exit
-    ```
+# default whisper command
+whisper input-samples/harvard.wav \
+--model tiny.en \
+--model_dir /tmp/ \
+--output_dir metrics/ \
+--output_format txt \
+--language en \
+--task transcribe \
+--beam_size 10 \
+--temperature 0 \
+--patience 2 \
+--suppress_tokens -1 \
+--compression_ratio_threshold 2.0 \
+--logprob_threshold -0.5 \
+--no_speech_threshold 0.4
+
+# calculate WER 0.00% means the transcription matches the ground truth exactly
+python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+
+# calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
+python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+
+# calculate WIL 0.00% means the hypothesis is a perfect match with the reference
+python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+
+# calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
+python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+
+# stop the container
+exit
+```
+
+## Observations:

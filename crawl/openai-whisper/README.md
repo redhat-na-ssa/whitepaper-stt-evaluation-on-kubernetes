@@ -1,6 +1,6 @@
 # OpenAI Whisper Benchmark Guide
 
-This guide provides instructions for evaluating OpenAI Whisper models using containerized environments. Each directory contains setup details for a specific base image:
+This guide provides instructions for evaluating OpenAI Whisper models using containerized environments for embedded microservice inference. Each directory contains setup details for a specific base image:
 
 ## Prepare Your Environment
 
