@@ -144,10 +144,10 @@ run_job() {
   SECONDS=0
   podman run --rm --pull=never \
     --name "$CONTAINER_NAME" \
-    --userns=keep-id \ t# he container run with the same UID/GID as your host user
+    --userns=keep-id \ 
     $GPU_FLAGS \
     $ENV_FLAGS \
-    -v "$(pwd)/data:/outside:Z" \ # SELinux label to the volume avoids cross-container access conflicts.
+    -v "$(pwd)/data:/outside:Z" \ 
     "$IMAGE" \
     whisper "input-samples/$SAMPLE_FILE" \
       --model_dir /tmp \
