@@ -149,12 +149,12 @@ run_job() {
   SECONDS=0
   podman run --rm --pull=never \
     --name "$CONTAINER_NAME" \
-    --userns=keep-id \ 
+    --userns=keep-id \
     $GPU_FLAGS \
     $ENV_FLAGS \
     -v "$(pwd)/data:/outside:Z" \
     "$IMAGE" \
-    whisper "input-samples/$SAMPLE_FILE" \
+    whisper "/outside/input-samples/$SAMPLE_FILE" \
       --model_dir /tmp \
       --output_dir /outside/metrics/ \
       --output_format txt \
