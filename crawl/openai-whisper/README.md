@@ -8,7 +8,7 @@ This guide provides instructions for evaluating OpenAI Whisper models using cont
 
 Follow the [provisioning guide](https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes/blob/main/crawl/RHEL_GPU.md) to set up your RHEL VM.
 
-### Clone the Repository
+### Clone the Repository Locally
 
 ```sh
 git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
