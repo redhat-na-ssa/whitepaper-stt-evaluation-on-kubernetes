@@ -280,7 +280,15 @@ Review your times for different gpu experiments:
 exit
 ```
 
+Rerun the experiment jobs and write the data to test_results.csv for review
+
 ```sh
+# single test
+./data/evaluation-scripts/run_cold_warm_test.sh tiny.en-ubuntu-minimal cpu harvard
+```
+
+```sh
+# batch tests
 for CONFIG in \
   "tiny.en-ubuntu cpu harvard" \
   "base.en-ubuntu cpu harvard" \
@@ -293,29 +301,16 @@ for CONFIG in \
   "small.en-ubuntu gpu harvard" \
   "medium.en-ubuntu gpu harvard" \
   "large-ubuntu gpu harvard" \
-  "turbo-ubuntu gpu harvard" \
-do
-  ./data/evaluation-scripts/run_cold_warm_test.sh $CONFIG
-done
-```
-
-```sh
-for CONFIG in \
-  "tiny.en-ubi9-minimal cpu harvard" \
-  "base.en-ubi9-minimal cpu harvard" \
-  "small.en-ubi9-minimal cpu harvard" \
-  "medium.en-ubi9-minimal cpu harvard" \
-  "large-ubi9-minimal cpu harvard" \
-  "turbo-ubi9-minimal cpu harvard" \
-  "tiny.en-ubi9-minimal gpu harvard" \
-  "base.en-ubi9-minimal gpu harvard" \
-  "small.en-ubi9-minimal gpu harvard" \
-  "medium.en-ubi9-minimal gpu harvard" \
-  "large-ubi9-minimal gpu harvard" \
-  "turbo-ubi9-minimal gpu harvard" \
+  "turbo-ubuntu gpu harvard" 
 do
   ./data/evaluation-scripts/run_cold_warm_test.sh $CONFIG
 done
 ```
 
 ## Observations:
+
+- CPU vs GPU performance
+- Cold start versus warm start
+- Hyper-parameters versus none
+- Container image scanning results from Quay.io
+- IDE versus a notebook for experiments
