@@ -54,23 +54,22 @@ JOBS=12                           # Max parallel CPU jobs
 
 # Individual test
 podman run --rm \
-  --name whisper-tiny-en-test \
   --userns=keep-id \
+  --user "$(id -u):$(id -g)" \
   -e OPENBLAS_NUM_THREADS=$THREADS \
   -e OMP_NUM_THREADS=$THREADS \
   -e MKL_NUM_THREADS=$THREADS \
   -v "$(pwd)/data:/outside:Z" \
-  localhost/whisper:tiny.en-${FLAVOR} \
+  localhost/whisper:tiny.en-ubi9-minimal \
   whisper /outside/input-samples/harvard.wav \
-    --model_dir /tmp \
+    --model_dir /outside/models \
     --output_dir /outside/metrics/ \
     --output_format txt \
     --language en \
     --task transcribe \
     --threads $THREADS \
     --fp16 False
-
-
+    
 # Launch the bulk benchmark using screen
 screen -S whisper-benchmark ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
   --flavor="$FLAVOR" \

@@ -156,7 +156,7 @@ run_job() {
     -v "$(pwd)/data:/outside:Z" \
     "$IMAGE" \
     whisper "/outside/input-samples/$SAMPLE_FILE" \
-      --model_dir /tmp \
+      --model_dir /outside/tmp \
       --output_dir /outside/metrics/ \
       --output_format txt \
       --language en \
