@@ -4,9 +4,9 @@
 
 From your browser:
 
-1. go to demo Catalog at (demo.redhat.com)[demo.redhat.com]
-1. select (Open Environments)[https://catalog.demo.redhat.com/catalog?category=Open_Environments]
-1. request (AWS Blank Open Environment)[https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/sandboxes-gpte.sandbox-open.prod&utm_source=webapp&utm_medium=share-link]
+1. go to demo Catalog at [demo.redhat.com](demo.redhat.com)
+1. select [Open Environments](https://catalog.demo.redhat.com/catalog?category=Open_Environments)
+1. request <a href="https://catalog.demo.redhat.com/catalog?item=babylon-catalog-prod/sandboxes-gpte.sandbox-open.prod&utm_source=webapp&utm_medium=share-linktarget=" target="_blank">AWS Blank Open Environment</a>
 1. set `Activity` to `Practice / Enablement`
 1. set `Purpose` to `Trying out a technical solution`
 1. `check` the cost disclaimer
