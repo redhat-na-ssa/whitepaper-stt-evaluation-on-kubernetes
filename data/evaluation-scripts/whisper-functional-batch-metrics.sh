@@ -140,7 +140,7 @@ run_job() {
 
   [[ "$MODE" == *complex* ]] && EXTRA_ARGS="$COMPLEX_ARGS"
 
-  AUDIO_DURATION=$(podman run --rm --pull=never -v "$(pwd)/data:/data:z" "$IMAGE" \
+  AUDIO_DURATION=$(podman run --rm --pull=never -v "$(pwd)/data:/outside:Z" "$IMAGE" \
     ffprobe -v error -show_entries format=duration -of csv=p=0 "input-samples/$SAMPLE_FILE" 2>/dev/null)
   AUDIO_DURATION=$(printf "%.3f" "$AUDIO_DURATION")
 
@@ -178,7 +178,7 @@ run_job() {
 
   WER="NA"; MER="NA"; WIL="NA"; WIP="NA"; CER="NA"
   if [[ -f "./outside/metrics/$OUTPUT_NAME" && -f "./outside/ground-truth/${FILENAME}.txt" ]]; then
-    METRIC_LINES=$(podman run --rm -v "$(pwd)/data:/data:z" "$IMAGE" \
+    METRIC_LINES=$(podman run --rm -v "$(pwd)/data:/outside:Z" "$IMAGE" \
       python3 /outside/evaluation-scripts/compare_transcripts.py \
       "/outside/ground-truth/${FILENAME}.txt" "/outside/metrics/${OUTPUT_NAME}")
     while IFS='=' read -r key val; do
