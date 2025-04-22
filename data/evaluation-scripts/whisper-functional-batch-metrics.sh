@@ -150,6 +150,7 @@ run_job() {
   podman run --rm --pull=never \
     --name "$CONTAINER_NAME" \
     --userns=keep-id \
+    --user "$(id -u):$(id -g)" \
     $GPU_FLAGS \
     $ENV_FLAGS \
     -v "$(pwd)/data:/outside:Z" \
