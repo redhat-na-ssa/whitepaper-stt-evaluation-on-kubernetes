@@ -26,7 +26,7 @@ from datetime import datetime
 
 # Ensure output directory exists
 os.makedirs("data/metrics", exist_ok=True)
-csv_file_path = "data/metrics/container_metrics.csv"
+csv_file_path = "data/metrics/non_functional_system_metrics.csv"
 
 # CSV headers grouped by section
 headers = [
