@@ -104,6 +104,9 @@ METRIC_FILE="./outside/metrics/aiml_functional_metrics.csv"
 
 SCRIPT_START_TIME=$(date +%s)
 
+echo "📦 Image list:"
+for image in "${IMAGES[@]}"; do echo "  - $image"; done
+
 # Function to run a single transcription benchmark job
 run_job() {
   local CONTAINER_NAME="$1"
@@ -141,13 +144,15 @@ run_job() {
     ffprobe -v error -show_entries format=duration -of csv=p=0 "input-samples/$SAMPLE_FILE" 2>/dev/null)
   AUDIO_DURATION=$(printf "%.3f" "$AUDIO_DURATION")
 
+  echo "🧪 Running container with image: $IMAGE"
+
   SECONDS=0
   podman run --rm --pull=never \
     --name "$CONTAINER_NAME" \
     --userns=keep-id \ 
     $GPU_FLAGS \
     $ENV_FLAGS \
-    -v "$(pwd)/data:/outside:Z" \ 
+    -v "$(pwd)/data:/outside:Z" \
     "$IMAGE" \
     whisper "input-samples/$SAMPLE_FILE" \
       --model_dir /tmp \
