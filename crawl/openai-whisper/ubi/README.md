@@ -76,16 +76,16 @@ done
     --threads 8
 
     # calculate WER 0.00% means the transcription matches the ground truth exactly
-    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
     
     # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
     # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
     # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
 
     # stop the container
     exit
@@ -115,16 +115,16 @@ done
     --no_speech_threshold 0.4
 
     # calculate WER 0.00% means the transcription matches the ground truth exactly
-    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
     
     # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
     # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
     # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
 
     # stop the container
     exit
@@ -146,16 +146,16 @@ done
     --task transcribe
 
     # calculate WER 0.00% means the transcription matches the ground truth exactly
-    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
     
     # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
     # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
     # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
 
     # stop the container
     exit
@@ -184,16 +184,16 @@ done
     --no_speech_threshold 0.4
 
     # calculate WER 0.00% means the transcription matches the ground truth exactly
-    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
     
     # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
     # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
 
     # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
 
     # stop the container
     exit

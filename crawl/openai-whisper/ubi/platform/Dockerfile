@@ -14,7 +14,8 @@ USER root
 
 # Install dependencies in a single step to reduce layers
 RUN yum -y install \
-    gcc gcc-c++ make automake autoconf libtool git diffutils && \
+    gcc gcc-c++ make automake autoconf libtool git diffutils \
+    time strace numactl bc && \
     yum clean all && \
     rm -rf /var/cache/yum
 
