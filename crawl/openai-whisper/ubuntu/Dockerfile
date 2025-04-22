@@ -24,7 +24,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Install OS dependencies in a single step to reduce layers
 RUN apt update && \
     apt install -y python${PYTHON_VER} python${PYTHON_VER}-venv python${PYTHON_VER}-dev \
-      python3-pip ffmpeg wget curl tzdata && \
+      python3-pip ffmpeg wget curl tzdata time strace numactl bc && \
     rm -rf /var/lib/apt/lists/*
 
 # Install python packages
