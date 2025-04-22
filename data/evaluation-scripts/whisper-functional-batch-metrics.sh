@@ -13,7 +13,7 @@
 # - Assigns each GPU job to a unique GPU (no duplication)
 # - Supports "safe mode" for resource-constrained instances (e.g. g4dn.xlarge)
 # - Runs CPU and GPU jobs concurrently
-# - Writes metrics to ./data/metrics/aiml_functional_metrics.csv
+# - Writes metrics to ./outside/metrics/aiml_functional_metrics.csv
 # - Evaluates WER, MER, CER, RTF, and TPS
 #
 # USAGE:
@@ -32,7 +32,7 @@
 #
 # EXAMPLE WITH SCREEN:
 #   screen -S benchmark-ubuntu-whisper \
-#     ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
+#     ./outside/evaluation-scripts/whisper-functional-batch-metrics.sh \
 #     --flavor=ubuntu \
 #     --instance=g5.12xlarge
 #
@@ -86,8 +86,8 @@ COMPLEX_ARGS="--beam_size 10 --temperature 0 --patience 2 --suppress_tokens -1 -
 INPUT_SAMPLES=("harvard.wav" "jfk-audio-inaugural-address-20-january-1961.mp3" "jfk-audio-rice-university-12-september-1962.mp3")
 
 # Prepare metrics output file
-mkdir -p ./data/metrics
-METRIC_FILE="./data/metrics/aiml_functional_metrics.csv"
+mkdir -p ./outside/metrics
+METRIC_FILE="./outside/metrics/aiml_functional_metrics.csv"
 [[ ! -f "$METRIC_FILE" ]] && echo "date,timestamp,container_name,token_count,tokens_per_second,audio_duration,real_time_factor,container_runtime_sec,wer,mer,wil,wip,cer,threads" > "$METRIC_FILE"
 
 SCRIPT_START_TIME=$(date +%s)
@@ -134,11 +134,11 @@ run_job() {
     --name "$CONTAINER_NAME" \
     $GPU_FLAGS \
     $ENV_FLAGS \
-    -v "$(pwd)/data:/data:z" \
+    -v "$(pwd)/data:/outside:z" \
     "$IMAGE" \
     whisper "input-samples/$SAMPLE_FILE" \
       --model_dir /tmp \
-      --output_dir /data/metrics/ \
+      --output_dir /outside/metrics/ \
       --output_format txt \
       --language en \
       --task transcribe \
@@ -147,9 +147,9 @@ run_job() {
       $EXTRA_ARGS
   TRANSCODE_SEC=$SECONDS
 
-  [[ -f "./data/metrics/${FILENAME}.txt" ]] && mv "./data/metrics/${FILENAME}.txt" "./data/metrics/$OUTPUT_NAME"
+  [[ -f "./outside/metrics/${FILENAME}.txt" ]] && mv "./outside/metrics/${FILENAME}.txt" "./outside/metrics/$OUTPUT_NAME"
 
-  TOKEN_COUNT=$(wc -w < "./data/metrics/$OUTPUT_NAME" | tr -d '[:space:]')
+  TOKEN_COUNT=$(wc -w < "./outside/metrics/$OUTPUT_NAME" | tr -d '[:space:]')
   TOKENS_PER_SEC="NA"
   [[ "$TOKEN_COUNT" -gt 0 && "$TRANSCODE_SEC" -gt 0 ]] && \
     TOKENS_PER_SEC=$(awk "BEGIN {printf \"%.2f\", $TOKEN_COUNT / $TRANSCODE_SEC}")
@@ -159,10 +159,10 @@ run_job() {
     RTF=$(awk "BEGIN {printf \"%.3f\", $TRANSCODE_SEC / $AUDIO_DURATION}")
 
   WER="NA"; MER="NA"; WIL="NA"; WIP="NA"; CER="NA"
-  if [[ -f "./data/metrics/$OUTPUT_NAME" && -f "./data/ground-truth/${FILENAME}.txt" ]]; then
+  if [[ -f "./outside/metrics/$OUTPUT_NAME" && -f "./outside/ground-truth/${FILENAME}.txt" ]]; then
     METRIC_LINES=$(podman run --rm -v "$(pwd)/data:/data:z" "$IMAGE" \
-      python3 /data/evaluation-scripts/compare_transcripts.py \
-      "/data/ground-truth/${FILENAME}.txt" "/data/metrics/${OUTPUT_NAME}")
+      python3 /outside/evaluation-scripts/compare_transcripts.py \
+      "/outside/ground-truth/${FILENAME}.txt" "/outside/metrics/${OUTPUT_NAME}")
     while IFS='=' read -r key val; do
       case $key in
         WER) WER="$val" ;; MER) MER="$val" ;; WIL) WIL="$val" ;;
