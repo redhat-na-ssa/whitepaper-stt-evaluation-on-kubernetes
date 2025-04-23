@@ -82,7 +82,7 @@ The second test lets run whisper with basic arguments:
 
 ```sh
 # start the container on cpu
-podman run --rm -it --name whisper-tiny-en-ubuntu-cpu -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
+podman run --rm -it --name whisper-tiny-en-ubuntu-cpu-basic -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 ```
 
 ```sh
@@ -116,7 +116,7 @@ The third test lets run whisper with hyperparameter argument values:
 
 ```sh
 # start the container on cpu
-podman run --rm -it --name whisper-tiny-en-ubuntu-cpu -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
+podman run --rm -it --name whisper-tiny-en-ubuntu-cpu-hyperparameter -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 ```
 
 ```sh
@@ -164,12 +164,9 @@ python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-trut
 
 Review your times for different cpu experiments:
 
-1. vanilla whisper command (cold)
-1. vanilla whisper command (warm)
-1. whisper command with basic arguments (cold)
-1. whisper command with basic arguments (warm)
-1. whisper command with hyper-parameters (cold)
-1. whisper command with hyper-parameters (warm)
+1. whisper command (cold vs warm)
+1. whisper command with basic arguments (cold vs warm)
+1. whisper command with hyperparameters (cold vs warm)
 
 ```sh
 # stop the container
@@ -200,7 +197,7 @@ The second test lets run whisper with basic arguments:
 
 ```sh
 # start the container on gpu
-podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
+podman run --rm -it --name whisper-tiny-en-ubuntu-gpu-basic --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 ```
 
 ```sh
@@ -226,7 +223,7 @@ The third test lets run whisper with hyperparameter argument values:
 
 ```sh
 # start the container on gpu
-podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
+podman run --rm -it --name whisper-tiny-en-ubuntu-gpu-hyperparameter --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 ```
 
 ```sh
@@ -268,12 +265,9 @@ python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-trut
 
 Review your times for different gpu experiments:
 
-1. vanilla whisper command (cold)
-1. vanilla whisper command (warm)
-1. whisper command with basic arguments (cold)
-1. whisper command with basic arguments (warm)
-1. whisper command with hyper-parameters (cold)
-1. whisper command with hyper-parameters (warm)
+1. whisper command (cold vs warm | cpu vs gpu)
+1. whisper command with basic arguments (cold vs warm | cpu vs gpu)
+1. whisper command with hyperparameters (cold vs warm | cpu vs gpu)
 
 ```sh
 # stop the container
@@ -283,8 +277,14 @@ exit
 Rerun the experiment jobs and write the data to test_results.csv for review
 
 ```sh
-# single test
-./data/evaluation-scripts/run_cold_warm_test.sh tiny.en-ubuntu-minimal cpu harvard
+# single test without arguments
+./run_cold_warm_test.sh tiny.en-ubuntu cpu harvard none
+
+# single test with basic arguments
+./run_cold_warm_test.sh tiny.en-ubuntu cpu harvard basic
+
+# single test with hyperparameters
+./run_cold_warm_test.sh tiny.en-ubuntu cpu harvard hyperparameter
 ```
 
 ```sh
@@ -309,8 +309,18 @@ done
 
 ## Observations:
 
+- Model size
+  - Larger models take significantly longer
+  - Inference time scales roughly with model size, as expected.
 - CPU vs GPU performance
+  - GPU tests are faster for warm starts, but not yet efficient on cold start
+  - GPU gives more benefit as model size increases and batch size scales
+  - CPU-only inference with large or turbo is costly — avoid in production unless necessary.
 - Cold start versus warm start
-- Hyper-parameters versus none
+  - Warm starts are consistently faster
+  - Warm inference is still faster than CPU even at small batch sizes
+  - Warm start skips some loading overhead (e.g., model weights into memory, tokenization cache)
+  - Cold start impact is significant on larger models, making persistent or warmed containers more efficient.
+- No arguments versus hyperparameters
 - Container image scanning results from Quay.io
 - IDE versus a notebook for experiments
