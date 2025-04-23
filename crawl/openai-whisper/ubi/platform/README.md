@@ -198,3 +198,8 @@ done
     # stop the container
     exit
     ```
+
+
+|||
+|-|-|
+|[Previous <- Ubuntu with Whisper](ubuntu/README.md)|[Next -> UBI9 Platform with Whisper](../ubi/platform/README.md)|

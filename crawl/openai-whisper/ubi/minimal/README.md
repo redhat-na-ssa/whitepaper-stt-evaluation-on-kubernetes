@@ -190,3 +190,7 @@ done
     # stop the container
     exit
     ```
+
+|||
+|-|-|
+|[Previous <- UBI9 Platform with Whisper](../platform/README.md)|[Next -> Faster-Whisper](../../../faster-whisper/README.md)|

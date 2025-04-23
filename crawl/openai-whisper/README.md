@@ -16,11 +16,7 @@ git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernet
 
 ### Begin Crawl
 
-Proceed to:
-
-1. [Ubuntu with Whisper](ubuntu/README.md)
-1. [UBI9 with Whisper](ubi/platform/README.md)
-1. [UBI9-minimal with Whisper](ubi/minimal/README.md)
+[Next -> Ubuntu with Whisper](ubuntu/README.md)
 
 ## Resources
 
