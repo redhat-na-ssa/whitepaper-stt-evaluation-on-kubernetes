@@ -325,6 +325,5 @@ done
 - Container image scanning results from Quay.io
 - IDE versus a notebook for experiments
 
-|||
+||[Next -> UBI9 Platform with Whisper](../ubi/platform/README.md)|
 |-|-|
-|[Next -> UBI9 Platform with Whisper](../ubi/platform/README.md)|
