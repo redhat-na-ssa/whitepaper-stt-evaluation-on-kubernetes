@@ -137,6 +137,9 @@ podman run --rm \
   --security-opt=label=disable registry.access.redhat.com/ubi9 nvidia-smi -L
 ```
 
+|[Previous <- Main README](./openai-whisper/README.md)|[Next -> Ubuntu with Whisper](./openai-whisper/ubuntu/README.md)|
+|-|-|
+
 ## Links
 
 - https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html
