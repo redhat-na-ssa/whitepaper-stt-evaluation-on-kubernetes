@@ -1,12 +1,24 @@
 # Whisper on Ubuntu
 
+- ssh into your VM
+
+## Git clone the project on the VM
+
+```sh
+# clone in the VM
+git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
+
+# move to repo
+cd whitepaper-stt-evaluation-on-kubernetes
+```
+
 ## Review OpenAI Whisper Requirements
 
 Go to [OpenAI Whisper](https://github.com/openai/whisper?tab=readme-ov-file#setup) and review basic packages to install: ffmpeg, Python, Openai-whisper, etc.
 
 ## Review the Dockerfile
 
-Notice: ffmpeg is an apt install
+Notice: ffmpeg is an apt install with the Ubuntu image
 
 ```sh
 cat crawl/openai-whisper/ubuntu/Dockerfile 
@@ -47,9 +59,13 @@ NOTE: models will be saved in `/data/.cache/whisper/` in each container image
 
 [Harvard Speech Recognition Dataset](https://www.kaggle.com/datasets/tmshaikh/speech-recognition-data) provides a way to smoke test before running against more complex audio data.
 
-#### tiny.en
+### Review the ground truth data
 
-The first test lets run whisper tiny.en ubuntu on cpu transcribing harvard audio data sample:
+```sh
+cat data/ground-truth/harvard.txt 
+```
+
+### The first test lets run whisper tiny.en ubuntu on cpu transcribing harvard audio data sample:
 
 ```sh
 # start the container on cpu
@@ -57,11 +73,11 @@ podman run --rm -it --name whisper-tiny-en-ubuntu-cpu -v $(pwd)/data/:/outside/:
 ```
 
 ```sh
-# vanilla whisper command
+# run whisper command
 time whisper /outside/input-samples/harvard.wav \
   --model tiny.en
 
-# Rerun the same command (warm start)
+# rerun the same command (warm start)
 ```
 
 ```sh
@@ -69,7 +85,7 @@ time whisper /outside/input-samples/harvard.wav \
 exit
 ```
 
-The second test lets run whisper with basic arguments:
+### The second test lets run whisper with basic arguments:
 
 - `/outside/input-samples/harvard.wav`	Path to the input audio file
 - `--model tiny.en`	Use the English-only Tiny model
@@ -104,7 +120,7 @@ time whisper /outside/input-samples/harvard.wav \
 exit
 ```
 
-The third test lets run whisper with hyperparameter argument values:
+### The third test lets run whisper with hyperparameter argument values:
 
 - `--beam_size 10`	Number of beams used in beam search (improves quality but slower)
 - `--temperature 0`	Sampling temperature (0 = deterministic; higher = more random)
@@ -140,7 +156,7 @@ time whisper /outside/input-samples/harvard.wav \
 # Rerun the same command (warm start)
 ```
 
-Measure transcription accuracy from (JiWER)[https://github.com/jitsi/jiwer]:
+### Measure transcription accuracy from (JiWER)[https://github.com/jitsi/jiwer]:
 
 - word error rate (WER)
 - match error rate (MER)
@@ -149,20 +165,26 @@ Measure transcription accuracy from (JiWER)[https://github.com/jitsi/jiwer]:
 - character error rate (CER)
 
 ```sh
-# calculate WER 0.00% means the transcription matches the ground truth exactly
-python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+# WER 0.00% means the transcription matches the ground truth exactly
+# MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
+# WIL 0.00% means the hypothesis is a perfect match with the reference
+# WIP 1.00 (100%) means perfect preservation from the reference in the hypothesis (i.e., a perfect match).
+# CER 0.00% means characters in your hypothesis match the characters in your reference exactly
 
-# calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-
-# calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-
-# calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+python3 -c '
+from jiwer import wer, mer, wil, cer
+ref = open("/outside/ground-truth/harvard.txt").read()
+hyp = open("metrics/harvard.txt").read()
+wil_val = wil(ref, hyp)
+print(f"WER: {wer(ref, hyp):.2%}")
+print(f"MER: {mer(ref, hyp):.2%}")
+print(f"WIL: {wil_val:.2%}")
+print(f"WIP: {1 - wil_val:.2%}")
+print(f"CER: {cer(ref, hyp):.2%}")
+'
 ```
 
-Review your times for different cpu experiments:
+### Review your times for different cpu experiments
 
 1. whisper command (cold vs warm)
 1. whisper command with basic arguments (cold vs warm)
@@ -173,7 +195,7 @@ Review your times for different cpu experiments:
 exit
 ```
 
-The first test lets run whisper tiny.en ubuntu on gpu transcribing harvard audio data sample:
+### Testing on GPU
 
 ```sh
 # start the container on gpu
@@ -181,53 +203,7 @@ podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disab
 ```
 
 ```sh
-# whisper command
-time whisper /outside/input-samples/harvard.wav \
-  --model tiny.en
-
-# Rerun the same command (warm start)
-```
-
-```sh
-# stop the container
-exit
-```
-
-The second test lets run whisper with basic arguments:
-
-```sh
-# start the container on gpu
-podman run --rm -it --name whisper-tiny-en-ubuntu-gpu-basic --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
-```
-
-```sh
-# whisper command with basic arguments
-time whisper /outside/input-samples/harvard.wav \
-  --model tiny.en \
-  --model_dir /tmp/ \
-  --output_dir metrics/ \
-  --output_format txt \
-  --language en \
-  --task transcribe \
-  --fp16 False
-
-# Rerun the same command (warm start)
-```
-
-```sh
-# stop the container
-exit
-```
-
-The third test lets run whisper with hyperparameter argument values:
-
-```sh
-# start the container on gpu
-podman run --rm -it --name whisper-tiny-en-ubuntu-gpu-hyperparameter --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
-```
-
-```sh
-# default whisper command
+# whisper command with hyperparameters
 time whisper /outside/input-samples/harvard.wav \
 --model tiny.en \
 --model_dir /tmp/ \
@@ -247,67 +223,39 @@ time whisper /outside/input-samples/harvard.wav \
 # Rerun the same command (warm start)
 ```
 
-Measure transcription accuracy:
+## Batch jobs running experiments on CPU and GPU in parallel
+
+Instead of manually repeating these steps on gpu transcribing harvard audio data sample, lets create job of experiments and run them in parallel.
+
+The output writes the data to `data/metrics/aiml_functional_metrics.csv` for easier review
 
 ```sh
-# calculate WER 0.00% means the transcription matches the ground truth exactly
-python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+# You can copy this entire block and paste in the terminal
+# Set your parameters
+FLAVOR=ubuntu               # Options: ubuntu, ubi9, ubi9-minimal
+INSTANCE=g6.12xlarge        # Set your instance type
+INPUT=harvard.wav           # Enter if you want process a single input, other All Audio files processed
 
-# calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-
-# calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-
-# calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-```
-
-Review your times for different gpu experiments:
-
-1. whisper command (cold vs warm | cpu vs gpu)
-1. whisper command with basic arguments (cold vs warm | cpu vs gpu)
-1. whisper command with hyperparameters (cold vs warm | cpu vs gpu)
-
-```sh
-# stop the container
-exit
-```
-
-Rerun the experiment jobs and write the data to test_results.csv for review
-
-```sh
-# single test without arguments
-./run_cold_warm_test.sh tiny.en-ubuntu cpu harvard none
-
-# single test with basic arguments
-./run_cold_warm_test.sh tiny.en-ubuntu cpu harvard basic
-
-# single test with hyperparameters
-./run_cold_warm_test.sh tiny.en-ubuntu cpu harvard hyperparameter
-```
-
-```sh
-# batch tests
-for CONFIG in \
-  "tiny.en-ubuntu cpu harvard" \
-  "base.en-ubuntu cpu harvard" \
-  "small.en-ubuntu cpu harvard" \
-  "medium.en-ubuntu cpu harvard" \
-  "large-ubuntu cpu harvard" \
-  "turbo-ubuntu cpu harvard" \
-  "tiny.en-ubuntu gpu harvard" \
-  "base.en-ubuntu gpu harvard" \
-  "small.en-ubuntu gpu harvard" \
-  "medium.en-ubuntu gpu harvard" \
-  "large-ubuntu gpu harvard" \
-  "turbo-ubuntu gpu harvard" 
-do
-  ./data/evaluation-scripts/run_cold_warm_test.sh $CONFIG
-done
+# Run the script
+./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
+  --flavor="$FLAVOR" \
+  --instance="$INSTANCE"
+  --input-sample="$INPUT"
 ```
 
 ## Observations:
+
+| **Metric**               | **Goal**            | **Notes**                                                                 |
+|--------------------------|---------------------|---------------------------------------------------------------------------|
+| `tokens_per_second`      | Higher = better     | Measures inference throughput. GPU modes should be much faster than CPU. |
+| `real_time_factor` (RTF) | < 1.0 = real-time   | Runtime ÷ audio duration. Ideal for evaluating latency.                   |
+| `container_runtime_sec`  | Lower = better      | Total time the container was alive. Includes startup/shutdown overhead.  |
+| `token_count`            | Stable across modes | Large variation may indicate inconsistent transcriptions.                 |
+| `wer`                    | Lower = better      | Word Error Rate. Basic transcription accuracy.                           |
+| `mer`                    | Lower = better      | Matches, Insertions, Deletions, Substitutions. Broader than WER.         |
+| `wil`                    | Lower = better      | Word Information Lost. Highlights over/under prediction.                 |
+| `wip`                    | Higher = better     | Word Information Preserved. 1.0 = perfect match.                          |
+| `cer`                    | Lower = better      | Character Error Rate. More sensitive to fine-grained transcription.       |
 
 - Model size
   - Larger models take significantly longer

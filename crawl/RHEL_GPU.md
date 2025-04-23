@@ -139,6 +139,16 @@ podman run --rm \
   --security-opt=label=disable registry.access.redhat.com/ubi9 nvidia-smi -L
 ```
 
+If you hit this error re-run `nvidia-smi` once and it should correct the error
+
+```sh
+# error
+Error: setting up CDI devices: failed to inject devices: failed to stat CDI host device "/dev/nvidia-uvm": no such file or directory
+
+# fix
+nvidia-smi
+```
+
 |[Previous <- Main README](./openai-whisper/README.md)|[Next -> Ubuntu with Whisper](./openai-whisper/ubuntu/README.md)|
 |-|-|
 

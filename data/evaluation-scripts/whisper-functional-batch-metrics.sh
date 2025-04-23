@@ -9,15 +9,19 @@
 
 # Default config values
 IMAGE_FLAVOR="ubi9-minimal"          # Container image flavor to use (e.g., ubuntu, ubi9)
-INSTANCE_TYPE="test-instance"       # Descriptive name for the machine type
+INSTANCE_TYPE="test-instance"        # Descriptive name for the machine type
 CPU_THREADS=4                        # Threads used per containerized CPU job
 MAX_CPU_JOBS=1                       # Max number of concurrent CPU jobs
 MODEL_FILTER=""                      # Optional model size filter (e.g., "tiny,base")
+INPUT_SAMPLE_FILTER=""               # Optional audio sample filter (e.g., harvard.wav)
 
-# Parse optional model filter from command line
+# Parse optional flags from command line
 for ARG in "$@"; do
   case $ARG in
-    --model=*) MODEL_FILTER="${ARG#*=}" ;;  # e.g., --model=tiny,base
+    --model=*) MODEL_FILTER="${ARG#*=}" ;;       # e.g., --model=tiny,base
+    --flavor=*) IMAGE_FLAVOR="${ARG#*=}" ;;      # e.g., --flavor=ubuntu
+    --instance=*) INSTANCE_TYPE="${ARG#*=}" ;;   # e.g., --instance=g5.12xlarge
+    --input-sample=*) INPUT_SAMPLE_FILTER="${ARG#*=}" ;;  # e.g., --input-sample=harvard.wav
   esac
 done
 
@@ -60,14 +64,21 @@ for IMG in "${ALL_IMAGES[@]}"; do
 done
 
 # Audio inputs to test against
-INPUT_SAMPLES=(
+ALL_SAMPLES=(
   "harvard.wav"
   "jfk-audio-inaugural-address-20-january-1961.mp3"
   "jfk-audio-rice-university-12-september-1962.mp3"
 )
 
+INPUT_SAMPLES=()
+for SAMPLE in "${ALL_SAMPLES[@]}"; do
+  if [[ -z "$INPUT_SAMPLE_FILTER" || "$SAMPLE" == "$INPUT_SAMPLE_FILTER" ]]; then
+    INPUT_SAMPLES+=("$SAMPLE")
+  fi
+done
+
 # Mode combinations to run
-MODES=("cpu_fast" "cpu_complex" "gpu_fast" "gpu_complex")
+MODES=("cpu_basic" "cpu_hyperparam" "gpu_basic" "gpu_hyperparam")
 
 # Detect GPUs
 GPU_IDS=($(nvidia-smi --query-gpu=index --format=csv,noheader))
@@ -84,7 +95,7 @@ fi
 run_job() {
   local IMAGE="$1"               # Whisper container image
   local SAMPLE_FILE="$2"         # Audio file to transcribe
-  local MODE="$3"               # Mode: cpu_fast, cpu_complex, gpu_fast, gpu_complex
+  local MODE="$3"               # Mode: cpu_basic, cpu_hyperparam, gpu_basic, gpu_hyperparam
   local CPU_THREADS="$4"        # Threads per CPU job
 
   local FILENAME="${SAMPLE_FILE%.*}"
