@@ -101,7 +101,9 @@ sudo dnf module -y install nvidia-driver:latest-dkms
 # dnf install nvidia-driver-cuda kmod-nvidia-latest-dkms
 
 sudo dkms status
-sudo dkms install nvidia/570.124.06
+
+# upgraded driver
+sudo dkms install nvidia/570.133.20
 
 sudo reboot
 ```
