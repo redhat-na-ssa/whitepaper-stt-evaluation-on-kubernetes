@@ -39,8 +39,6 @@ screen -S download-images bash -c '
 
 ```sh
 # start the container monitoring
-nohup python3 data/evaluation-scripts/system_non_functional_monitoring.py &
-
 nohup python3 data/evaluation-scripts/system_non_functional_monitoring.py > data/metrics/monitoring.log 2>&1 &
 ```
 
@@ -119,10 +117,10 @@ Monitor CSV updates:
 
 ```sh
 # watch the experiment logs
-tail -f /outside/metrics/aiml_functional_metrics.csv
+tail -f /data/metrics/aiml_functional_metrics.csv
 
 # watch the container logs
-tail -f /outside/metrics/container_metrics.csv
+tail -f data/metrics/system_non_functional_metrics.csv
 ```
 
 ---
