@@ -2,6 +2,19 @@
 
 Complete the steps from [README](./README.md)
 
+| **Question**                                                                 | **Insight or Decision You Can Make**                                                                 |
+|------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| How much faster is a **warm start** compared to a **cold start**?         | Understand startup overhead. Helps optimize deployment patterns (e.g., always-on vs. just-in-time).   |
+| Are GPUs consistently faster than CPUs across all samples and modes?      | Determine cost/performance tradeoffs. Helps justify GPU provisioning or autoscaling strategies.       |
+| Do **hyperparameters** improve accuracy (WER, MER, etc.)?                 | Evaluate if added complexity gives better results. Useful for tuning production pipelines.            |
+| How does **tokens per second** vary between CPU and GPU?                  | Quantify throughput gains. Helps size workloads or batch strategies.                                  |
+| Does **model accuracy (WER, MER, WIL)** stay consistent across inputs?    | Identify model sensitivity to input types. May highlight weaknesses or dataset alignment issues.       |
+| Are **cold start GPU times** worth the latency compared to CPU warm start? | Reveal if GPUs only benefit long-running or warmed models. Useful for real-time or burst workloads.    |
+| Which models/configs have the lowest **CER**?                             | Helps pick setups for domains needing fine-grained accuracy (e.g., legal or medical transcription).    |
+| Are **tokens_per_second** scaling linearly with input length?            | Detect performance bottlenecks for longer inputs. Nonlinear scaling may imply inefficiencies.          |
+| Is **accuracy stable between cold and warm starts**?                     | Ensures caching or warm-up doesn’t affect output quality. Detects potential reproducibility issues.    |
+| What’s the **best tradeoff** between speed and accuracy?                 | Allows selecting config based on latency, throughput, or quality — critical for user-facing apps.      |
+
 ## Pull Whisper Images
 
 ```sh
@@ -175,27 +188,17 @@ podman rmi -a
 chmod 775 data/metrics
 ```
 
-## Whisper Transcription Experiment Workflow
+## 📊 Questions and Insights from Benchmark Data
 
-1. Provision one of four RHEL VMs with a GPU.
-1. Pull six Ubuntu Whisper images from Quay.io.
-1. Start container monitoring in the background.
-1. For each of the six container images:
-    - For each of the three audio samples:
-        - Launch a new container using the image and transcribe the sample on the host CPU with:
-            1. A fast command, saving the output with a unique filename.
-            1. A complex command, saving the output with a unique filename.
-        - Launch a new container using the image and transcribe the sample on the host GPU with: 
-            1. A fast command, saving the output with a unique filename.
-            1. A complex command, saving the output with a unique filename.
-1. Stop container monitoring.
-1. Remove the six Ubuntu Whisper images from the host.
-1. Repeat steps 2–6 for the six UBI9 then UBI9-minimal Whisper images from Quay.io.
-1. Repeat the entire process for all four RHEL VMs.
-
-```sh
-4 VMs × 18 containers × 3 samples × 2 commands × 2 modes
-= 864 transcription files per VM
-× 4 VMs
-= 3,456 transcription files total
-```
+| **Question**                                                                 | **Answer / Insight from Data**                                                                                                                                      |
+|------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| How much faster is a **warm start** compared to a **cold start**?         | Warm starts cut container runtime by over 50% in most cases (e.g., CPU basic from 59.7s to 20.0s).                                                                 |
+| Are GPUs consistently faster than CPUs across all samples and modes?      | Yes. GPUs are ~5–10x faster than CPU cold starts and ~2–4x faster than CPU warm starts, with consistent performance at scale.                                     |
+| Do **hyperparameters** improve accuracy (WER, MER, etc.)?                 | Slightly — minor but consistent improvements (e.g., WER drops from 0.2600 to 0.2457 on JFK sample with GPU hyperparameters).                                      |
+| How does **tokens per second (TPS)** vary between CPU and GPU?           | TPS on GPU (30–33) is an order of magnitude higher than on CPU (2–3).                                                                                              |
+| Are **TPS** values stable across warm vs cold starts?                    | Yes. TPS improves slightly with warm start due to reduced overhead (e.g., GPU basic 3.83 → 4.71).                                                                  |
+| Does **model accuracy** stay consistent across inputs and configs?        | Yes. Accuracy metrics remain stable across cold/warm starts and CPU/GPU for the same input (e.g., Harvard sample has 0.0000 WER in all tests).                   |
+| Are **cold start GPU times** better than CPU warm starts?                | Yes. Even cold-start GPU runs (e.g., ~11s) outperform CPU warm starts (~20s) for small audio files, with wider margins on longer audio.                          |
+| Which configs give lowest **CER** (Character Error Rate)?                | GPU hyperparameter runs consistently yield lower CER on complex samples (e.g., JFK CER down to 0.0811).                                                           |
+| Is **accuracy stable between cold and warm starts**?                     | Yes. WER/WIL/WIP metrics remain virtually identical, validating container cold/warm consistency.                                                                  |
+| What’s the **best tradeoff** between speed and accuracy?                 | GPU + hyperparameter + warm start: fastest execution and best accuracy across all samples. Avoid large models on CPU without warm-up.                            |

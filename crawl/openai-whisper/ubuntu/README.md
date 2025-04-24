@@ -1,8 +1,26 @@
 # Whisper on Ubuntu
 
-- ssh into your VM
+## Section Expectations
+
+## Questions to Ask Before Running Whisper Benchmarks
+
+| **Question Before the Exercise**| **Expected Answer / Learning After Completion**|
+|-|-|
+| What is the impact of model size (e.g., tiny → turbo)?                 |  |
+| How much faster is GPU inference compared to CPU?                      |  |
+| How do cold starts compare to warm starts?                             |  |
+| Do advanced arguments (hyperparameters) improve accuracy?              |  |
+| How accurate is Whisper across short vs. long audio?                   |  |
+| Do different base images (Ubuntu vs UBI) affect performance?           |  |
+| What metrics are most useful to compare experiments?                   |  |
+| What’s a reasonable throughput goal for deployment?                    |  |
+| Should experiments run in parallel or sequentially?                    |  |
+| Are containers reusable across experiments?                            |  |
+
 
 ## Git clone the project on the VM
+
+- ssh into your VM
 
 ```sh
 # clone in the VM
@@ -52,6 +70,15 @@ done
 ```
 
 NOTE: models will be saved in `/data/.cache/whisper/` in each container image
+
+## Capture the image sizes
+
+This captures the image sizes for comparison laters and writes to `data/metrics/image_sizes.csv`.
+
+```sh
+# image sizes
+mkdir -p data/metrics && echo "repository,tag,size" | tee data/metrics/image_sizes.csv && podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep '^localhost/whisper' | tee -a data/metrics/image_sizes.csv
+```
 
 ## Test the containers
 
@@ -138,31 +165,31 @@ podman run --rm -it --name whisper-tiny-en-ubuntu-cpu-hyperparameter -v $(pwd)/d
 ```sh
 # whisper command with hyperparameters
 time whisper /outside/input-samples/harvard.wav \
---model tiny.en \
---model_dir /tmp/ \
---output_dir metrics/ \
---output_format txt \
---language en \
---task transcribe \
---fp16 False \
---beam_size 10 \
---temperature 0 \
---patience 2 \
---suppress_tokens -1 \
---compression_ratio_threshold 2.0 \
---logprob_threshold -0.5 \
---no_speech_threshold 0.4
+  --model tiny.en \
+  --model_dir /tmp/ \
+  --output_dir metrics/ \
+  --output_format txt \
+  --language en \
+  --task transcribe \
+  --fp16 False \
+  --beam_size 10 \
+  --temperature 0 \
+  --patience 2 \
+  --suppress_tokens -1 \
+  --compression_ratio_threshold 2.0 \
+  --logprob_threshold -0.5 \
+  --no_speech_threshold 0.4
 
 # Rerun the same command (warm start)
 ```
 
-### Measure transcription accuracy from (JiWER)[https://github.com/jitsi/jiwer]:
+### Measure transcription accuracy from [JiWER](https://github.com/jitsi/jiwer):
 
-- word error rate (WER)
-- match error rate (MER)
-- word information lost (WIL)
-- word information preserved (WIP)
-- character error rate (CER)
+- **WER (Word Error Rate):** How many words were wrong in the transcription.
+- **MER (Match Error Rate):** How many changes were needed to fix the transcription.
+- **WIL (Word Information Lost):** How much word meaning was missed.
+- **WIP (Word Information Preserved):** How much word meaning was kept.
+- **CER (Character Error Rate):** How many letters were wrong.
 
 ```sh
 # WER 0.00% means the transcription matches the ground truth exactly
@@ -199,26 +226,30 @@ exit
 
 ```sh
 # start the container on gpu
-podman run --rm -it --name whisper-tiny-en-ubuntu-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
+podman run --rm -it --name whisper-tiny-en-ubuntu-gpu \
+  --security-opt=label=disable \
+  --device nvidia.com/gpu=all \
+  -v $(pwd)/data/:/outside/:z \
+  whisper:tiny.en-ubuntu /bin/bash
 ```
 
 ```sh
 # whisper command with hyperparameters
 time whisper /outside/input-samples/harvard.wav \
---model tiny.en \
---model_dir /tmp/ \
---output_dir metrics/ \
---output_format txt \
---language en \
---task transcribe \
---fp16 False \
---beam_size 10 \
---temperature 0 \
---patience 2 \
---suppress_tokens -1 \
---compression_ratio_threshold 2.0 \
---logprob_threshold -0.5 \
---no_speech_threshold 0.4
+  --model tiny.en \
+  --model_dir /tmp/ \
+  --output_dir metrics/ \
+  --output_format txt \
+  --language en \
+  --task transcribe \
+  --fp16 False \
+  --beam_size 10 \
+  --temperature 0 \
+  --patience 2 \
+  --suppress_tokens -1 \
+  --compression_ratio_threshold 2.0 \
+  --logprob_threshold -0.5 \
+  --no_speech_threshold 0.4
 
 # Rerun the same command (warm start)
 ```
@@ -231,17 +262,33 @@ The output writes the data to `data/metrics/aiml_functional_metrics.csv` for eas
 
 ```sh
 # You can copy this entire block and paste in the terminal
+
 # Set your parameters
-FLAVOR=ubuntu               # Options: ubuntu, ubi9, ubi9-minimal
-INSTANCE=g6.12xlarge        # Set your instance type
-INPUT=harvard.wav           # Enter if you want process a single input, other All Audio files processed
+FLAVOR=ubuntu         # Options: ubuntu, ubi9, ubi9-minimal
+INSTANCE=g6.12xlarge  # Set your instance type
+#MODELS=large,turbo
+#INPUT=harvard.wav    # Enter if you want process a single input, else All Audio files processed
 
 # Run the script
-./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
+screen -S jobs ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
   --flavor="$FLAVOR" \
-  --instance="$INSTANCE"
-  --input-sample="$INPUT"
+  --instance="$INSTANCE" # \
+  #--model="$MODELS"
 ```
+
+| **Question Before the Exercise**                                      | **Expected Answer / Learning After Completion**                                                                           |
+|------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| What is the impact of model size (e.g., tiny → turbo)?                 | Larger models offer better transcription accuracy but increase inference time and image size.                             |
+| How much faster is GPU inference compared to CPU?                      | GPU inference is 10–15x faster on warm starts and is necessary for large models or real-time workloads.                   |
+| How do cold starts compare to warm starts?                             | Cold starts can take 3–5x longer due to model loading and tokenization caching overhead.                                  |
+| Do advanced arguments (hyperparameters) improve accuracy?              | Hyperparameters slightly improve accuracy (WER, WIL) but also increase latency.                                            |
+| How accurate is Whisper across short vs. long audio?                   | Short samples are consistently accurate; longer files show more variation across model sizes and config modes.            |
+| Do different base images (Ubuntu vs UBI) affect performance?           | Not significantly in speed or accuracy, but image sizes and cold start performance may vary.                              |
+| What metrics are most useful to compare experiments?                   | tokens/sec, real_time_factor (RTF), container_runtime_sec, WER, MER, WIL, WIP, CER.                                        |
+| What’s a reasonable throughput goal for deployment?                    | Aim for >30 tokens/sec on GPU warm inference for real-time production performance.                                        |
+| Should experiments run in parallel or sequentially?                    | Parallel jobs are efficient, but overloading CPU cores or GPU memory should be avoided.                                   |
+| Are containers reusable across experiments?                            | Yes, especially useful for warm start reuse and reproducible performance analysis.                                        |
+
 
 ## Observations:
 
