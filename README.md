@@ -4,86 +4,77 @@ This project evaluates various Speech-to-Text (STT) configurations for both stre
 
 ## Goal
 
+Two fold:
+
 1. Demonstrate how to move from individual experimentation to operational enterprise scale.
-1. Gather data to answer technical questions regarding performance, security and efficiency along this process.
+2. Collect benchmarking data to guide architectural and operational decisions on model performance, system efficiency, and container security.
 
-## Scenarios
+## Summary of Experimentation to Operations
 
-- Speech Recognition Models: 3
-- Embedded Inference Microservices / Images: 3
-- Platforms: 2
-- Model Servers: 3
-- CPU Types: 4
-- GPU Types: 4
-- CMD Types: 2
+- **[Crawl README](./crawl/README.md)** — Start with open source Ubuntu containers and end on supported UBI9-minimal containers on a single server.
+- **[Walk README](./walk/README.md)** — Move from a single server with finite resources to a Kubernetes cluster.
+- **[Run README](./run/README.md)** — Transition from embedded inference to decoupled model serving.
+- **Sprint** — Integrate with Model Registry and advanced serving infrastructure.
 
-Test 3x general-purpose speech recognition models:
+Along the journey, we introduce automation and answer common performance, security, and scalability questions.
 
-1. Whisper
-1. Faster-Whisper
-1. NVIDIA Riva
+## Summary of Benchmarking
 
-Test Embedded inference microservices on 3x images:
+Execute [benchmarking](./benchmark/README.md) to capture metrics from:
 
-1. Ubuntu
-1. UBI9-platform
-1. UBI9-minimal
+- **Models**: Whisper, Faster-Whisper
+- **Containers**: Ubuntu, UBI9, UBI9-minimal
+- **Platforms**: Linux, Kubernetes
+- **Model Servers**: vLLM, Speeches, TensorRT
+- **CPUs**: Intel Cascade Lake, AWS Graviton3, AMD EPYC, Intel Sapphire Rapids
+- **GPUs**: T4, L4, A10, H100
+- **Instance Types**: g4dn.12xlarge, g6.12xlarge, g5.12xlarge, p5.48xlarge
+- **Command Modes**: basic, hyperparameters
+- **Start Modes**: cold, warm
 
-Test on 2x platforms:
+### Input Audio Files (in `/data/input-samples/`):
 
-1. Linux
-1. Kubernetes
+1. [Harvard.wav](https://www.kaggle.com/datasets/pavanelisetty/sample-audio-files-for-speech-recognition)
+2. [JFK Inaugural Address (1961)](https://www.jfklibrary.org/asset-viewer/archives/jfkwha-001)
+3. [JFK Rice University Speech (1962)](https://www.jfklibrary.org/asset-viewer/archives/usg-15-29-2)
 
-Test with 3x Decoupled model servers:
-
-1. vLLM
-1. Speaches
-1. NVIDIA Triton
-
-Test on 4x CPU:
-
-1. T4
-1. L4
-1. A10
-1. H100
-
-Test on 4x GPU:
-
-1. Intel Cascade Lake
-1. Graviton3
-1. AMD EPYC
-1. Intel Sapphire Rapids
-
-Test with different parameters:
-
-1. default
-1. optimized
-
-Provided input files:
-
-1. (Harvard.wav)[https://www.kaggle.com/datasets/pavanelisetty/sample-audio-files-for-speech-recognition]
-1. (JFK Inaugural Address from Jan. 20, 1961)[https://www.jfklibrary.org/asset-viewer/archives/jfkwha-001]
-1. (JFK Rice University from Sept. 12, 1962)[https://www.jfklibrary.org/asset-viewer/archives/usg-15-29-2]
-
-Provided ground truth transcriptions:
+### Ground Truth Transcripts (in `/data/ground-truth/`):
 
 1. Harvard.txt
-1. JFK Inaugural Address from Jan. 20, 1961 transcript from the White House
-1. JFK Rice University from Sept. 12, 1962 transcript from the White House
+2. JFK Inaugural Address (official transcript)
+3. JFK Rice University Speech (official transcript)
 
-### Crawl
+### Evaluation Scripts (in `/data/evaluation-scripts/`):
 
-Go to the [Crawl README](./crawl/README.md)
+- `whisper-functional-batch-metrics.sh`
+- `compare_transcripts.py`
+- `system_non_functional_monitoring.py`
+- `cleanup-benchmark-results.sh`
 
-### Walk
+## Example Questions to Answer
 
-Go to the [Walk README](./walk/README.md)
+- How much faster is GPU vs CPU inference?
+- What is the benefit of warm starts?
+- Do hyperparameters increase transcription quality?
+- Is container startup time a major factor?
+- How do different container bases (Ubuntu vs UBI) compare?
+- Are larger models worth the additional runtime cost?
 
-### Run
+## Observations Summary Table
 
-Go to the [Run README](./run/README.md)
+| **Metric**               | **Goal**            | **Notes**                                                                 |
+|--------------------------|---------------------|--------------------------------------------------------------------------|
+| `tokens_per_second`      | Higher = better     | Measures inference throughput. GPU modes should be much faster.         |
+| `real_time_factor` (RTF) | < 1.0 = real-time   | Runtime / audio duration. Critical for low-latency requirements.         |
+| `container_runtime_sec`  | Lower = better      | Includes startup/shutdown time. Reflects cold/warm tradeoffs.           |
+| `token_count`            | Stable across modes | Large changes may indicate transcription variation.                     |
+| `wer`                    | Lower = better      | Measures transcription accuracy.                                        |
+| `mer`                    | Lower = better      | Broader accuracy metric (match + insertions + deletions).               |
+| `wil`                    | Lower = better      | Captures meaning loss during transcription.                             |
+| `wip`                    | Higher = better     | Complements WIL — reflects preserved meaning.                           |
+| `cer`                    | Lower = better      | Character-level precision.                                               |
 
-## Related resources
+## Related Resources
 
-- https://github.com/pmichaillat/latex-paper
-- https://tex.stackexchange.com/questions/101717/converting-markdown-to-latex-in-latex#246871
+- [LaTeX paper template](https://github.com/pmichaillat/latex-paper)
+- [Convert Markdown to LaTeX](https://tex.stackexchange.com/questions/101717/converting-markdown-to-latex-in-latex#246871)
