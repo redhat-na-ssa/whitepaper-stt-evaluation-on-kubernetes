@@ -1,20 +1,14 @@
 #!/usr/bin/env python3
 
 """
-Podman Container Monitor Script
+System Monitor Script for Podman Whisper Containers
 
-Monitors running Podman containers starting with 'whisper-', collects system,
-CPU, and GPU metrics, and logs them to a CSV.
+Continuously monitors Podman containers that begin with 'whisper-', capturing system-level performance metrics
+such as CPU, GPU, memory usage, and lifecycle timings. Output is written to CSV for analysis.
 
-Captures:
-- CPU and GPU core counts
-- GPU usage, temperature, VRAM, power draw
-- CPU usage and system memory
-- Timing: startup, task, shutdown, and total durations
-
-USAGE:
-  nohup python3 system_non_functional_monitoring.py &
-  screen -S whisper-monitor && python3 system_non_functional_monitoring.py
+Usage:
+    nohup python3 system_non_functional_monitoring.py &
+    screen -S whisper-monitor && python3 system_non_functional_monitoring.py
 """
 
 import time
@@ -24,24 +18,25 @@ import os
 import subprocess
 from datetime import datetime
 
-# Ensure output directory exists
+# ======================= Ensure Metrics Directory is Writable ==================
 os.makedirs("data/metrics", exist_ok=True)
 csv_file_path = "data/metrics/system_non_functional_metrics.csv"
 
-# CSV headers grouped by section
+# ============================= Define CSV Headers ==============================
+# Define CSV headers to organize metrics
 headers = [
-    # Container Info
+    # Container identification
     "date",
     "timestamp",
     "container name",
 
-    # CPU Info
+    # CPU metrics
     "cpu name",
     "cpu core count",
     "cpu max usage (%)",
     "memory usage (MB)",
 
-    # GPU Info
+    # GPU metrics (1 row per GPU)
     "gpu index",
     "gpu name",
     "gpu count",
@@ -50,22 +45,24 @@ headers = [
     "gpu pwr:usage/cap (%)",
     "gpu vram usage (%)",
 
-    # Time Info
+    # Timing data
     "startup time (s)",
     "task time (s)",
     "shutdown time (s)",
     "total time (s)"
 ]
 
+# ============================ CSV Header Setup =================================
 def write_csv_header():
-    """Write header to CSV if it doesn't already exist."""
+    """Write CSV headers if the file is empty or missing."""
     if not os.path.exists(csv_file_path) or os.stat(csv_file_path).st_size == 0:
         with open(csv_file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(headers)
 
+# ============================== CPU Detection ==================================
 def get_cpu_name():
-    """Get human-readable CPU model name."""
+    """Return the CPU model string (cross-platform fallback)."""
     try:
         result = subprocess.run(["lscpu"], capture_output=True, text=True, check=True)
         for line in result.stdout.splitlines():
@@ -81,8 +78,9 @@ def get_cpu_name():
             pass
     return "Unknown CPU"
 
+# ============================== GPU Metrics Collection ==========================
 def get_per_gpu_metrics():
-    """Retrieve metrics for each GPU using nvidia-smi."""
+    """Collect per-GPU utilization, power, and memory statistics."""
     try:
         result = subprocess.run([
             "nvidia-smi",
@@ -108,20 +106,23 @@ def get_per_gpu_metrics():
     except subprocess.CalledProcessError:
         return []
 
+# ============================ Timestamp Generator ==============================
 def get_timestamp():
-    """Return HH:MM:SS string."""
+    """Return the current time in HH:MM:SS format."""
     return datetime.now().strftime('%H:%M:%S')
 
+# ========================= Container Status Check ==============================
 def is_container_running(container_name):
-    """Check if a specific Podman container is currently running."""
+    """Return True if the given container is currently running."""
     try:
         result = subprocess.run(["podman", "ps", "--format", "{{.Names}}"], capture_output=True, text=True)
         return container_name in result.stdout.strip().splitlines()
     except Exception:
         return False
 
+# ============================= Monitor Whisper Jobs ============================
 def monitor_containers():
-    """Continuously monitor and log container metrics."""
+    """Poll podman for whisper-* containers and monitor them until exit."""
     write_csv_header()
     seen = set()
 
@@ -133,18 +134,19 @@ def monitor_containers():
                 if container_name.startswith("whisper-") and container_name not in seen:
                     seen.add(container_name)
                     print(f"Detected container: {container_name}")
-                    time.sleep(0.2)
+                    time.sleep(0.2)  # Small buffer before collecting metrics
                     capture_metrics(container_name)
         except Exception as e:
             print(f"Error: {e}")
         time.sleep(0.1)
 
+# ========================== Collect & Write Metrics ============================
 def capture_metrics(container_name):
-    """Capture and write system + GPU metrics for a running container."""
+    """Track system metrics and timings while a whisper container is running."""
     start_time = time.time()
-    startup_time = time.time() - start_time
+    startup_time = time.time() - start_time  # Effectively near-zero since start_time is immediate
 
-    # Track task execution time
+    # ====================== Container Task Duration Tracking =====================
     task_start = time.time()
     while is_container_running(container_name):
         time.sleep(0.1)
@@ -154,7 +156,7 @@ def capture_metrics(container_name):
     shutdown_time = task_end - start_time
     total_time = shutdown_time
 
-    # CPU and memory stats
+    # ========================== CPU & Memory Metrics ============================
     try:
         cpu_name = get_cpu_name()
         cpu_core_count = psutil.cpu_count(logical=False)
@@ -167,15 +169,15 @@ def capture_metrics(container_name):
         cpu_max_usage = "NA"
         memory_usage = "NA"
 
-    # GPU stats (one row per GPU)
+    # ============================ GPU Metrics Logging ============================
     gpu_metrics_list = get_per_gpu_metrics()
     gpu_count = len(gpu_metrics_list)
 
+    # ========================= CSV Row Writing per GPU ===========================
     with open(csv_file_path, mode='a', newline='') as file:
         writer = csv.writer(file)
         for gpu in gpu_metrics_list:
             row = [
-                # Container Info
                 datetime.now().strftime('%Y-%m-%d'),
                 get_timestamp(),
                 container_name,
@@ -203,5 +205,6 @@ def capture_metrics(container_name):
             ]
             writer.writerow(row)
 
+# ================================ Entrypoint ===================================
 if __name__ == "__main__":
     monitor_containers()
