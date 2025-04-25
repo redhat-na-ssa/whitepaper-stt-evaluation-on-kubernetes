@@ -5,7 +5,7 @@
 ## Crawl Procedure
 
 1. **Provision a RHEL VM with GPU support**  
-   [Provision RHEL with GPU](../RHEL_GPU.md)
+   [Provision RHEL with GPU](RHEL_GPU.md)
 
 2. **Test OpenAI Whisper**
     - [Ubuntu](/crawl/openai-whisper/ubuntu/README.md)
