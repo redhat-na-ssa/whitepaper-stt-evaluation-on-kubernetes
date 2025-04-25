@@ -59,13 +59,9 @@ Run the appropriate benchmark based on your instance type:
 💡 --max-cpu-jobs limits parallel jobs on the host.
 
 ```sh
-# Set your parameters
-FLAVOR=ubi9-minimal               # Options: ubuntu, ubi9, ubi9-minimal
-INSTANCE=g6.12xlarge              # Set your instance type
-THREADS=4                         # CPU threads per container
-JOBS=12                           # Max parallel CPU jobs
-
 # Individual test
+THREADS=4  # or however many CPU threads you want to assign
+
 podman run --rm \
   --userns=keep-id \
   --user "$(id -u):$(id -g)" \
@@ -73,22 +69,34 @@ podman run --rm \
   -e OMP_NUM_THREADS=$THREADS \
   -e MKL_NUM_THREADS=$THREADS \
   -v "$(pwd)/data:/outside:z" \
-  localhost/whisper:tiny.en-ubi9-minimal \
-  whisper /outside/input-samples/harvard.wav \
-    --model_dir /outside/models \
+  quay.io/redhat_na_ssa/speech-to-text/whisper:tiny.en-ubi9-minimal \
+  whisper /outside/input-samples/jfk-audio-inaugural-address-20-january-1961.mp3 \
+    --model_dir /outside/tmp \
     --output_dir /outside/metrics/ \
     --output_format txt \
     --language en \
     --task transcribe \
     --threads $THREADS \
     --fp16 False
-    
+
+
+# Set your parameters
+IMAGE_FLAVOR=ubi9-minimal           # Container image flavor (e.g., ubuntu, ubi9)
+INSTANCE=g6.12xlarge                # Name of the machine or VM for labeling
+THREADS=4                           # Number of CPU threads per container job
+MAX_JOBS=12                         # Maximum number of concurrent jobs
+MODEL=turbo                         # Comma-separated list of models to include
+INPUT_SAMPLE=jfk-audio-inaugural-address-20-january-1961.mp3  # Audio sample filename (with extension)
+
+
 # Launch the bulk benchmark using screen
 screen -S whisper-benchmark ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
-  --flavor="$FLAVOR" \
+  --flavor="$IMAGE_FLAVOR" \
   --instance="$INSTANCE" \
-  --cpu-threads=$THREADS \
-  --max-cpu-jobs=$JOBS 
+  --cpu-threads="$THREADS" \
+  --max-cpu-jobs="$MAX_JOBS" \
+  --model="$MODEL" \
+  --input-sample="$INPUT_SAMPLE"
 
   # Optional flag if you only want to test a model size or sizes comma separated no spaces
   # --model=tiny.en

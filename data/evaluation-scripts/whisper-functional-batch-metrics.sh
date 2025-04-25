@@ -22,6 +22,8 @@ for ARG in "$@"; do
     --flavor=*) IMAGE_FLAVOR="${ARG#*=}" ;;
     --instance=*) INSTANCE_TYPE="${ARG#*=}" ;;
     --input-sample=*) INPUT_SAMPLE_FILTER="${ARG#*=}" ;;
+    --cpu-threads=*) CPU_THREADS="${ARG#*=}" ;;
+    --max-cpu-jobs=*) MAX_CPU_JOBS="${ARG#*=}" ;;
   esac
 done
 
