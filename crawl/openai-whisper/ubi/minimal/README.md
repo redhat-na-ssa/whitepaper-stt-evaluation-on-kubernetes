@@ -1,195 +1,162 @@
-# Whisper on UBI
+# Whisper on Ubuntu
 
-## What is (UBI)[https://catalog.redhat.com/software/base-images]? 
+## Section Expectations
 
-- **Built from a subset of RHEL content:** Red Hat Universal Base images are built from a subset of normal Red Hat Enterprise Linux content.
-- **Redistributable:** UBI images allow standardization for Red Hat customers, partners, ISVs, and others. With UBI images, you can build your container images on a foundation of official Red Hat software that can be freely shared and deployed.
-- **Provide a set of four base images:** micro, minimal, standard, and init.
-- **Provide a set of pre-built language runtime container images:** The runtime images based on Application Streams provide a foundation for applications that can benefit from standard, supported runtimes such as python, perl, php, dotnet, nodejs, and ruby.
-- **Provide a set of associated DNF repositories:** DNF repositories include RPM packages and updates that allow you to add application dependencies and rebuild UBI container images.
-  - The ubi-9-baseos repository holds the redistributable subset of RHEL packages you can include in your container.
-  - The ubi-9-appstream repository holds Application streams packages that you can add to a UBI image to help you standardize the environments you use with applications that require particular runtimes.
-  - **Adding UBI RPMs:** You can add RPM packages to UBI images from preconfigured UBI repositories. If you happen to be in a disconnected environment, you must allowlist the UBI Content Delivery Network (https://cdn-ubi.redhat.com) to use that feature. For more information, see the Red Hat Knowledgebase solution Connect to https://cdn-ubi.redhat.com.
-- **Licensing:** You are free to use and redistribute UBI images, provided you adhere to the Red Hat Universal Base Image End User Licensing Agreement.
+- Understand what UBI (Universal Base Image) is and why it matters for production.
+- Learn key differences between Ubuntu and UBI9-minimal for AI workloads (e.g., security, support, compliance).
+- Build or pull container images embedding Whisper models.
+- Compare image sizes, performance, and cold/warm start times across models and platforms.
+- Evaluate how moving to UBI affects:
+  - Startup time
+  - Inference speed
+  - Transcription accuracy
+  - System resource usage (CPU, GPU, memory)
+- Measure operational metrics like power draw, GPU temperatures, and VRAM usage.
+- Explore security implications (e.g., building FFmpeg from source vs using distro packages).
+- See how batch testing enables large-scale benchmarking across multiple configurations.
+- Build intuition on scaling from simple experiments toward production readiness (containers, clusters, registries).
 
-# Whisper on UBI
+## What is [UBI9-minimal (Universal Base Image)](https://catalog.redhat.com/software/base-images/ubi9-minimal)?
 
-Some of the packages that were as simple as a `pip install` on Ubuntu are not available and require a little more effort:
+- Minimal RHEL Subset for Containers: UBI9-minimal is a slimmed-down Red Hat Enterprise Linux 9 base, stripped to essentials for lightweight, secure container builds.
+- Optimized for Small Size: Only the critical libraries and utilities needed to run applications — no extra tools, shells, or services.
+- Freely Redistributable: You can use, share, and deploy UBI9-minimal images without a RHEL subscription, following the Red Hat UBI license.
+- DNF Package Access: UBI9-minimal still supports installing additional RPMs from Red Hat’s trusted ubi-9-baseos and ubi-9-appstream repositories when needed.
+- Security and Compliance: Full access to Red Hat security updates, signed RPMs, and vulnerability scanning integrations (e.g., Clair, ACS).
+- Ideal for AI and Microservices: Small surface area → faster cold starts, smaller image pull sizes, and reduced attack surface for inference workloads like Whisper.
+- Offline/Disconnected Support: RPMs can be added even in air-gapped environments by allowlisting access to https://cdn-ubi.redhat.com.
+- No FFMPEG by Default: Must manually build/install specific tools (like ffmpeg) into the image if needed for AI/multimedia workloads.
 
-1. ffmpeg
-1. Python
-1. Openai-whisper
+## Questions to Ask Before Running Whisper Benchmarks
 
-We also have the option of building a minimal container.
+| **Question Before the Exercise**| **Expected Answer / Learning After Completion**|
+|-|-|
+| Differences between Ubuntu and UBI9-minimal?                           |  |
+| Decompressed size?                                                     |  |
+| Speed?                                                                 |  |
+| Accuracy?                                                              |  |
+| Security?                                                              |  |
+| Power?                                                                 |  |
+| Temperature?                                                           |  |
+| What is the impact of model size (e.g., tiny → turbo)?                 |  |
+| How much faster is GPU inference compared to CPU?                      |  |
+| How do cold starts compare to warm starts?                             |  |
+| Do advanced arguments (hyperparameters) improve accuracy?              |  |
+| How accurate is Whisper across short vs. long audio?                   |  |
+| Do different base images (Ubuntu vs UBI) affect performance?           |  |
+| What was the fastest transcription?                                    |  |
+| What was the slowest transcription?                                    |  |
+| What metrics are most useful to compare experiments?                   |  |
+| What’s a reasonable throughput goal for deployment?                    |  |
+| Should experiments run in parallel or sequentially?                    |  |
+| Are containers reusable across experiments?                            |  |
 
-## Review the Dockerfiles
+Assuming
 
-Some key changes in the Dockerfiles:
+1. ssh into your VM
+1. you git cloned the repo on your VM
+1. you cd into the root folder
+1. you completed the [Ubuntu](../../ubuntu/README.md) steps
 
-Overall
-    - TBP
+## Review the Dockerfile
+
+Notice: ffmpeg is built from source - how do security scanners handle it?
 
 ```sh
-# review the minimal dockerfile
-cat crawl/openai-whisper/ubi/minimal/Dockerfile  
+cat crawl/openai-whisper/ubi/minimal/Dockerfile 
 ```
 
-## Build the Dockerfile embedding the model
-    
+## (Option A) Pull the Dockerfiles from Quay.io
+
 ```sh
-# build the minimal dockerfile
+# login to Quay.io
+podman login quay.io
+
+export FLAVOR=ubi9-minimal # or ubuntu or ubi9-minimal
+
+screen -S download-images bash -c '
+  set -e
+  for tag in tiny.en-'$FLAVOR' base.en-'$FLAVOR' small.en-'$FLAVOR' medium.en-'$FLAVOR' large-'$FLAVOR' turbo-'$FLAVOR'; do
+    echo "📦 Pulling quay.io/redhat_na_ssa/speech-to-text/whisper:$tag"
+    podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag || echo "❌ Failed to pull $tag"
+  done
+'
+```
+
+## (Option B) Build the Dockerfile Embedding the model in the `/data` directory
+
+```sh
 for model in tiny.en base.en small.en medium.en large turbo; do
-    tag="whisper:${model}-ubi9-minimal"
-    echo "🔧 Building image: $tag"
-    podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubi/minimal/.
+  tag="whisper:${model}-ubi9-minimal"
+  echo "🔧 Building image: $tag"
+  podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubi9/minimal/.
 done
 ```
 
-## Test the UBI9 containers
+NOTE: models will be saved in `/data/.cache/whisper/` in each container image
 
-### Harvard
+## Capture the image sizes
 
-#### tiny.en
+This captures the image sizes for comparison laters and writes to `data/metrics/image_sizes.csv`.
 
-1. whisper tiny.en ubi9 cpu harvard fast
+```sh
+# image sizes
+mkdir -p data/metrics
+echo "repository,tag,size" > data/metrics/image_sizes.csv
+podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep 'speech-to-text/whisper' >> data/metrics/image_sizes.csv
+```
 
-    ```sh
-    # start the container on cpu
-    podman run --rm -it --name whisper-tiny-en-ubi9-minimal -v $(pwd)/data/:/outside:z whisper:tiny.en-ubi9-minimal /bin/bash
+```sh
+repository,tag,size
+quay.io/redhat_na_ssa/speech-to-text/whisper,turbo-ubi9-minimal,9.74 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,large-ubi9-minimal,12.7 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,medium.en-ubi9-minimal,9.56 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,small.en-ubi9-minimal,7.47 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,base.en-ubi9-minimal,6.79 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,tiny.en-ubi9-minimal,6.65 GB
+```
 
-    # default whisper command
-    time whisper /outside/input-samples/harvard.wav \
-    --model tiny.en \
-    --model_dir /tmp/ \
-    --output_dir metrics/ \
-    --output_format txt \
-    --language en \
-    --task transcribe \
-    --fp16 False
+## Batch jobs running experiments on CPU and GPU in parallel
 
-    # calculate WER 0.00% means the transcription matches the ground truth exactly
-    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-    
-    # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+Instead of manually repeating these steps on gpu transcribing harvard audio data sample, lets create job of experiments and run them in parallel.
 
-    # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
+The output writes the data to `data/metrics/aiml_functional_metrics.csv` for easier review
 
-    # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
+```sh
+# You can copy this entire block and paste in the terminal
 
-    # stop the container
-    exit
-    ```
+# Set your parameters
+FLAVOR=ubi9-minimal         # Options: ubuntu, ubi9, ubi9-minimal
+INSTANCE=g6.12xlarge  # Set your instance type
+#MODELS=large,turbo
+#INPUT=harvard.wav    # Enter if you want process a single input, else All Audio files processed
 
-1. whisper tiny.en ubi9 cpu harvard complex
+# Run the script
+screen -S jobs ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
+  --flavor="$FLAVOR" \
+  --instance="$INSTANCE" # \
+  #--model="$MODELS"
+```
 
-    ```sh
-    # start the container on cpu
-    podman run --rm -it --name whisper-tiny-en-ubi9-minimal -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubi9-minimal /bin/bash
+| **Question Before the Exercise**| **Expected Answer / Learning After Completion** |
+|-|-|
+| Differences between Ubuntu and UBI9-minimal?                           |  |
+| Decompressed size?                                                     |  |
+| Speed?                                                                 |  |
+| Accuracy?                                                              |  |
+| Security?                                                              |  |
+| Power?                                                                 |  |
+| Temperature?                                                           |  |
+| What is the impact of model size (e.g., tiny → turbo)?                 | Larger models offer better transcription accuracy but increase inference time and image size.                             |
+| How much faster is GPU inference compared to CPU?                      | GPU inference is 10–15x faster on warm starts and is necessary for large models or real-time workloads.                   |
+| How do cold starts compare to warm starts?                             | Cold starts can take 3–5x longer due to model loading and tokenization caching overhead.                                  |
+| Do advanced arguments (hyperparameters) improve accuracy?              | Hyperparameters slightly improve accuracy (WER, WIL) but also increase latency.                                            |
+| How accurate is Whisper across short vs. long audio?                   | Short samples are consistently accurate; longer files show more variation across model sizes and config modes.            |
+| Do different base images (Ubuntu vs UBI) affect performance?           | Not significantly in speed or accuracy, but image sizes and cold start performance may vary.                              |
+| What metrics are most useful to compare experiments?                   | tokens/sec, real_time_factor (RTF), container_runtime_sec, WER, MER, WIL, WIP, CER.                                        |
+| What’s a reasonable throughput goal for deployment?                    | Aim for >30 tokens/sec on GPU warm inference for real-time production performance.                                        |
+| Should experiments run in parallel or sequentially?                    | Parallel jobs are efficient, but overloading CPU cores or GPU memory should be avoided.                                   |
+| Are containers reusable across experiments?                            | Yes, especially useful for warm start reuse and reproducible performance analysis.                                        |
 
-    # default whisper command
-    time whisper /outside/input-samples/harvard.wav \
-    --model tiny.en \
-    --model_dir /tmp/ \
-    --output_dir metrics/ \
-    --output_format txt \
-    --language en \
-    --task transcribe \
-    --fp16 False \
-    --beam_size 10 \
-    --temperature 0 \
-    --patience 2 \
-    --suppress_tokens -1 \
-    --compression_ratio_threshold 2.0 \
-    --logprob_threshold -0.5 \
-    --no_speech_threshold 0.4
-
-    # calculate WER 0.00% means the transcription matches the ground truth exactly
-    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-    
-    # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-
-    # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-
-    # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
-
-    # stop the container
-    exit
-    ```
-
-1. whisper tiny.en ubi9 gpu harvard fast
-
-    ```sh
-    # start the container on gpu
-    podman run --rm -it --name whisper-tiny-en-ubi9-minimal-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubi9-minimal /bin/bash
-
-    # default whisper command
-    time whisper /outside/input-samples/harvard.wav \
-    --model tiny.en \
-    --model_dir /tmp/ \
-    --output_dir metrics/ \
-    --output_format txt \
-    --language en \
-    --task transcribe
-
-    # calculate WER 0.00% means the transcription matches the ground truth exactly
-    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-    
-    # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-
-    # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-
-    # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
-
-    # stop the container
-    exit
-    ```
-
-1. whisper tiny.en ubi9 gpu harvard complex
-
-    ```sh
-    # start the container on gpu
-    podman run --rm -it --name whisper-tiny-en-ubi9-minimal-gpu --security-opt=label=disable --device nvidia.com/gpu=all -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubi9-minimal /bin/bash
-
-    # default whisper command
-    time whisper input-samples/harvard.wav \
-    --model tiny.en \
-    --model_dir /tmp/ \
-    --output_dir metrics/ \
-    --output_format txt \
-    --language en \
-    --task transcribe \
-    --beam_size 10 \
-    --temperature 0 \
-    --patience 2 \
-    --suppress_tokens -1 \
-    --compression_ratio_threshold 2.0 \
-    --logprob_threshold -0.5 \
-    --no_speech_threshold 0.4
-
-    # calculate WER 0.00% means the transcription matches the ground truth exactly
-    python3 -c "from jiwer import wer; print(f'WER: {wer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-    
-    # calculate MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-    python3 -c "from jiwer import mer; print(f'MER: {mer(open(\"/outside/round-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-
-    # calculate WIL 0.00% means the hypothesis is a perfect match with the reference
-    python3 -c "from jiwer import wil; print(f'WIL: {wil(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')"
-
-    # calculate CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-    python3 -c "from jiwer import cer; print(f'CER: {cer(open(\"/outside/ground-truth/harvard.txt\").read(), open(\"metrics/harvard.txt\").read()):.2%}')
-
-    # stop the container
-    exit
-    ```
-
-|[Previous <- UBI9 Platform with Whisper](../platform/README.md)|[Next -> Faster-Whisper](../../../faster-whisper/README.md)|
+|[Previous <- Ubuntu](../../ubuntu/README.md)|[Next -> UBI9 Minimal with Whisper](../ubi/minimal/README.md)|
 |-|-|

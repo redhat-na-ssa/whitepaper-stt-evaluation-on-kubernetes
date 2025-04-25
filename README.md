@@ -11,10 +11,10 @@ Two fold:
 
 ## Summary of Experimentation to Operations
 
-- **[Crawl README](./crawl/README.md)** — Start with open source Ubuntu containers and end on supported UBI9-minimal containers on a single server.
-- **[Walk README](./walk/README.md)** — Move from a single server with finite resources to a Kubernetes cluster.
-- **[Run README](./run/README.md)** — Transition from embedded inference to decoupled model serving.
-- **Sprint** — Integrate with Model Registry and advanced serving infrastructure.
+- **[Crawl README](./crawl/README.md)** — Experiment locally using Ubuntu and UBI9-minimal containers on a single server.
+- **[Walk README](./walk/README.md)** — Scale from a single server to a Kubernetes cluster.
+- **[Run README](./run/README.md)** — Shift from embedded inference to decoupled model serving.
+- **Sprint** — Integrate Model Registries and optimize for production-scale serving.
 
 Along the journey, we introduce automation and answer common performance, security, and scalability questions.
 
@@ -23,7 +23,7 @@ Along the journey, we introduce automation and answer common performance, securi
 Execute [benchmarking](./benchmark/README.md) to capture metrics from:
 
 - **Models**: Whisper, Faster-Whisper
-- **Containers**: Ubuntu, UBI9, UBI9-minimal
+- **Containers**: Ubuntu, UBI9-minimal
 - **Platforms**: Linux, Kubernetes
 - **Model Servers**: vLLM, Speeches, TensorRT
 - **CPUs**: Intel Cascade Lake, AWS Graviton3, AMD EPYC, Intel Sapphire Rapids
@@ -46,10 +46,10 @@ Execute [benchmarking](./benchmark/README.md) to capture metrics from:
 
 ### Evaluation Scripts (in `/data/evaluation-scripts/`):
 
-- `whisper-functional-batch-metrics.sh`
-- `compare_transcripts.py`
-- `system_non_functional_monitoring.py`
-- `cleanup-benchmark-results.sh`
+- `whisper-functional-batch-metrics.sh` - Batch Transcription Benchmarking
+- `compare_transcripts.py` - Accuracy Metrics Scoring
+- `system_non_functional_monitoring.py` - System Resource Monitoring
+- `cleanup-benchmark-results.sh` - Benchmark Workspace Cleanup
 
 ## Related Resources
 
