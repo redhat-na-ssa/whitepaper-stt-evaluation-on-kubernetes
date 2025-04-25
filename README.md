@@ -51,29 +51,6 @@ Execute [benchmarking](./benchmark/README.md) to capture metrics from:
 - `system_non_functional_monitoring.py`
 - `cleanup-benchmark-results.sh`
 
-## Example Questions to Answer
-
-- How much faster is GPU vs CPU inference?
-- What is the benefit of warm starts?
-- Do hyperparameters increase transcription quality?
-- Is container startup time a major factor?
-- How do different container bases (Ubuntu vs UBI) compare?
-- Are larger models worth the additional runtime cost?
-
-## Observations Summary Table
-
-| **Metric**               | **Goal**            | **Notes**                                                                 |
-|--------------------------|---------------------|--------------------------------------------------------------------------|
-| `tokens_per_second`      | Higher = better     | Measures inference throughput. GPU modes should be much faster.         |
-| `real_time_factor` (RTF) | < 1.0 = real-time   | Runtime / audio duration. Critical for low-latency requirements.         |
-| `container_runtime_sec`  | Lower = better      | Includes startup/shutdown time. Reflects cold/warm tradeoffs.           |
-| `token_count`            | Stable across modes | Large changes may indicate transcription variation.                     |
-| `wer`                    | Lower = better      | Measures transcription accuracy.                                        |
-| `mer`                    | Lower = better      | Broader accuracy metric (match + insertions + deletions).               |
-| `wil`                    | Lower = better      | Captures meaning loss during transcription.                             |
-| `wip`                    | Higher = better     | Complements WIL — reflects preserved meaning.                           |
-| `cer`                    | Lower = better      | Character-level precision.                                               |
-
 ## Related Resources
 
 - [LaTeX paper template](https://github.com/pmichaillat/latex-paper)

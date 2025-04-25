@@ -9,10 +9,10 @@
 
 2. **Test OpenAI Whisper**
     - [Ubuntu](/crawl/openai-whisper/ubuntu/README.md)
-    - [UBI9](/crawl/openai-whisper/ubi/platform/README.md)
     - [UBI9-minimal](/crawl/openai-whisper/ubi/minimal/README.md)
+
+NOTE: *[UBI9-platform](/crawl/openai-whisper/ubi/platform/README.md) is used for discussion only*
 
 3. **Test Faster-Whisper** – *coming soon*
     - Ubuntu – *not yet implemented*
-    - UBI9 – *not yet implemented*
     - UBI9-minimal – *not yet implemented*

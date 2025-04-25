@@ -1,0 +1,7 @@
+repository,tag,size
+quay.io/redhat_na_ssa/speech-to-text/whisper,turbo-ubi9-minimal,9.74 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,large-ubi9-minimal,12.7 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,medium.en-ubi9-minimal,9.56 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,small.en-ubi9-minimal,7.47 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,base.en-ubi9-minimal,6.79 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,tiny.en-ubi9-minimal,6.65 GB

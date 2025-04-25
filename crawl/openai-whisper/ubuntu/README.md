@@ -2,6 +2,14 @@
 
 ## Section Expectations
 
+- Run Whisper STT inside containers with various configs
+- Compare cold vs warm starts, CPU vs GPU, basic vs hyperparam runs
+- Measure transcription speed, accuracy, and runtime
+- Evaluate container performance using system metrics (CPU/GPU/memory)
+- Understand trade-offs across model sizes and environments (Ubuntu vs UBI)
+- Automate and scale tests using batch scripts
+- Prepare for production by benchmarking real-world workloads
+
 ## Questions to Ask Before Running Whisper Benchmarks
 
 | **Question Before the Exercise**| **Expected Answer / Learning After Completion**|
@@ -11,12 +19,12 @@
 | How do cold starts compare to warm starts?                             |  |
 | Do advanced arguments (hyperparameters) improve accuracy?              |  |
 | How accurate is Whisper across short vs. long audio?                   |  |
-| Do different base images (Ubuntu vs UBI) affect performance?           |  |
+| What was the fastest transcription?                                    |  |
+| What was the slowest transcription?                                    |  |
 | What metrics are most useful to compare experiments?                   |  |
 | What’s a reasonable throughput goal for deployment?                    |  |
 | Should experiments run in parallel or sequentially?                    |  |
 | Are containers reusable across experiments?                            |  |
-
 
 ## Git clone the project on the VM
 
@@ -224,6 +232,10 @@ exit
 
 ### Testing on GPU
 
+For illustration purposes, here is how you would run the same container on a GPU setting the `--security-opt=label=disable` and `--device nvidia.com/gpu=all` arguments.
+
+You can pass this step and move onto batch testing.
+
 ```sh
 # start the container on gpu
 podman run --rm -it --name whisper-tiny-en-ubuntu-gpu \
@@ -283,42 +295,12 @@ screen -S jobs ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
 | How do cold starts compare to warm starts?                             | Cold starts can take 3–5x longer due to model loading and tokenization caching overhead.                                  |
 | Do advanced arguments (hyperparameters) improve accuracy?              | Hyperparameters slightly improve accuracy (WER, WIL) but also increase latency.                                            |
 | How accurate is Whisper across short vs. long audio?                   | Short samples are consistently accurate; longer files show more variation across model sizes and config modes.            |
-| Do different base images (Ubuntu vs UBI) affect performance?           | Not significantly in speed or accuracy, but image sizes and cold start performance may vary.                              |
+| What was the fastest transcription?                                    |  |
+| What was the slowest transcription?                                    |  |
 | What metrics are most useful to compare experiments?                   | tokens/sec, real_time_factor (RTF), container_runtime_sec, WER, MER, WIL, WIP, CER.                                        |
 | What’s a reasonable throughput goal for deployment?                    | Aim for >30 tokens/sec on GPU warm inference for real-time production performance.                                        |
 | Should experiments run in parallel or sequentially?                    | Parallel jobs are efficient, but overloading CPU cores or GPU memory should be avoided.                                   |
 | Are containers reusable across experiments?                            | Yes, especially useful for warm start reuse and reproducible performance analysis.                                        |
 
-
-## Observations:
-
-| **Metric**               | **Goal**            | **Notes**                                                                 |
-|--------------------------|---------------------|---------------------------------------------------------------------------|
-| `tokens_per_second`      | Higher = better     | Measures inference throughput. GPU modes should be much faster than CPU. |
-| `real_time_factor` (RTF) | < 1.0 = real-time   | Runtime ÷ audio duration. Ideal for evaluating latency.                   |
-| `container_runtime_sec`  | Lower = better      | Total time the container was alive. Includes startup/shutdown overhead.  |
-| `token_count`            | Stable across modes | Large variation may indicate inconsistent transcriptions.                 |
-| `wer`                    | Lower = better      | Word Error Rate. Basic transcription accuracy.                           |
-| `mer`                    | Lower = better      | Matches, Insertions, Deletions, Substitutions. Broader than WER.         |
-| `wil`                    | Lower = better      | Word Information Lost. Highlights over/under prediction.                 |
-| `wip`                    | Higher = better     | Word Information Preserved. 1.0 = perfect match.                          |
-| `cer`                    | Lower = better      | Character Error Rate. More sensitive to fine-grained transcription.       |
-
-- Model size
-  - Larger models take significantly longer
-  - Inference time scales roughly with model size, as expected.
-- CPU vs GPU performance
-  - GPU tests are faster for warm starts, but not yet efficient on cold start
-  - GPU gives more benefit as model size increases and batch size scales
-  - CPU-only inference with large or turbo is costly — avoid in production unless necessary.
-- Cold start versus warm start
-  - Warm starts are consistently faster
-  - Warm inference is still faster than CPU even at small batch sizes
-  - Warm start skips some loading overhead (e.g., model weights into memory, tokenization cache)
-  - Cold start impact is significant on larger models, making persistent or warmed containers more efficient.
-- No arguments versus hyperparameters
-- Container image scanning results from Quay.io
-- IDE versus a notebook for experiments
-
-|[Previous <- Provision VM w/GPU](../../RHEL_GPU.md)|[Next -> UBI9 Platform with Whisper](../ubi/platform/README.md)|
+|[Previous <- Provision VM w/GPU](../../RHEL_GPU.md)|[Next -> UBI9 Minimal with Whisper](../ubi/minimal/README.md)|
 |-|-|
