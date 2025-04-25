@@ -149,7 +149,7 @@ Error: setting up CDI devices: failed to inject devices: failed to stat CDI host
 nvidia-smi
 ```
 
-|[Previous <- Main README](./openai-whisper/README.md)|[Next -> Ubuntu with Whisper](./openai-whisper/ubuntu/README.md)|
+|[Previous <- Main README](./README.md)|[Next -> Ubuntu with Whisper](./openai-whisper/ubuntu/README.md)|
 |-|-|
 
 ## Links
