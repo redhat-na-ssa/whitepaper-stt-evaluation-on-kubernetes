@@ -60,7 +60,7 @@ Run the appropriate benchmark based on your instance type:
 
 ```sh
 # Set your parameters
-FLAVOR=ubuntu               # Options: ubuntu, ubi9, ubi9-minimal
+FLAVOR=ubi9-minimal               # Options: ubuntu, ubi9, ubi9-minimal
 INSTANCE=g6.12xlarge              # Set your instance type
 THREADS=4                         # CPU threads per container
 JOBS=12                           # Max parallel CPU jobs
@@ -153,15 +153,15 @@ kill <pid>
 
 Use `sftp` to retrieve the following files, review, append and move the results as needed:
 
-- `/outside/metrics/container_metrics.csv`
-- `/outside/metrics/aiml_functional_metrics.csv`
+- `/data/metrics/system_non_functional_metrics.csv`
+- `/data/metrics/aiml_functional_metrics.csv`
 
 ```sh
 # sftp from your machine to the host
 sftp user@ec2-N-NNN-NNN-NNN.us-east-2.compute.amazonaws.com
 
 # move to directory
-cd whitepaper-stt-evaluation-on-kubernetes//outside/metrics/g6-12xlarge/
+cd /home/ec2-user/whitepaper-stt-evaluation-on-kubernetes/data/metrics
 
 # get CSV files
 get *.csv

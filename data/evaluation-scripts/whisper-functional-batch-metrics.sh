@@ -16,18 +16,16 @@ MODEL_FILTER=""                      # Comma-separated list of models to include
 INPUT_SAMPLE_FILTER=""               # Specific audio sample to use (optional)
 
 # ======================== Command-line Argument Parsing ========================
-# Parse optional command-line arguments
 for ARG in "$@"; do
   case $ARG in
-    --model=*) MODEL_FILTER="${ARG#*=}" ;;       # e.g. --model=base,medium
-    --flavor=*) IMAGE_FLAVOR="${ARG#*=}" ;;      # e.g. --flavor=ubuntu
-    --instance=*) INSTANCE_TYPE="${ARG#*=}" ;;   # e.g. --instance=g6.12xlarge
-    --input-sample=*) INPUT_SAMPLE_FILTER="${ARG#*=}" ;;  # e.g. --input-sample=harvard.wav
+    --model=*) MODEL_FILTER="${ARG#*=}" ;;
+    --flavor=*) IMAGE_FLAVOR="${ARG#*=}" ;;
+    --instance=*) INSTANCE_TYPE="${ARG#*=}" ;;
+    --input-sample=*) INPUT_SAMPLE_FILTER="${ARG#*=}" ;;
   esac
 done
 
 # ======================= Ensure Metrics Directory is Writable ==================
-# Create metrics directory and ensure it's writable
 mkdir -p ./data/metrics
 if ! touch ./data/metrics/.write_test 2>/dev/null; then
   echo "⚠️ Attempting to fix permissions for ./data/metrics..."
@@ -40,17 +38,20 @@ fi
 rm -f ./data/metrics/.write_test
 
 # =========================== Image Selection Logic =============================
-# Define all model container image tags
-ALL_IMAGES=(
-  "localhost/whisper:tiny.en-${IMAGE_FLAVOR}"
-  "localhost/whisper:base.en-${IMAGE_FLAVOR}"
-  "localhost/whisper:small.en-${IMAGE_FLAVOR}"
-  "localhost/whisper:medium.en-${IMAGE_FLAVOR}"
-  "localhost/whisper:large-${IMAGE_FLAVOR}"
-  "localhost/whisper:turbo-${IMAGE_FLAVOR}"
-)
+MODEL_NAMES=("tiny.en" "base.en" "small.en" "medium.en" "large" "turbo")
+ALL_IMAGES=()
 
-# Apply model filter (if provided)
+for MODEL in "${MODEL_NAMES[@]}"; do
+  TAG="$MODEL-${IMAGE_FLAVOR}"
+  LOCAL_IMG="localhost/whisper:$TAG"
+  REMOTE_IMG="quay.io/redhat_na_ssa/speech-to-text/whisper:$TAG"
+  if podman image exists "$LOCAL_IMG"; then
+    ALL_IMAGES+=("$LOCAL_IMG")
+  else
+    ALL_IMAGES+=("$REMOTE_IMG")
+  fi
+done
+
 IMAGES=()
 IFS=',' read -ra FILTERS <<< "$MODEL_FILTER"
 for IMG in "${ALL_IMAGES[@]}"; do
@@ -80,13 +81,13 @@ for SAMPLE in "${ALL_SAMPLES[@]}"; do
 done
 
 # ============================ Inference Modes ==================================
-MODES=("cpu_basic" "cpu_hyperparam" "gpu_basic" "gpu_hyperparam")   # Test variations
-START_TYPES=("cold" "warm")  # Cold and warm start modes
+MODES=("cpu_basic" "cpu_hyperparam" "gpu_basic" "gpu_hyperparam")
+START_TYPES=("cold" "warm")
 
 # =========================== GPU Detection =====================================
-GPU_IDS=($(nvidia-smi --query-gpu=index --format=csv,noheader))  # List of GPU indices
+GPU_IDS=($(nvidia-smi --query-gpu=index --format=csv,noheader))
 GPU_COUNT=${#GPU_IDS[@]}
-GPU_INDEX=0  # Round-robin pointer
+GPU_INDEX=0
 
 # ============================ CSV Header Setup =================================
 METRIC_FILE="./data/metrics/aiml_functional_metrics.csv"
@@ -107,7 +108,6 @@ run_job() {
   local OUTPUT_PREFIX="whisper-${IMAGE_TAG}_${FILENAME}_${MODE}_${START_TYPE}"
   local CONTAINER_NAME="$OUTPUT_PREFIX"
 
-  # Threading and GPU configuration
   THREADS_FLAG="--threads $CPU_THREADS"
   FP16_FLAG="--fp16 False"
   ENV_FLAGS="-e OPENBLAS_NUM_THREADS=$CPU_THREADS -e OMP_NUM_THREADS=$CPU_THREADS -e MKL_NUM_THREADS=$CPU_THREADS"
@@ -122,7 +122,6 @@ run_job() {
     GPU_INDEX=$(((GPU_INDEX + 1) % GPU_COUNT))
   fi
 
-  # Get audio file duration using ffprobe
   AUDIO_DURATION_RAW=$(podman run --rm --pull=never -v "$(pwd)/data:/outside:Z" "$IMAGE" \
     ffprobe -v error -show_entries format=duration -of csv=p=0 "/outside/input-samples/$SAMPLE_FILE" 2>/dev/null)
 
@@ -133,7 +132,6 @@ run_job() {
     AUDIO_DURATION="0.000"
   fi
 
-  # Run transcription and time it
   START_TIME=$(date +%s.%N)
   CMD="umask 002 && mkdir -p /outside/metrics && \
     whisper /outside/input-samples/$SAMPLE_FILE \
@@ -158,11 +156,9 @@ run_job() {
   END_TIME=$(date +%s.%N)
   TRANSCODE_SEC=$(awk "BEGIN {print $END_TIME - $START_TIME}")
 
-  # Move and rename output if needed
   OUTPUT_NAME="${OUTPUT_PREFIX}.txt"
   [[ -f "./data/metrics/${FILENAME}.txt" ]] && mv "./data/metrics/${FILENAME}.txt" "./data/metrics/$OUTPUT_NAME"
 
-  # Calculate token stats
   TOKEN_COUNT=$(wc -w < "./data/metrics/$OUTPUT_NAME" | tr -d '[:space:]')
   TOKENS_PER_SEC="NA"
   RTF="NA"
@@ -173,7 +169,6 @@ run_job() {
     RTF=$(awk "BEGIN {printf \"%.3f\", $TRANSCODE_SEC / $AUDIO_DURATION}")
   fi
 
-  # Accuracy metrics (WER, MER, WIL, WIP, CER)
   WER="NA"; MER="NA"; WIL="NA"; WIP="NA"; CER="NA"
   if [[ -f "./data/metrics/$OUTPUT_NAME" && -f "./data/ground-truth/${FILENAME}.txt" ]]; then
     METRIC_LINES=$(podman run --rm -v "$(pwd)/data:/outside:Z" "$IMAGE" \
@@ -187,7 +182,6 @@ run_job() {
     done <<< "$METRIC_LINES"
   fi
 
-  # Write results to CSV
   echo "$(date +%Y-%m-%d),$(date +%H:%M:%S),$CONTAINER_NAME,$TOKEN_COUNT,$TOKENS_PER_SEC,$AUDIO_DURATION,$RTF,$TRANSCODE_SEC,$WER,$MER,$WIL,$WIP,$CER,$CPU_THREADS,$START_TYPE" >> "$METRIC_FILE"
   echo "✅ Completed: $OUTPUT_PREFIX"
 }
@@ -207,7 +201,7 @@ for IMAGE in "${IMAGES[@]}"; do
       done
     done
   done
-  GPU_INDEX=0  # Reset GPU index after each image
+  GPU_INDEX=0
 
 done
 wait
