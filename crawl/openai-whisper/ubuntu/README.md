@@ -28,7 +28,7 @@
 
 ## Git clone the project on the VM
 
-- ssh into your VM
+ssh into your VM
 
 ```sh
 # clone in the VM
@@ -53,28 +53,42 @@ cat crawl/openai-whisper/ubuntu/Dockerfile
 ## (Option A) Pull the Dockerfiles from Quay.io
 
 ```sh
-# login to Quay.io
 podman login quay.io
 
 export FLAVOR=ubuntu # or ubi9 or ubi9-minimal
 
 screen -S download-images bash -c '
   set -e
+  start_time=$(date +%s)
   for tag in tiny.en-'$FLAVOR' base.en-'$FLAVOR' small.en-'$FLAVOR' medium.en-'$FLAVOR' large-'$FLAVOR' turbo-'$FLAVOR'; do
     echo "📦 Pulling quay.io/redhat_na_ssa/speech-to-text/whisper:$tag"
     podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag || echo "❌ Failed to pull $tag"
   done
+  end_time=$(date +%s)
+  duration=$((end_time - start_time))
+  echo "⏱️ Total download time: $duration seconds"
 '
 ```
 
 ## (Option B) Build the Dockerfile Embedding the model in the `/data` directory
 
 ```sh
+# Set your flavor
+export FLAVOR=ubuntu  # (or ubi9 or ubi9-minimal)
+
+# Start a screen session for building
+set -e
+start_time=$(date +%s)
+
 for model in tiny.en base.en small.en medium.en large turbo; do
-  tag="whisper:${model}-ubuntu"
+  tag="whisper:${model}-$FLAVOR"
   echo "🔧 Building image: $tag"
-  podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubuntu/.
+  podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/$FLAVOR/. || echo "❌ Failed to build $tag"
 done
+
+end_time=$(date +%s)
+duration=$((end_time - start_time))
+echo "⏱️ Total build time: $(($duration / 60)) min $(($duration % 60)) sec"
 ```
 
 NOTE: models will be saved in `/data/.cache/whisper/` in each container image
@@ -85,7 +99,20 @@ This captures the image sizes for comparison laters and writes to `data/metrics/
 
 ```sh
 # image sizes
-mkdir -p data/metrics && echo "repository,tag,size" | tee data/metrics/image_sizes.csv && podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep '^localhost/whisper' | tee -a data/metrics/image_sizes.csv
+mkdir -p data/metrics && \
+echo "repository,tag,size" | tee data/metrics/image_sizes.csv && \
+podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep 'speech-to-text/whisper' | tee -a data/metrics/image_sizes.csv
+```
+
+```sh
+# expected output
+repository,tag,size
+quay.io/redhat_na_ssa/speech-to-text/whisper,turbo-ubuntu,8.25 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,large-ubuntu,9.72 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,medium.en-ubuntu,8.16 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,small.en-ubuntu,7.12 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,base.en-ubuntu,6.78 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,tiny.en-ubuntu,6.71 GB
 ```
 
 ## Test the containers
@@ -97,7 +124,11 @@ mkdir -p data/metrics && echo "repository,tag,size" | tee data/metrics/image_siz
 ### Review the ground truth data
 
 ```sh
-cat data/ground-truth/harvard.txt 
+echo "--- File Contents ---"
+cat data/ground-truth/harvard.txt
+
+echo "--- Word Count ---"
+wc -w data/ground-truth/harvard.txt
 ```
 
 ### The first test lets run whisper tiny.en ubuntu on cpu transcribing harvard audio data sample:
@@ -113,7 +144,23 @@ time whisper /outside/input-samples/harvard.wav \
   --model tiny.en
 
 # rerun the same command (warm start)
+
+# sample time cold output
+# real    0m3.065s
+# user    0m30.300s
+# sys     0m0.585s
+
+# sample time warm output
+# real    0m3.051s
+# user    0m30.710s
+# sys     0m0.525s
 ```
+
+Notice:
+
+- language has to be detected
+- floating point has to be detected
+- the task of transcribe has to be detected
 
 ```sh
 # stop the container
@@ -148,12 +195,60 @@ time whisper /outside/input-samples/harvard.wav \
   --fp16 False
 
 # Rerun the same command (warm start)
+
+# sample time cold output
+# real    0m6.038s
+# user    0m33.521s
+# sys     0m1.360s
+
+# sample time warm output
+# real    0m3.280s
+# user    0m34.902s
+# sys     0m1.947s
 ```
+
+#### What happens during the first run:
+
+1. Model download
+  - You see the 72.1M/72.1M progress bar:
+  - 100%|█████████████████████████████████████| 72.1M/72.1M
+  - Whisper is downloading the tiny.en model weights from HuggingFace (or OpenAI) into /tmp/ (your --model_dir).
+1. Model loading
+  - After downloading, the model is deserialized into memory (PyTorch .bin format → model object).
+1. Tokenizer initialization
+  - The tokenizer (based on SentencePiece or similar) is loaded and possibly compiled.
+1. First-time memory allocation
+  - CPU RAM is allocated for model layers.
+  - OpenBLAS may also initialize CPU thread pools (expensive on first call).
+1. Inference
+  - Audio is transcribed.
+
+All of those steps — downloading, deserializing, setting up caches — take time.
+That's why your first real time is 6 seconds.
+
+#### What happens during the second run:
+
+1. No download
+  - Model already exists in /tmp/. No need to fetch from network.
+1. Model loaded from disk
+  - Much faster — it reads the weights from local storage.
+1. Tokenizer is ready
+  - Possibly kept in memory, or quickly initialized if disk-cached.
+1. Thread pools are warm
+  - OpenBLAS, MKL, or NumPy threading libraries have already spun up threads.
+1. Inference only
+  - Just the actual transcribing.
+
+So your second real time drops to ~3.3 seconds — about 50% faster.
 
 ```sh
 # stop the container
 exit
 ```
+
+You can see this even more dramatically if you use larger models (like medium.en, large, turbo) —
+First run cold start might take 30–90 seconds.
+Second run will often cut that by half or more!
 
 ### The third test lets run whisper with hyperparameter argument values:
 
@@ -189,7 +284,54 @@ time whisper /outside/input-samples/harvard.wav \
   --no_speech_threshold 0.4
 
 # Rerun the same command (warm start)
+
+# real    0m6.022s
+# user    0m44.440s
+# sys     0m0.730s
+
+# real    0m3.674s
+# user    0m44.729s
+# sys     0m0.581s
 ```
+
+Argument | Plain English Meaning | Impact
+|-|-|-|
+--beam_size 10 | Instead of picking the next word instantly, the model tries 10 different guesses before choosing. | Makes transcription slower but sometimes slightly better.
+--temperature 0 | Always pick the most confident guess (no randomness at all). | No real slowdown.
+--patience 2 | Wait a little longer (2 chances) before locking in the final guess. | Small extra time cost.
+--suppress_tokens -1 | Don’t block any words — allow the model to say anything. | No real effect unless customized.
+--compression_ratio_threshold 2.0 | Detect if audio sounds repetitive (like "uh uh uh") and fix it. | Tiny time cost; helpful for noisy audio.
+--logprob_threshold -0.5 | Reject very bad guesses based on confidence. | Small compute cost, better quality.
+--no_speech_threshold 0.4 | Skip silence faster if the model thinks there’s no speaking. | Can slightly speed things up.
+
+#### First, why is the second run faster?
+
+Same as before — cold start vs warm start:
+
+- First run loads the model from scratch (even though you don't see it download because it's cached, /tmp/ model_dir still has to deserialize and initialize PyTorch weights).
+- Second run benefits from Python memory caching, already initialized OpenBLAS/MKL thread pools, and tokenizer caches.
+
+#### Why the second pass is faster, but not dramatically faster with beam search?
+
+- Model load time is eliminated
+- Thread pools are warmed
+- Beam search still costs CPU cycles, even in warm start
+- (Beam search is CPU bound — because it's exploring multiple hypotheses at every token step.)
+
+#### Second, what about the bigger difference you’re seeing with hyperparameters?
+
+You added beam search and other decoding hyperparameters, and that changes the inference behavior:
+
+Config | Decode Strategy | Speed | Accuracy
+|-|-|-|-|
+Basic (no hyperparams) | Greedy (fastest) | Fast | Good
+Hyperparams | Beam Search (explores alternatives) | Slower | Slightly better
+
+- Beam size = trade speed for accuracy
+- Temperature = deterministic vs random
+- Patience = wait for better guesses
+- Suppress / compression / logprob = clean up bad or repetitive results
+- No speech threshold = don't waste time on silence
 
 ### Measure transcription accuracy from [JiWER](https://github.com/jitsi/jiwer):
 
