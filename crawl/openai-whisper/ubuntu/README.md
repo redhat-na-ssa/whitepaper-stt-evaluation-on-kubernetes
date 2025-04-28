@@ -57,17 +57,24 @@ podman login quay.io
 
 export FLAVOR=ubuntu # or ubi9 or ubi9-minimal
 
-screen -S download-images bash -c '
+time {
   set -e
   start_time=$(date +%s)
-  for tag in tiny.en-'$FLAVOR' base.en-'$FLAVOR' small.en-'$FLAVOR' medium.en-'$FLAVOR' large-'$FLAVOR' turbo-'$FLAVOR'; do
+  for tag in tiny.en-$FLAVOR base.en-$FLAVOR small.en-$FLAVOR medium.en-$FLAVOR large-$FLAVOR turbo-$FLAVOR; do
     echo "📦 Pulling quay.io/redhat_na_ssa/speech-to-text/whisper:$tag"
     podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag || echo "❌ Failed to pull $tag"
   done
   end_time=$(date +%s)
   duration=$((end_time - start_time))
   echo "⏱️ Total download time: $duration seconds"
-'
+}
+
+
+#⏱️ Total download time: 1038 seconds
+
+#real    17m18.519s
+#user    10m17.688s
+#sys     7m45.052s
 ```
 
 ## (Option B) Build the Dockerfile Embedding the model in the `/data` directory
@@ -95,7 +102,7 @@ NOTE: models will be saved in `/data/.cache/whisper/` in each container image
 
 ## Capture the image sizes
 
-This captures the image sizes for comparison laters and writes to `data/metrics/image_sizes.csv`.
+This captures the image sizes for comparison later and writes to `data/metrics/image_sizes.csv`.
 
 ```sh
 # image sizes
@@ -106,13 +113,13 @@ podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep 'speech-to-te
 
 ```sh
 # expected output
-repository,tag,size
-quay.io/redhat_na_ssa/speech-to-text/whisper,turbo-ubuntu,8.25 GB
-quay.io/redhat_na_ssa/speech-to-text/whisper,large-ubuntu,9.72 GB
-quay.io/redhat_na_ssa/speech-to-text/whisper,medium.en-ubuntu,8.16 GB
-quay.io/redhat_na_ssa/speech-to-text/whisper,small.en-ubuntu,7.12 GB
-quay.io/redhat_na_ssa/speech-to-text/whisper,base.en-ubuntu,6.78 GB
-quay.io/redhat_na_ssa/speech-to-text/whisper,tiny.en-ubuntu,6.71 GB
+#repository,tag,size
+#quay.io/redhat_na_ssa/speech-to-text/whisper,turbo-ubuntu,8.25 GB
+#quay.io/redhat_na_ssa/speech-to-text/whisper,large-ubuntu,9.72 GB
+#quay.io/redhat_na_ssa/speech-to-text/whisper,medium.en-ubuntu,8.16 GB
+#quay.io/redhat_na_ssa/speech-to-text/whisper,small.en-ubuntu,7.12 GB
+#quay.io/redhat_na_ssa/speech-to-text/whisper,base.en-ubuntu,6.78 GB
+#quay.io/redhat_na_ssa/speech-to-text/whisper,tiny.en-ubuntu,6.71 GB
 ```
 
 ## Test the containers
