@@ -100,6 +100,11 @@ sudo rpm --import https://developer.download.nvidia.com/compute/cuda/repos/fedor
 sudo dnf module -y install nvidia-driver:latest-dkms
 # dnf install nvidia-driver-cuda kmod-nvidia-latest-dkms
 
+# reboot to make sure we are on the latest kernel
+sudo reboot
+```
+
+```sh
 sudo dkms status
 
 # upgraded driver
