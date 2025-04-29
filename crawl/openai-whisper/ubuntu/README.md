@@ -184,7 +184,7 @@ exit
 - `--fp16 False`	Force FP32 inference (useful on CPU or unsupported GPUs)
 
 ```sh
-# start the container on cpu
+# start an interactive container on cpu
 podman run --rm -it --name whisper-tiny-en-ubuntu-cpu-basic -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 ```
 
@@ -266,7 +266,7 @@ Second run will often cut that by half or more!
 - `--no_speech_threshold 0.4`	Threshold for skipping non-speech segments
 
 ```sh
-# start the container on cpu
+# start an interactive container on cpu
 podman run --rm -it --name whisper-tiny-en-ubuntu-cpu-hyperparameter -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 ```
 
@@ -384,7 +384,7 @@ For illustration purposes, here is how you would run the same container on a GPU
 You can pass this step and move onto batch testing.
 
 ```sh
-# start the container on gpu
+# start an interactive container on cpu
 podman run --rm -it --name whisper-tiny-en-ubuntu-gpu \
   --security-opt=label=disable \
   --device nvidia.com/gpu=all \
