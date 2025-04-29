@@ -11,8 +11,8 @@ Follow the [provisioning guide](https://github.com/redhat-na-ssa/whitepaper-stt-
 ### Clone the Repository Locally
 
 ```sh
-git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git && \
-    cd whitepaper-stt-evaluation-on-kubernetes/ 
+git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
+cd whitepaper-stt-evaluation-on-kubernetes/
 ```
 
 ### Begin Crawl
