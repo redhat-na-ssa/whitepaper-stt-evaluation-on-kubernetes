@@ -53,8 +53,6 @@ cat crawl/openai-whisper/ubuntu/Dockerfile
 ## (Option A) Pull the Dockerfiles from Quay.io
 
 ```sh
-podman login quay.io
-
 export FLAVOR=ubuntu # or ubi9 or ubi9-minimal
 
 time {
