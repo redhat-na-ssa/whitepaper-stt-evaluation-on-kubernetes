@@ -422,19 +422,36 @@ Instead of manually repeating these steps on gpu transcribing harvard audio data
 The output writes the data to `data/metrics/aiml_functional_metrics.csv` for easier review
 
 ```sh
+# Terminal 1 of 2
 # You can copy this entire block and paste in the terminal
 
 # Set your parameters
 FLAVOR=ubuntu         # Options: ubuntu, ubi9, ubi9-minimal
-INSTANCE=g6.12xlarge  # Set your instance type
-#MODELS=large,turbo
-#INPUT=harvard.wav    # Enter if you want process a single input, else All Audio files processed
+INSTANCE=g5.12xlarge  # Set your instance type
+MODELS=tiny.en,small.en
+INPUT=harvard.wav    # Enter if you want process a single input, else All Audio files processed
+#INPUT=jfk-audio-inaugural-address-20-january-1961.mp3
+#INPUT=jfk-audio-rice-university-12-september-1962.mp3
 
 # Run the script
 screen -S jobs ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
   --flavor="$FLAVOR" \
-  --instance="$INSTANCE" # \
-  #--model="$MODELS"
+  --instance="$INSTANCE" \
+  --model="$MODELS"
+```
+
+```sh
+# Terminal 2 of 2
+# monitor the metrics writing to data/metrics/aiml_functional_metrics.csv
+$ tail -f data/metrics/aiml_functional_metrics.csv
+
+# monitor the cpu / gpu metrics
+watch -n 2 -t '
+  echo "== NVIDIA GPU Usage =="
+  nvidia-smi
+  echo "\n== Top Whisper Threads by CPU Usage =="
+  ps -T -p $(pgrep -d"," -f whisper) -o pid,tid,pcpu,pmem,comm | sort -k3 -nr | head -20
+'
 ```
 
 | **Question Before the Exercise**                                      | **Expected Answer / Learning After Completion**                                                                           |
