@@ -139,7 +139,7 @@ wc -w data/ground-truth/harvard.txt
 ### The first test lets run whisper tiny.en ubuntu on cpu transcribing harvard audio data sample:
 
 ```sh
-# start the container on cpu
+# start an interactive container on cpu
 podman run --rm -it --name whisper-tiny-en-ubuntu-cpu -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 ```
 
