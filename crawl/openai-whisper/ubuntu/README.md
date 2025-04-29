@@ -32,10 +32,10 @@ ssh into your VM
 
 ```sh
 # clone in the VM
-git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git
+git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git && \
 
-# move to repo
-cd whitepaper-stt-evaluation-on-kubernetes
+  # move to repo
+  cd whitepaper-stt-evaluation-on-kubernetes
 ```
 
 ## Review OpenAI Whisper Requirements
