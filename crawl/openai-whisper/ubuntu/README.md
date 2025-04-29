@@ -42,6 +42,16 @@ git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernet
 
 Go to [OpenAI Whisper](https://github.com/openai/whisper?tab=readme-ov-file#setup) and review basic packages to install: ffmpeg, Python, Openai-whisper, etc.
 
+## Define `time`
+
+`Real` is wall clock time - time from start to finish of the call. This is all elapsed time including time slices used by other processes and time the process spends blocked (for example if it is waiting for I/O to complete).
+
+`User` is the amount of CPU time spent in user-mode code (outside the kernel) within the process. This is only actual CPU time used in executing the process. Other processes and time the process spends blocked do not count towards this figure.
+
+`Sys` is the amount of CPU time spent in the kernel within the process. This means executing CPU time spent in system calls within the kernel, as opposed to library code, which is still running in user-space. Like 'user', this is only CPU time used by the process. See below for a brief description of kernel mode (also known as 'supervisor' mode) and the system call mechanism.
+
+[Reference: time](https://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1/)
+
 ## Review the Dockerfile
 
 Notice: ffmpeg is an apt install with the Ubuntu image
@@ -212,7 +222,7 @@ time whisper /outside/input-samples/harvard.wav \
 # sys     0m1.947s
 ```
 
-#### What happens during the first run:
+#### What happens during the first run
 
 1. Model download
   - You see the 72.1M/72.1M progress bar:
