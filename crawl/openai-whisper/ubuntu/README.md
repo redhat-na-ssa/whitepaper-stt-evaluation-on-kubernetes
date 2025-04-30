@@ -1,68 +1,73 @@
+
 # Whisper on Ubuntu
 
-## Section Expectations
+## 📌 Overview
 
-- Run Whisper STT inside containers with various configs
-- Compare cold vs warm starts, CPU vs GPU, basic vs hyperparam runs
-- Measure transcription speed, accuracy, and runtime
-- Evaluate container performance using system metrics (CPU/GPU/memory)
-- Understand trade-offs across model sizes and environments (Ubuntu vs UBI)
-- Automate and scale tests using batch scripts
-- Prepare for production by benchmarking real-world workloads
+This guide walks you through benchmarking OpenAI Whisper models in containerized environments (Ubuntu-based), including:
 
-## Questions to Ask Before Running Whisper Benchmarks
+- Cold vs. warm start comparisons  
+- CPU vs. GPU performance  
+- Hyperparameter tuning impact  
+- System metrics collection  
+- Accuracy measurement  
+- Automation via batch testing
 
-| **Question Before the Exercise**| **Expected Answer / Learning After Completion**|
-|-|-|
-| What is the impact of model size (e.g., tiny → turbo)?                 |  |
-| How much faster is GPU inference compared to CPU?                      |  |
-| How do cold starts compare to warm starts?                             |  |
-| Do advanced arguments (hyperparameters) improve accuracy?              |  |
-| How accurate is Whisper across short vs. long audio?                   |  |
-| What was the fastest transcription?                                    |  |
-| What was the slowest transcription?                                    |  |
-| What metrics are most useful to compare experiments?                   |  |
-| What’s a reasonable throughput goal for deployment?                    |  |
-| Should experiments run in parallel or sequentially?                    |  |
-| Are containers reusable across experiments?                            |  |
+## 🎯 Objectives
 
-## Git clone the project on the VM
+- Run Whisper STT inside containers with different configurations  
+- Compare transcription performance and latency across models and hardware  
+- Evaluate accuracy using metrics like WER, MER, and CER  
+- Capture CPU/GPU utilization and system resource impact  
+- Scale benchmarking with automated batch scripts  
+- Prepare for production by testing real-world workloads
 
-ssh into your VM
+## 🧠 Questions to Explore
 
-```sh
-# clone in the VM
+| **Before the Benchmark**                          | **After the Benchmark (Expected Insight)**                                                  |
+|---------------------------------------------------|---------------------------------------------------------------------------------------------|
+| What is the impact of model size (tiny → turbo)?  | Larger models increase accuracy but also inference time and image size.                    |
+| How much faster is GPU inference than CPU?        | GPUs are typically 10–15× faster on warm starts.                                            |
+| Cold vs. warm start performance?                  | Warm starts reduce latency by 3–5× by skipping model loading and initialization.            |
+| Do hyperparameters improve accuracy?              | Yes, slightly. Beam search and logprob thresholds improve WER/WIL but increase latency.     |
+| How does Whisper perform on short vs. long audio? | Short clips are consistently accurate; long clips show variance based on model and config.  |
+| Fastest transcription?                            | _[Fill in based on experiment]_                                                            |
+| Slowest transcription?                            | _[Fill in based on experiment]_                                                            |
+| Most useful metrics?                              | tokens/sec, RTF, container_runtime_sec, WER, MER, WIL, WIP, CER                             |
+| Target throughput for deployment?                 | Aim for >30 tokens/sec on GPU warm inference                                               |
+| Run jobs sequentially or in parallel?             | Parallel is faster but must respect core/GPU capacity                                      |
+| Are containers reusable across tests?             | Yes—especially valuable for warm starts and reproducible results                           |
+
+## 🚀 Quick Start
+
+### Step 1: Clone the Project
+
+```bash
 git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git && \
-
-  # move to repo
-  cd whitepaper-stt-evaluation-on-kubernetes
+cd whitepaper-stt-evaluation-on-kubernetes
 ```
 
-## Review OpenAI Whisper Requirements
+## 📦 Review Whisper Requirements
 
-Go to [OpenAI Whisper](https://github.com/openai/whisper?tab=readme-ov-file#setup) and review basic packages to install: ffmpeg, Python, Openai-whisper, etc.
+See [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#setup) for prerequisites:  
+- Python  
+- `ffmpeg`  
+- `openai-whisper`  
 
-## Define `time`
+## ⏱ Understanding `time`
 
-`Real` is wall clock time - time from start to finish of the call. This is all elapsed time including time slices used by other processes and time the process spends blocked (for example if it is waiting for I/O to complete).
+| Output   | Meaning                                                                 |
+|----------|-------------------------------------------------------------------------|
+| real     | Total wall clock time                                                   |
+| user     | Time spent in user-mode (actual CPU execution)                         |
+| sys      | Time spent in kernel-mode (e.g., system calls, I/O wait)               |
 
-`User` is the amount of CPU time spent in user-mode code (outside the kernel) within the process. This is only actual CPU time used in executing the process. Other processes and time the process spends blocked do not count towards this figure.
+📖 [Reference](https://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1)
 
-`Sys` is the amount of CPU time spent in the kernel within the process. This means executing CPU time spent in system calls within the kernel, as opposed to library code, which is still running in user-space. Like 'user', this is only CPU time used by the process. See below for a brief description of kernel mode (also known as 'supervisor' mode) and the system call mechanism.
+## 🐳 Docker Image Setup
 
-[Reference: time](https://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1/)
+### Option A: Pull Prebuilt Images from Quay.io
 
-## Review the Dockerfile
-
-Notice: ffmpeg is an apt install with the Ubuntu image
-
-```sh
-cat crawl/openai-whisper/ubuntu/Dockerfile 
-```
-
-## (Option A) Pull the Dockerfiles from Quay.io
-
-```sh
+```bash
 export FLAVOR=ubuntu # or ubi9 or ubi9-minimal
 
 time {
@@ -85,9 +90,9 @@ time {
 #sys     7m45.052s
 ```
 
-## (Option B) Build the Dockerfile Embedding the model in the `/data` directory
+### Option B: Build Locally with Embedded Models
 
-```sh
+```bash
 # Set your flavor
 export FLAVOR=ubuntu  # (or ubi9 or ubi9-minimal)
 
@@ -106,13 +111,11 @@ duration=$((end_time - start_time))
 echo "⏱️ Total build time: $(($duration / 60)) min $(($duration % 60)) sec"
 ```
 
-NOTE: models will be saved in `/data/.cache/whisper/` in each container image
+📌 Models are embedded in `/data/.cache/whisper/` inside each image.
 
-## Capture the image sizes
+### 🔍 Capture Image Sizes
 
-This captures the image sizes for comparison later and writes to `data/metrics/image_sizes.csv`.
-
-```sh
+```bash
 # image sizes
 mkdir -p data/metrics && \
 echo "repository,tag,size" | tee data/metrics/image_sizes.csv && \
@@ -130,13 +133,9 @@ podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep 'speech-to-te
 #quay.io/redhat_na_ssa/speech-to-text/whisper,tiny.en-ubuntu,6.71 GB
 ```
 
-## Test the containers
+## 🧪 Run Benchmark Tests
 
-### Harvard
-
-[Harvard Speech Recognition Dataset](https://www.kaggle.com/datasets/tmshaikh/speech-recognition-data) provides a way to smoke test before running against more complex audio data.
-
-### Review the ground truth data
+### Review Dataset
 
 ```sh
 echo "--- File Contents ---"
@@ -146,60 +145,32 @@ echo "--- Word Count ---"
 wc -w data/ground-truth/harvard.txt
 ```
 
-### The first test lets run whisper tiny.en ubuntu on cpu transcribing harvard audio data sample:
+### Test 1: Cold vs Warm (CPU)
 
-```sh
-# start an interactive container on cpu
-podman run --rm -it --name whisper-tiny-en-ubuntu-cpu -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
+```bash
+podman run --rm -it -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
 ```
 
-```sh
-# run whisper command
+```bash
+# Run transcription
 time whisper /outside/input-samples/harvard.wav \
   --model tiny.en
 
-# rerun the same command (warm start)
-
-# sample time cold output
-# real    0m3.065s
-# user    0m30.300s
-# sys     0m0.585s
-
-# sample time warm output
-# real    0m3.051s
-# user    0m30.710s
-# sys     0m0.525s
+# Re-run for warm start
 ```
 
-Notice:
+### Test 2: Add Basic Inference Flags
 
-- language has to be detected
-- floating point has to be detected
-- the task of transcribe has to be detected
+- -- /outside/input-samples/harvard.wav Path to the input audio file
+- --`model tiny.en` Use the English-only Tiny model
+- --`model_dir /tmp/` Location to cache/load downloaded models
+- --`output_dir metrics/` Where to write the transcription result
+- --`output_format txt` Output format: plain text (can also be vtt, json, etc.)
+- --`language en` Language code (e.g., en for English)
+- --`task transcribe` Task type: transcribe or translate
+- --`fp16 False` Force FP32 inference (useful on CPU or unsupported GPUs)
 
-```sh
-# stop the container
-exit
-```
-
-### The second test lets run whisper with basic arguments:
-
-- `/outside/input-samples/harvard.wav`	Path to the input audio file
-- `--model tiny.en`	Use the English-only Tiny model
-- `--model_dir /tmp/`	Location to cache/load downloaded models
-- `--output_dir metrics/`	Where to write the transcription result
-- `--output_format txt`	Output format: plain text (can also be vtt, json, etc.)
-- `--language en`	Language code (e.g., en for English)
-- `--task transcribe`	Task type: transcribe or translate
-- `--fp16 False`	Force FP32 inference (useful on CPU or unsupported GPUs)
-
-```sh
-# start an interactive container on cpu
-podman run --rm -it --name whisper-tiny-en-ubuntu-cpu-basic -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
-```
-
-```sh
-# whisper command with basic arguments
+```bash
 time whisper /outside/input-samples/harvard.wav \
   --model tiny.en \
   --model_dir /tmp/ \
@@ -208,7 +179,9 @@ time whisper /outside/input-samples/harvard.wav \
   --language en \
   --task transcribe \
   --fp16 False
+```
 
+```sh
 # Rerun the same command (warm start)
 
 # sample time cold output
@@ -222,66 +195,31 @@ time whisper /outside/input-samples/harvard.wav \
 # sys     0m1.947s
 ```
 
-#### What happens during the first run
+| **First Run (Cold Start)**                                                                                          | **Second Run (Warm Start)**                                                                                      |
+|---------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| **Model download** Whisper downloads the model weights (e.g., 72.1M) into `/tmp/`.                                  | **No download** Model is already cached in `/tmp/`.                                                              |
+| **Model loading** Weights are deserialized into memory (PyTorch .bin → model object).                              | **Model loaded from disk** Much faster read from local cache.                                                    |
+| **Tokenizer initialization** SentencePiece-based tokenizer is loaded and possibly compiled.                        | **Tokenizer is ready** Possibly kept in memory or disk-cached.                                                   |
+| **First-time memory allocation** RAM is allocated for model layers. OpenBLAS initializes CPU thread pools.         | **Thread pools are warm** OpenBLAS/MKL thread pools already initialized.                                         |
+| **Inference** Audio is transcribed after setup steps complete.                                                      | **Inference only** Directly starts transcribing.                                                                 |
+| **Result** All steps take time — cold start might take ~6s.                                                         | **Result** Warm start is ~50% faster — drops to ~3.3s.                                                            |
 
-1. Model download
-  - You see the 72.1M/72.1M progress bar:
-  - 100%|█████████████████████████████████████| 72.1M/72.1M
-  - Whisper is downloading the tiny.en model weights from HuggingFace (or OpenAI) into /tmp/ (your --model_dir).
-1. Model loading
-  - After downloading, the model is deserialized into memory (PyTorch .bin format → model object).
-1. Tokenizer initialization
-  - The tokenizer (based on SentencePiece or similar) is loaded and possibly compiled.
-1. First-time memory allocation
-  - CPU RAM is allocated for model layers.
-  - OpenBLAS may also initialize CPU thread pools (expensive on first call).
-1. Inference
-  - Audio is transcribed.
+You can see this even more dramatically if you use larger models (like medium.en, large, turbo) — First run cold start might take 30–90 seconds. Second run will often cut that by half or more!
 
-All of those steps — downloading, deserializing, setting up caches — take time.
-That's why your first real time is 6 seconds.
+### Test 3: Add Hyperparameters
 
-#### What happens during the second run:
+| **Argument**                     | **Plain English Meaning**                                                                 | **Impact on Performance**                                             |
+|----------------------------------|--------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
+| `--beam_size 10`                | Try 10 different guesses before picking the best word (beam search).                       | Slower transcription, but can slightly improve quality.              |
+| `--temperature 0`              | Always choose the most confident word (no randomness).                                    | Deterministic output; no significant slowdown.                       |
+| `--patience 2`                 | Wait up to 2 rounds for a better guess before finalizing a word.                           | Small extra processing time; may improve result.                     |
+| `--suppress_tokens -1`         | Don’t block any tokens; allow the model to say anything.                                   | No impact unless you’ve configured specific tokens to suppress.      |
+| `--compression_ratio_threshold 2.0` | Detect repetitive artifacts (like "uh uh uh") and remove them.                         | Minimal cost; useful for cleaning noisy audio.                       |
+| `--logprob_threshold -0.5`     | Discard low-confidence segments below -0.5 log probability.                                | Small compute overhead; improves quality by filtering bad output.    |
+| `--no_speech_threshold 0.4`    | Skip over segments where the model detects no speech.                                      | Can slightly reduce transcription time.                              |
 
-1. No download
-  - Model already exists in /tmp/. No need to fetch from network.
-1. Model loaded from disk
-  - Much faster — it reads the weights from local storage.
-1. Tokenizer is ready
-  - Possibly kept in memory, or quickly initialized if disk-cached.
-1. Thread pools are warm
-  - OpenBLAS, MKL, or NumPy threading libraries have already spun up threads.
-1. Inference only
-  - Just the actual transcribing.
 
-So your second real time drops to ~3.3 seconds — about 50% faster.
-
-```sh
-# stop the container
-exit
-```
-
-You can see this even more dramatically if you use larger models (like medium.en, large, turbo) —
-First run cold start might take 30–90 seconds.
-Second run will often cut that by half or more!
-
-### The third test lets run whisper with hyperparameter argument values:
-
-- `--beam_size 10`	Number of beams used in beam search (improves quality but slower)
-- `--temperature 0`	Sampling temperature (0 = deterministic; higher = more random)
-- `--patience 2`	Allowed delay in selecting a less confident token (used in beam search)
-- `--suppress_tokens -1`	Disable default token suppression; decode all tokens
-- `--compression_ratio_threshold 2.0`	Threshold for flagging repetitive audio artifacts
-- `--logprob_threshold -0.5`	Minimum average log probability per segment to accept
-- `--no_speech_threshold 0.4`	Threshold for skipping non-speech segments
-
-```sh
-# start an interactive container on cpu
-podman run --rm -it --name whisper-tiny-en-ubuntu-cpu-hyperparameter -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
-```
-
-```sh
-# whisper command with hyperparameters
+```bash
 time whisper /outside/input-samples/harvard.wav \
   --model tiny.en \
   --model_dir /tmp/ \
@@ -309,60 +247,29 @@ time whisper /outside/input-samples/harvard.wav \
 # sys     0m0.581s
 ```
 
-Argument | Plain English Meaning | Impact
-|-|-|-|
---beam_size 10 | Instead of picking the next word instantly, the model tries 10 different guesses before choosing. | Makes transcription slower but sometimes slightly better.
---temperature 0 | Always pick the most confident guess (no randomness at all). | No real slowdown.
---patience 2 | Wait a little longer (2 chances) before locking in the final guess. | Small extra time cost.
---suppress_tokens -1 | Don’t block any words — allow the model to say anything. | No real effect unless customized.
---compression_ratio_threshold 2.0 | Detect if audio sounds repetitive (like "uh uh uh") and fix it. | Tiny time cost; helpful for noisy audio.
---logprob_threshold -0.5 | Reject very bad guesses based on confidence. | Small compute cost, better quality.
---no_speech_threshold 0.4 | Skip silence faster if the model thinks there’s no speaking. | Can slightly speed things up.
+| **First Run (Cold Start with Hyperparameters)**                                                                                     | **Second Run (Warm Start with Hyperparameters)**                                                                                    |
+|-------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| **Command:** Whisper with `--beam_size 10`, `--temperature 0`, `--patience 2`, and other decoding arguments.                        | **Same command**, re-run immediately after the first.                                                                               |
+| **Model loading:** Model deserialized from `/tmp/` into memory (PyTorch).                                                           | **Model already in memory**, skipping deserialization.                                                                              |
+| **Thread pools:** OpenBLAS thread pools initialized for the first time.                                                             | **Thread pools are warm**, no init overhead.                                                                                        |
+| **Tokenizer:** Initialized from scratch.                                                                                            | **Tokenizer is ready**, cached in memory or quickly loaded.                                                                         |
+| **Beam search:** Active — multiple hypotheses evaluated at each token step (CPU intensive).                                         | **Beam search still active**, contributes most of the CPU time in both runs.                                                       |
+| **real:** `6.022s`                                                                                                                  | **real:** `3.674s`                                                                                                                  |
+| **user:** `44.440s`                                                                                                                 | **user:** `44.729s` (almost identical — beam search CPU cost dominates)                                                             |
+| **sys:** `0.730s`                                                                                                                   | **sys:** `0.581s`                                                                                                                   |
+| **Conclusion:** Cold start includes model setup and memory/thread overhead.                                                        | **Conclusion:** Warm start cuts wall time nearly in half, but CPU time is still high due to beam search complexity.                |
 
-#### First, why is the second run faster?
 
-Same as before — cold start vs warm start:
+## 🧠 Accuracy Metrics with JiWER
 
-- First run loads the model from scratch (even though you don't see it download because it's cached, /tmp/ model_dir still has to deserialize and initialize PyTorch weights).
-- Second run benefits from Python memory caching, already initialized OpenBLAS/MKL thread pools, and tokenizer caches.
+WER (Word Error Rate): How many words were wrong in the transcription.
+MER (Match Error Rate): How many changes were needed to fix the transcription.
+WIL (Word Information Lost): How much word meaning was missed.
+WIP (Word Information Preserved): How much word meaning was kept.
+CER (Character Error Rate): How many letters were wrong.
 
-#### Why the second pass is faster, but not dramatically faster with beam search?
 
-- Model load time is eliminated
-- Thread pools are warmed
-- Beam search still costs CPU cycles, even in warm start
-- (Beam search is CPU bound — because it's exploring multiple hypotheses at every token step.)
-
-#### Second, what about the bigger difference you’re seeing with hyperparameters?
-
-You added beam search and other decoding hyperparameters, and that changes the inference behavior:
-
-Config | Decode Strategy | Speed | Accuracy
-|-|-|-|-|
-Basic (no hyperparams) | Greedy (fastest) | Fast | Good
-Hyperparams | Beam Search (explores alternatives) | Slower | Slightly better
-
-- Beam size = trade speed for accuracy
-- Temperature = deterministic vs random
-- Patience = wait for better guesses
-- Suppress / compression / logprob = clean up bad or repetitive results
-- No speech threshold = don't waste time on silence
-
-### Measure transcription accuracy from [JiWER](https://github.com/jitsi/jiwer):
-
-- **WER (Word Error Rate):** How many words were wrong in the transcription.
-- **MER (Match Error Rate):** How many changes were needed to fix the transcription.
-- **WIL (Word Information Lost):** How much word meaning was missed.
-- **WIP (Word Information Preserved):** How much word meaning was kept.
-- **CER (Character Error Rate):** How many letters were wrong.
-
-```sh
-# WER 0.00% means the transcription matches the ground truth exactly
-# MER 0.00% means there were no substitutions, deletions, or insertions and an exact match
-# WIL 0.00% means the hypothesis is a perfect match with the reference
-# WIP 1.00 (100%) means perfect preservation from the reference in the hypothesis (i.e., a perfect match).
-# CER 0.00% means characters in your hypothesis match the characters in your reference exactly
-
+```bash
 python3 -c '
 from jiwer import wer, mer, wil, cer
 ref = open("/outside/ground-truth/harvard.txt").read()
@@ -376,105 +283,43 @@ print(f"CER: {cer(ref, hyp):.2%}")
 '
 ```
 
-### Review your times for different cpu experiments
+## ⚙️ Optional GPU Run
 
-1. whisper command (cold vs warm)
-1. whisper command with basic arguments (cold vs warm)
-1. whisper command with hyperparameters (cold vs warm)
-
-```sh
-# stop the container
-exit
+```bash
+podman run --rm -it   --security-opt=label=disable   --device nvidia.com/gpu=all   -v $(pwd)/data/:/outside/:z   whisper:tiny.en-ubuntu /bin/bash
 ```
 
-### Testing on GPU
-
-For illustration purposes, here is how you would run the same container on a GPU setting the `--security-opt=label=disable` and `--device nvidia.com/gpu=all` arguments.
-
-You can pass this step and move onto batch testing.
-
-```sh
-# start an interactive container on cpu
-podman run --rm -it --name whisper-tiny-en-ubuntu-gpu \
-  --security-opt=label=disable \
-  --device nvidia.com/gpu=all \
-  -v $(pwd)/data/:/outside/:z \
-  whisper:tiny.en-ubuntu /bin/bash
-```
-
-```sh
-# whisper command with hyperparameters
-time whisper /outside/input-samples/harvard.wav \
-  --model tiny.en \
-  --model_dir /tmp/ \
-  --output_dir metrics/ \
-  --output_format txt \
-  --language en \
-  --task transcribe \
-  --fp16 False \
-  --beam_size 10 \
-  --temperature 0 \
-  --patience 2 \
-  --suppress_tokens -1 \
-  --compression_ratio_threshold 2.0 \
-  --logprob_threshold -0.5 \
-  --no_speech_threshold 0.4
-
-# Rerun the same command (warm start)
-```
-
-## Batch jobs running experiments on CPU and GPU in parallel
+## 🧵 Run Batch Experiments (Parallel CPU/GPU)
 
 Instead of manually repeating these steps on gpu transcribing harvard audio data sample, lets create job of experiments and run them in parallel.
 
-The output writes the data to `data/metrics/aiml_functional_metrics.csv` for easier review
+The output writes the data to data/metrics/aiml_functional_metrics.csv for easier review
 
-```sh
-# Terminal 1 of 2
-# You can copy this entire block and paste in the terminal
+### Terminal 1: Run Experiments
 
-# Set your parameters
-FLAVOR=ubuntu         # Options: ubuntu, ubi9, ubi9-minimal
-INSTANCE=g5.12xlarge  # Set your instance type
-MODELS=tiny.en,small.en
-INPUT=harvard.wav    # Enter if you want process a single input, else All Audio files processed
-#INPUT=jfk-audio-inaugural-address-20-january-1961.mp3
-#INPUT=jfk-audio-rice-university-12-september-1962.mp3
-
-# Run the script
+```bash
 screen -S jobs ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
-  --flavor="$FLAVOR" \
-  --instance="$INSTANCE" \
-  --model="$MODELS"
+  --flavor="ubuntu" \
+  --instance="g5.12xlarge" \
+  --model="tiny.en,small.en"
 ```
 
-```sh
-# Terminal 2 of 2
-# monitor the metrics writing to data/metrics/aiml_functional_metrics.csv
-$ tail -f data/metrics/aiml_functional_metrics.csv
+### Terminal 2: Monitor Output
 
-# monitor the cpu / gpu metrics
+```bash
+tail -f data/metrics/aiml_functional_metrics.csv
+```
+
+```bash
 watch -n 2 -t '
-  echo "== NVIDIA GPU Usage =="
-  nvidia-smi
-  echo "\n== Top Whisper Threads by CPU Usage =="
-  ps -T -p $(pgrep -d"," -f whisper) -o pid,tid,pcpu,pmem,comm | sort -k3 -nr | head -20
+echo "== NVIDIA GPU Usage =="
+nvidia-smi
+echo "\n== Top Whisper Threads by CPU Usage =="
+ps -T -p $(pgrep -d"," -f whisper) -o pid,tid,pcpu,pmem,comm | sort -k3 -nr | head -20
 '
 ```
 
-| **Question Before the Exercise**                                      | **Expected Answer / Learning After Completion**                                                                           |
-|------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| What is the impact of model size (e.g., tiny → turbo)?                 | Larger models offer better transcription accuracy but increase inference time and image size.                             |
-| How much faster is GPU inference compared to CPU?                      | GPU inference is 10–15x faster on warm starts and is necessary for large models or real-time workloads.                   |
-| How do cold starts compare to warm starts?                             | Cold starts can take 3–5x longer due to model loading and tokenization caching overhead.                                  |
-| Do advanced arguments (hyperparameters) improve accuracy?              | Hyperparameters slightly improve accuracy (WER, WIL) but also increase latency.                                            |
-| How accurate is Whisper across short vs. long audio?                   | Short samples are consistently accurate; longer files show more variation across model sizes and config modes.            |
-| What was the fastest transcription?                                    |  |
-| What was the slowest transcription?                                    |  |
-| What metrics are most useful to compare experiments?                   | tokens/sec, real_time_factor (RTF), container_runtime_sec, WER, MER, WIL, WIP, CER.                                        |
-| What’s a reasonable throughput goal for deployment?                    | Aim for >30 tokens/sec on GPU warm inference for real-time production performance.                                        |
-| Should experiments run in parallel or sequentially?                    | Parallel jobs are efficient, but overloading CPU cores or GPU memory should be avoided.                                   |
-| Are containers reusable across experiments?                            | Yes, especially useful for warm start reuse and reproducible performance analysis.                                        |
+## ⏮ Navigation
 
-|[Previous <- Provision VM w/GPU](../../RHEL_GPU.md)|[Next -> UBI9 Minimal with Whisper](../ubi/minimal/README.md)|
-|-|-|
+| ← [Provision VM w/ GPU](../../RHEL_GPU.md) | [UBI9 Minimal with Whisper →](../ubi/minimal/README.md) |
+|--------------------------------------------|----------------------------------------------------------|
