@@ -68,6 +68,9 @@ See [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#setup)
 ### Option A: Pull Prebuilt Images from Quay.io
 
 ```bash
+# Login to Quay.io
+# podman login quay.io
+
 export FLAVOR=ubuntu # or ubi9 or ubi9-minimal
 
 time {
@@ -122,7 +125,7 @@ echo "repository,tag,size" | tee data/metrics/image_sizes.csv && \
 podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep 'speech-to-text/whisper' | tee -a data/metrics/image_sizes.csv
 ```
 
-```sh
+```csv
 # expected output
 #repository,tag,size
 #quay.io/redhat_na_ssa/speech-to-text/whisper,turbo-ubuntu,8.25 GB
