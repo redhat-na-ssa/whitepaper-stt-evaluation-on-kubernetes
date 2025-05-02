@@ -27,17 +27,27 @@ for ARG in "$@"; do
   esac
 done
 
+# ===================== Define Output Directory ============================
+OUTPUT_DIR="data/metrics/$INSTANCE_TYPE/$IMAGE_FLAVOR"
+mkdir -p "$OUTPUT_DIR"
+
+# ============================ CSV Header Setup =============================
+METRIC_FILE="$OUTPUT_DIR/aiml_functional_metrics.csv"
+if [[ ! -f "$METRIC_FILE" ]]; then
+  echo "date,timestamp,container_name,token_count,tokens_per_second,audio_duration,real_time_factor,container_runtime_sec,wer,mer,wil,wip,cer,threads,start_type" > "$METRIC_FILE"
+fi
+
 # ======================= Ensure Metrics Directory is Writable ==================
 mkdir -p ./data/metrics
-if ! touch ./data/metrics/.write_test 2>/dev/null; then
+if ! touch $OUTPUT_DIR/.write_test 2>/dev/null; then
   echo "⚠️ Attempting to fix permissions for ./data/metrics..."
   sudo chown -R $(id -u):$(id -g) ./data/metrics 2>/dev/null || sudo chmod -R a+rw ./data/metrics 2>/dev/null
-  if ! touch ./data/metrics/.write_test 2>/dev/null; then
-    echo "❌ ERROR: Cannot write to ./data/metrics/. Check ownership and permissions."
+  if ! touch $OUTPUT_DIR/.write_test 2>/dev/null; then
+    echo "❌ ERROR: Cannot write to $OUTPUT_DIR/. Check ownership and permissions."
     exit 1
   fi
 fi
-rm -f ./data/metrics/.write_test
+rm -f $OUTPUT_DIR/.write_test
 
 # =========================== Image Selection Logic =============================
 MODEL_NAMES=("tiny.en" "base.en" "small.en" "medium.en" "large" "turbo")
@@ -90,12 +100,6 @@ START_TYPES=("cold" "warm")
 GPU_IDS=($(nvidia-smi --query-gpu=index --format=csv,noheader))
 GPU_COUNT=${#GPU_IDS[@]}
 GPU_INDEX=0
-
-# ============================ CSV Header Setup =================================
-METRIC_FILE="./data/metrics/aiml_functional_metrics.csv"
-if [[ ! -f "$METRIC_FILE" ]]; then
-  echo "date,timestamp,container_name,token_count,tokens_per_second,audio_duration,real_time_factor,container_runtime_sec,wer,mer,wil,wip,cer,threads,start_type" > "$METRIC_FILE"
-fi
 
 # ============================ Job Execution Function ===========================
 run_job() {
@@ -159,9 +163,11 @@ run_job() {
   TRANSCODE_SEC=$(awk "BEGIN {print $END_TIME - $START_TIME}")
 
   OUTPUT_NAME="${OUTPUT_PREFIX}.txt"
-  [[ -f "./data/metrics/${FILENAME}.txt" ]] && mv "./data/metrics/${FILENAME}.txt" "./data/metrics/$OUTPUT_NAME"
+  if [[ -f "./data/metrics/${FILENAME}.txt" ]]; then
+    mv "./data/metrics/${FILENAME}.txt" "$OUTPUT_DIR/$OUTPUT_NAME"
+  fi
 
-  TOKEN_COUNT=$(wc -w < "./data/metrics/$OUTPUT_NAME" | tr -d '[:space:]')
+  TOKEN_COUNT=$(wc -w < "$OUTPUT_DIR/$OUTPUT_NAME" | tr -d '[:space:]')
   TOKENS_PER_SEC="NA"
   RTF="NA"
   if [[ "$TOKEN_COUNT" -gt 0 ]] && awk "BEGIN {exit ($TRANSCODE_SEC <= 0)}"; then
@@ -172,10 +178,10 @@ run_job() {
   fi
 
   WER="NA"; MER="NA"; WIL="NA"; WIP="NA"; CER="NA"
-  if [[ -f "./data/metrics/$OUTPUT_NAME" && -f "./data/ground-truth/${FILENAME}.txt" ]]; then
+  if [[ -f "$OUTPUT_DIR/$OUTPUT_NAME" && -f "./data/ground-truth/${FILENAME}.txt" ]]; then
     METRIC_LINES=$(podman run --rm -v "$(pwd)/data:/outside:Z" "$IMAGE" \
       python3 /outside/evaluation-scripts/compare_transcripts.py \
-      "/outside/ground-truth/${FILENAME}.txt" "/outside/metrics/${OUTPUT_NAME}")
+      "/outside/ground-truth/${FILENAME}.txt" "/outside/$(realpath --relative-to=./data "$OUTPUT_DIR")/${OUTPUT_NAME}")
     while IFS='=' read -r key val; do
       case $key in
         WER) WER="$val" ;; MER) MER="$val" ;; WIL) WIL="$val" ;;

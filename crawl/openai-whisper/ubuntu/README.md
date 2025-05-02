@@ -1,7 +1,7 @@
 
 # Whisper on Ubuntu
 
-## 📌 Overview
+## Overview
 
 This guide walks you through benchmarking OpenAI Whisper models in containerized environments (Ubuntu-based), including:
 
@@ -12,7 +12,7 @@ This guide walks you through benchmarking OpenAI Whisper models in containerized
 - Accuracy measurement  
 - Automation via batch testing
 
-## 🎯 Objectives
+## Objectives
 
 - Run Whisper STT inside containers with different configurations  
 - Compare transcription performance and latency across models and hardware  
@@ -21,7 +21,7 @@ This guide walks you through benchmarking OpenAI Whisper models in containerized
 - Scale benchmarking with automated batch scripts  
 - Prepare for production by testing real-world workloads
 
-## 🧠 Questions to Explore
+## Questions to Explore
 
 | **Before the Benchmark**                          | **After the Benchmark (Expected Insight)**                                                  |
 |---------------------------------------------------|---------------------------------------------------------------------------------------------|
@@ -37,7 +37,7 @@ This guide walks you through benchmarking OpenAI Whisper models in containerized
 | Run jobs sequentially or in parallel?             | Parallel is faster but must respect core/GPU capacity                                      |
 | Are containers reusable across tests?             | Yes—especially valuable for warm starts and reproducible results                           |
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Step 1: Clone the Project
 
@@ -46,7 +46,7 @@ git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernet
 cd whitepaper-stt-evaluation-on-kubernetes
 ```
 
-## 📦 Review Whisper Requirements
+## Review Whisper Requirements
 
 See [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#setup) for prerequisites:  
 - Python  
@@ -61,7 +61,7 @@ See [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#setup)
 | user     | Time spent in user-mode (actual CPU execution)                         |
 | sys      | Time spent in kernel-mode (e.g., system calls, I/O wait)               |
 
-📖 [Reference](https://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1)
+[Reference](https://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1)
 
 ## 🐳 Docker Image Setup
 
@@ -69,24 +69,31 @@ See [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#setup)
 
 ```bash
 # Login to Quay.io
-# podman login quay.io
+podman login quay.io
+```
 
-export FLAVOR=ubuntu # or ubi9 or ubi9-minimal
+Screen hints:
+- To detach, press: `Ctrl + A, then D`
+- To list sessions: `screen -ls`
+- To reattach: `screen -r pull-whisper`
 
+```sh
+export FLAVOR=ubuntu # or ubi
+
+screen -S pull-whisper bash -c '
 time {
   set -e
   start_time=$(date +%s)
-  for tag in tiny.en-$FLAVOR base.en-$FLAVOR small.en-$FLAVOR medium.en-$FLAVOR large-$FLAVOR turbo-$FLAVOR; do
-    echo "📦 Pulling quay.io/redhat_na_ssa/speech-to-text/whisper:$tag"
+  for tag in tiny.en-'$FLAVOR' base.en-'$FLAVOR' small.en-'$FLAVOR' medium.en-'$FLAVOR' large-'$FLAVOR' turbo-'$FLAVOR'; do
+    echo "Pulling quay.io/redhat_na_ssa/speech-to-text/whisper:$tag"
     podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag || echo "❌ Failed to pull $tag"
   done
   end_time=$(date +%s)
   duration=$((end_time - start_time))
-  echo "⏱️ Total download time: $duration seconds"
-}
+  echo "Total download time: $duration seconds"
+}'
 
-
-#⏱️ Total download time: 1038 seconds
+# Total download time: 1038 seconds
 
 #real    17m18.519s
 #user    10m17.688s
@@ -97,7 +104,7 @@ time {
 
 ```bash
 # Set your flavor
-export FLAVOR=ubuntu  # (or ubi9 or ubi9-minimal)
+export FLAVOR=ubuntu  # (or ubi)
 
 # Start a screen session for building
 set -e
@@ -111,22 +118,26 @@ done
 
 end_time=$(date +%s)
 duration=$((end_time - start_time))
-echo "⏱️ Total build time: $(($duration / 60)) min $(($duration % 60)) sec"
+echo "Total build time: $(($duration / 60)) min $(($duration % 60)) sec"
 ```
 
 📌 Models are embedded in `/data/.cache/whisper/` inside each image.
 
-### 🔍 Capture Image Sizes
+### Capture Image Sizes
 
 ```bash
-# image sizes
-mkdir -p data/metrics && \
-echo "repository,tag,size" | tee data/metrics/image_sizes.csv && \
-podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep 'speech-to-text/whisper' | tee -a data/metrics/image_sizes.csv
+# Set your variables
+export INSTANCE=g4dn-12xlarge  # (or g5-12xlarge, g6.12xlarge, etc)
+export FLAVOR=ubuntu  # (or ubi)
+
+# Create folders and write image size data
+mkdir -p data/metrics/$INSTANCE/$FLAVOR && \
+echo "repository,tag,size" | tee data/metrics/$INSTANCE/$FLAVOR/image_sizes.csv && \
+podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep 'speech-to-text/whisper' | tee -a data/metrics/$INSTANCE/$FLAVOR/image_sizes.csv
 ```
 
 ```csv
-# expected output
+# expected output in data/metrics/$INSTANCE/$FLAVOR
 #repository,tag,size
 #quay.io/redhat_na_ssa/speech-to-text/whisper,turbo-ubuntu,8.25 GB
 #quay.io/redhat_na_ssa/speech-to-text/whisper,large-ubuntu,9.72 GB
@@ -136,7 +147,7 @@ podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep 'speech-to-te
 #quay.io/redhat_na_ssa/speech-to-text/whisper,tiny.en-ubuntu,6.71 GB
 ```
 
-## 🧪 Run Benchmark Tests
+## Run Benchmark Tests
 
 ### Review Dataset
 
@@ -160,9 +171,27 @@ time whisper /outside/input-samples/harvard.wav \
   --model tiny.en
 
 # Re-run for warm start
+
+# sample time cold output
+# real    0m9.341s
+# user    0m29.231s
+# sys     0m1.036s
+
+# sample time warm output
+# real    0m3.492s
+# user    0m27.399s
+# sys     0m0.489s
+```
+
+```bash
+exit
 ```
 
 ### Test 2: Add Basic Inference Flags
+
+```bash
+podman run --rm -it -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
+```
 
 - -- /outside/input-samples/harvard.wav Path to the input audio file
 - --`model tiny.en` Use the English-only Tiny model
@@ -198,6 +227,10 @@ time whisper /outside/input-samples/harvard.wav \
 # sys     0m1.947s
 ```
 
+```bash
+exit
+```
+
 | **First Run (Cold Start)**                                                                                          | **Second Run (Warm Start)**                                                                                      |
 |---------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
 | **Model download** Whisper downloads the model weights (e.g., 72.1M) into `/tmp/`.                                  | **No download** Model is already cached in `/tmp/`.                                                              |
@@ -211,6 +244,10 @@ You can see this even more dramatically if you use larger models (like medium.en
 
 ### Test 3: Add Hyperparameters
 
+```bash
+podman run --rm -it -v $(pwd)/data/:/outside/:z whisper:tiny.en-ubuntu /bin/bash
+```
+
 | **Argument**                     | **Plain English Meaning**                                                                 | **Impact on Performance**                                             |
 |----------------------------------|--------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
 | `--beam_size 10`                | Try 10 different guesses before picking the best word (beam search).                       | Slower transcription, but can slightly improve quality.              |
@@ -220,7 +257,6 @@ You can see this even more dramatically if you use larger models (like medium.en
 | `--compression_ratio_threshold 2.0` | Detect repetitive artifacts (like "uh uh uh") and remove them.                         | Minimal cost; useful for cleaning noisy audio.                       |
 | `--logprob_threshold -0.5`     | Discard low-confidence segments below -0.5 log probability.                                | Small compute overhead; improves quality by filtering bad output.    |
 | `--no_speech_threshold 0.4`    | Skip over segments where the model detects no speech.                                      | Can slightly reduce transcription time.                              |
-
 
 ```bash
 time whisper /outside/input-samples/harvard.wav \
@@ -241,10 +277,12 @@ time whisper /outside/input-samples/harvard.wav \
 
 # Rerun the same command (warm start)
 
-# real    0m6.022s
-# user    0m44.440s
-# sys     0m0.730s
+# sample time cold output
+# real    0m4.966s
+# user    0m37.362s
+# sys     0m0.710s
 
+# sample time warm output
 # real    0m3.674s
 # user    0m44.729s
 # sys     0m0.581s
@@ -284,6 +322,17 @@ print(f"WIL: {wil_val:.2%}")
 print(f"WIP: {1 - wil_val:.2%}")
 print(f"CER: {cer(ref, hyp):.2%}")
 '
+
+# sample accuracy output
+# WER: 0.00%
+# MER: 0.00%
+# WIL: 0.00%
+# WIP: 100.00%
+# CER: 0.00%
+```
+
+```bash
+exit
 ```
 
 ## ⚙️ Optional GPU Run
@@ -301,16 +350,19 @@ The output writes the data to data/metrics/aiml_functional_metrics.csv for easie
 ### Terminal 1: Run Experiments
 
 ```bash
+export INSTANCE=g4dn-12xlarge  # (or g5-12xlarge, g6.12xlarge, etc)
+export FLAVOR=ubuntu  # (or ubi)
+
 screen -S jobs ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
-  --flavor="ubuntu" \
-  --instance="g5.12xlarge" \
+  --flavor=$FLAVOR \
+  --instance=$INSTANCE \
   --model="tiny.en,small.en"
 ```
 
 ### Terminal 2: Monitor Output
 
 ```bash
-tail -f data/metrics/aiml_functional_metrics.csv
+tail -f data/metrics/$INSTANCE/$FLAVOR/aiml_functional_metrics.csv
 ```
 
 ```bash
@@ -324,5 +376,5 @@ ps -T -p $(pgrep -d"," -f whisper) -o pid,tid,pcpu,pmem,comm | sort -k3 -nr | he
 
 ## ⏮ Navigation
 
-| ← [Provision VM w/ GPU](../../RHEL_GPU.md) | [UBI9 Minimal with Whisper →](../ubi/minimal/README.md) |
+| ← [Provision VM w/ GPU](../../RHEL_GPU.md) | [UBI9 Minimal with Whisper →](../ubi/README.md) |
 |--------------------------------------------|----------------------------------------------------------|

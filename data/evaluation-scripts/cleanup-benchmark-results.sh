@@ -16,7 +16,7 @@ set -e
 echo "🧹 Cleaning up benchmark results..."
 
 # Remove metrics CSVs and transcripts
-rm -f data/metrics/*.{csv,txt}
+rm -f data/metrics/$INSTANCE/$FLAVOR/*.{csv,txt}
 
 # Delete unused Podman images
 #podman image prune -a

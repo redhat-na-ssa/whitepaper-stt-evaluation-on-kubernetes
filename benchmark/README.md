@@ -20,7 +20,7 @@ Complete the steps from [README](./README.md)
 ```sh
 podman login quay.io
 
-export FLAVOR=ubuntu # or ubi9 or ubi9-minimal
+export FLAVOR=ubuntu # o9 ubi9-minimal
 
 screen -S download-images bash -c '
   set -e

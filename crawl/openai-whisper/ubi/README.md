@@ -152,6 +152,15 @@ Monitor output in `data/metrics/aiml_functional_metrics.csv`.
 
 ---
 
+## What are the gains
+
+We are moving up a rung on the ladder on security, supportability and efficiency:
+
+- Whisper runtime is running embedded in the container image. UBI is supported although Whisper is not.
+- We have moved from a less secure image with N CVEs to a more secure image with N CVEs.
+- We have moved from an unsupported base image.
+- We have moved from an image that takes up more storage than less storage.
+
 ## ⏮ Navigation
 
 | ← [Back: Ubuntu Setup](../../ubuntu/README.md) | [Next: UBI9 Minimal Whisper Inference →](../ubi/minimal/README.md) |
