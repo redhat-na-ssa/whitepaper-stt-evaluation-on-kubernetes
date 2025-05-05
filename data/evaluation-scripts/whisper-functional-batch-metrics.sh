@@ -38,7 +38,7 @@ if [[ ! -f "$METRIC_FILE" ]]; then
 fi
 
 # ======================= Ensure Metrics Directory is Writable ==================
-mkdir -p ./data/metrics
+# DELETE mkdir -p ./data/metrics
 if ! touch $OUTPUT_DIR/.write_test 2>/dev/null; then
   echo "⚠️ Attempting to fix permissions for ./data/metrics..."
   sudo chown -R $(id -u):$(id -g) ./data/metrics 2>/dev/null || sudo chmod -R a+rw ./data/metrics 2>/dev/null
@@ -112,7 +112,8 @@ run_job() {
   local FILENAME="${SAMPLE_FILE%.*}"
   local IMAGE_TAG=$(basename "$IMAGE" | sed 's/whisper://; s/:/-/g; s/\./_/g')
   local OUTPUT_PREFIX="whisper-${IMAGE_TAG}_${FILENAME}_${MODE}_${START_TYPE}"
-  local CONTAINER_NAME="$OUTPUT_PREFIX"
+  local UNIQUE_ID=$(uuidgen | cut -d'-' -f1)
+  local CONTAINER_NAME="${OUTPUT_PREFIX}_${UNIQUE_ID}"
 
   THREADS_FLAG="--threads $CPU_THREADS"
   FP16_FLAG="--fp16 False"
@@ -128,7 +129,7 @@ run_job() {
     GPU_INDEX=$(((GPU_INDEX + 1) % GPU_COUNT))
   fi
 
-  AUDIO_DURATION_RAW=$(podman run --rm --pull=never -v "$(pwd)/data:/outside:Z" "$IMAGE" \
+  AUDIO_DURATION_RAW=$(podman run --rm --pull=never -v "$(pwd)/data:/outside:z" "$IMAGE" \
     ffprobe -v error -show_entries format=duration -of csv=p=0 "/outside/input-samples/$SAMPLE_FILE" 2>/dev/null)
 
   if [[ "$AUDIO_DURATION_RAW" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
@@ -156,7 +157,7 @@ run_job() {
     --user "$(id -u):$(id -g)" \
     $ENV_FLAGS \
     $GPU_FLAGS \
-    -v "$(pwd)/data:/outside:Z" \
+    -v "$(pwd)/data:/outside:z" \
     "$IMAGE" \
     bash -c "$CMD"
   END_TIME=$(date +%s.%N)
@@ -179,7 +180,7 @@ run_job() {
 
   WER="NA"; MER="NA"; WIL="NA"; WIP="NA"; CER="NA"
   if [[ -f "$OUTPUT_DIR/$OUTPUT_NAME" && -f "./data/ground-truth/${FILENAME}.txt" ]]; then
-    METRIC_LINES=$(podman run --rm -v "$(pwd)/data:/outside:Z" "$IMAGE" \
+    METRIC_LINES=$(podman run --rm -v "$(pwd)/data:/outside:z" "$IMAGE" \
       python3 /outside/evaluation-scripts/compare_transcripts.py \
       "/outside/ground-truth/${FILENAME}.txt" "/outside/$(realpath --relative-to=./data "$OUTPUT_DIR")/${OUTPUT_NAME}")
     while IFS='=' read -r key val; do

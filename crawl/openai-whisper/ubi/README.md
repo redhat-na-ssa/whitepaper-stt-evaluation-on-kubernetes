@@ -83,19 +83,37 @@ cat crawl/openai-whisper/ubi/minimal/Dockerfile
 
 ## 🏗️ Option A – Pull Prebuilt Images
 
-```sh
+```bash
 # Login to Quay.io
-# podman login quay.io
+podman login quay.io
+```
 
-export FLAVOR=ubi9-minimal
+```bash
+# clear up disk space from the ubuntu images
+podman rmi 
+```
 
-screen -S download-images bash -c '
+```bash
+export FLAVOR=ubuntu # or ubi9-minimal
+
+screen -S pull-whisper bash -c '
+time {
   set -e
+  start_time=$(date +%s)
   for tag in tiny.en-'$FLAVOR' base.en-'$FLAVOR' small.en-'$FLAVOR' medium.en-'$FLAVOR' large-'$FLAVOR' turbo-'$FLAVOR'; do
-    echo "📦 Pulling quay.io/redhat_na_ssa/speech-to-text/whisper:$tag"
+    echo "Pulling quay.io/redhat_na_ssa/speech-to-text/whisper:$tag"
     podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag || echo "❌ Failed to pull $tag"
   done
-'
+  end_time=$(date +%s)
+  duration=$((end_time - start_time))
+  echo "Total download time: $duration seconds"
+}'
+
+# Total download time: 1038 seconds
+
+#real    17m18.519s
+#user    10m17.688s
+#sys     7m45.052s
 ```
 
 ---
@@ -103,11 +121,22 @@ screen -S download-images bash -c '
 ## 🛠️ Option B – Build Locally with Embedded Models
 
 ```sh
+# Set your flavor
+export FLAVOR=ubi9-minimal  # (or ubi9-minimal)
+
+# Start a screen session for building
+set -e
+start_time=$(date +%s)
+
 for model in tiny.en base.en small.en medium.en large turbo; do
-  tag="whisper:${model}-ubi9-minimal"
+  tag="whisper:${model}-$FLAVOR"
   echo "🔧 Building image: $tag"
-  podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/ubi/minimal/.
+  podman build --build-arg MODEL_SIZE=$model -t $tag crawl/openai-whisper/$FLAVOR/. || echo "❌ Failed to build $tag"
 done
+
+end_time=$(date +%s)
+duration=$((end_time - start_time))
+echo "Total build time: $(($duration / 60)) min $(($duration % 60)) sec"
 ```
 
 Models will be stored at `/data/.cache/whisper/` inside each image.
@@ -117,9 +146,19 @@ Models will be stored at `/data/.cache/whisper/` inside each image.
 ## 📏 Capture Image Sizes
 
 ```sh
-mkdir -p data/metrics
-echo "repository,tag,size" > data/metrics/image_sizes.csv
-podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep 'speech-to-text/whisper' >> data/metrics/image_sizes.csv
+# Set your variables
+export INSTANCE=g4dn-12xlarge # (or g5-12xlarge, g6.12xlarge, etc)
+export FLAVOR=ubi9-minimal  # (or ubuntu)
+
+# Create folders and write image size data
+mkdir -p data/metrics/$INSTANCE/$FLAVOR && \
+echo "repository,tag,size" | tee data/metrics/$INSTANCE/$FLAVOR/image_sizes.csv && \
+podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep 'speech-to-text/whisper' | tee -a data/metrics/$INSTANCE/$FLAVOR/image_sizes.csv
+```
+
+```csv
+# expected output in data/metrics/$INSTANCE/$FLAVOR
+#repository,tag,size
 ```
 
 **Sample Output:**
@@ -136,19 +175,39 @@ quay.io/redhat_na_ssa/speech-to-text/whisper,tiny.en-ubi9-minimal,6.65 GB
 
 ---
 
-## 🧪 Batch Test Across Configs
+### Terminal 1: Run Experiments & Gather Metrics
 
-Batch jobs can run CPU/GPU experiments in parallel and log results automatically to CSV.
+This script writes metrics to data/metrics/$INSTANCE/$FLAVOR including:
+date,timestamp,container_name,token_count,**tokens_per_second**,audio_duration,**real_time_factor**,container_runtime_sec,wer,mer,wil,wip,cer,threads,start_type
 
 ```sh
 # Example setup
-FLAVOR=ubi9-minimal
-INSTANCE=g6.12xlarge
+export INSTANCE=g4dn-12xlarge  # (or g5-12xlarge, g6.12xlarge, etc)
+export FLAVOR=ubuntu  # (or ubi)
 
-screen -S jobs ./data/evaluation-scripts/whisper-functional-batch-metrics.sh   --flavor="$FLAVOR"   --instance="$INSTANCE"
+screen -S jobs bash -c "time ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
+  --flavor=$FLAVOR \
+  --instance=$INSTANCE \
+  --model='tiny.en,large'"
 ```
 
-Monitor output in `data/metrics/aiml_functional_metrics.csv`.
+### Terminal 2: Monitor Output
+
+```bash
+export INSTANCE=g4dn-12xlarge  # (or g5-12xlarge, g6.12xlarge, etc)
+export FLAVOR=ubuntu  # (or ubi9-minimal)
+
+tail -f data/metrics/$INSTANCE/$FLAVOR/aiml_functional_metrics.csv
+```
+
+```bash
+watch -n 2 -t '
+echo "== NVIDIA GPU Usage =="
+nvidia-smi
+echo "\n== Top Whisper Threads by CPU Usage =="
+ps -T -p $(pgrep -d"," -f whisper) -o pid,tid,pcpu,pmem,comm | sort -k3 -nr | head -20
+'
+```
 
 ---
 

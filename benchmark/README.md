@@ -17,16 +17,18 @@ Complete the steps from [README](./README.md)
 
 ## Pull Whisper Images
 
-```sh
+```bash
 podman login quay.io
+```
 
-export FLAVOR=ubuntu # o9 ubi9-minimal
+```bash
+export FLAVOR=ubuntu # or ubi9-minimal
 
 screen -S download-images bash -c '
   set -e
   for tag in tiny.en-'$FLAVOR' base.en-'$FLAVOR' small.en-'$FLAVOR' medium.en-'$FLAVOR' large-'$FLAVOR' turbo-'$FLAVOR'; do
-    echo "📦 Pulling quay.io/redhat_na_ssa/speech-to-text/whisper:$tag"
-    podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag || echo "❌ Failed to pull $tag"
+    echo "Pulling quay.io/redhat_na_ssa/speech-to-text/whisper:$tag"
+    podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag || echo "Failed to pull $tag"
   done
 '
 ```
@@ -38,8 +40,12 @@ screen -S download-images bash -c '
 ### Terminal 1: Start System Monitoring
 
 ```sh
-# start the container monitoring
-nohup python3 data/evaluation-scripts/system_non_functional_monitoring.py > data/metrics/monitoring.log 2>&1 &
+cd whitepaper-stt-evaluation-on-kubernetes
+
+export INSTANCE=g4dn-12xlarge
+export FLAVOR=ubuntu
+
+nohup python3 data/evaluation-scripts/system_non_functional_monitoring.py > data/metrics/$INSTANCE/$FLAVOR/monitoring.log 2>&1 &
 ```
 
 ### Terminal 2: Run Benchmark Experiments
@@ -59,17 +65,29 @@ Run the appropriate benchmark based on your instance type:
 💡 --max-cpu-jobs limits parallel jobs on the host.
 
 ```sh
-# Individual test
-THREADS=4  # or however many CPU threads you want to assign
+export INSTANCE=g4dn-12xlarge
+export FLAVOR=ubuntu
+export THREADS=3
+export JOBS=12
 
+screen -S jobs bash -c "time ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
+  --flavor=$FLAVOR \
+  --instance=$INSTANCE \
+  --cpu-threads=$THREADS \
+  --max-cpu-jobs=$JOBS \
+  --model='tiny.en,base.en,small.en,medium.en,large,turbo'"
+```
+
+```bash
+# Individual test
 podman run --rm \
   --userns=keep-id \
-  --user "$(id -u):$(id -g)" \
+  --user \"$(id -u):$(id -g)\" \
   -e OPENBLAS_NUM_THREADS=$THREADS \
   -e OMP_NUM_THREADS=$THREADS \
   -e MKL_NUM_THREADS=$THREADS \
-  -v "$(pwd)/data:/outside:z" \
-  quay.io/redhat_na_ssa/speech-to-text/whisper:tiny.en-ubi9-minimal \
+  -v \"$(pwd)/data:/outside:z\" \
+  quay.io/redhat_na_ssa/speech-to-text/whisper:tiny.en-$FLAVOR \
   whisper /outside/input-samples/jfk-audio-inaugural-address-20-january-1961.mp3 \
     --model_dir /outside/tmp \
     --output_dir /outside/metrics/ \
@@ -78,35 +96,13 @@ podman run --rm \
     --task transcribe \
     --threads $THREADS \
     --fp16 False
-
-
-# Set your parameters
-IMAGE_FLAVOR=ubi9-minimal           # Container image flavor (e.g., ubuntu, ubi9)
-INSTANCE=g6.12xlarge                # Name of the machine or VM for labeling
-THREADS=4                           # Number of CPU threads per container job
-MAX_JOBS=12                         # Maximum number of concurrent jobs
-MODEL=turbo                         # Comma-separated list of models to include
-INPUT_SAMPLE=jfk-audio-inaugural-address-20-january-1961.mp3  # Audio sample filename (with extension)
-
-
-# Launch the bulk benchmark using screen
-screen -S whisper-benchmark ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
-  --flavor="$IMAGE_FLAVOR" \
-  --instance="$INSTANCE" \
-  --cpu-threads="$THREADS" \
-  --max-cpu-jobs="$MAX_JOBS" \
-  --model="$MODEL" \
-  --input-sample="$INPUT_SAMPLE"
-
-  # Optional flag if you only want to test a model size or sizes comma separated no spaces
-  # --model=tiny.en
 ```
 
-Detach with `Ctrl+A D`, reattach with `screen -r whisper-benchmark`.
+Detach with `Ctrl+A D`, reattach with `screen -r jobs`.
 
 ### Terminal 3: GPU and CPU Monitoring
 
-```sh
+```bash
 watch -n 2 -t '
   echo "== NVIDIA GPU Usage =="
   nvidia-smi
@@ -115,20 +111,17 @@ watch -n 2 -t '
 '
 ```
 
-Monitor file output progress:
-
-```sh
-ls -lhtr /outside/metrics/whisper-*.txt
-```
-
 Monitor CSV updates:
 
 ```sh
+export INSTANCE=g4dn-12xlarge
+export FLAVOR=ubuntu
+
 # watch the experiment logs
-tail -f /data/metrics/aiml_functional_metrics.csv
+tail -f data/metrics/$INSTANCE/$FLAVOR/aiml_functional_metrics.csv
 
 # watch the container logs
-tail -f data/metrics/system_non_functional_metrics.csv
+tail -f data/metrics/$INSTANCE/$FLAVOR/system_non_functional_metrics.csv
 ```
 
 ---
@@ -145,11 +138,7 @@ podman ps -a -q | xargs podman rm -f
 
 ```sh
 # Press Ctrl+C to stop GPU/CPU monitoring
-```
 
-### Terminal 2
-
-```sh
 # Press Ctrl+C, then clean up:
 ps aux | grep system_non_functional_monitoring.py
 kill <pid>
@@ -168,11 +157,14 @@ Use `sftp` to retrieve the following files, review, append and move the results 
 # sftp from your machine to the host
 sftp user@ec2-N-NNN-NNN-NNN.us-east-2.compute.amazonaws.com
 
+export INSTANCE=g4dn-12xlarge
+export FLAVOR=ubuntu
+
 # move to directory
-cd /home/ec2-user/whitepaper-stt-evaluation-on-kubernetes/data/metrics
+cd /home/ec2-user/whitepaper-stt-evaluation-on-kubernetes/data/metrics/$INSTANCE/$FLAVOR/
 
 # get CSV files
-get *.csv
+get *.{csv,txt}
 
 # one-liner to merge without duplicate headers or rows
 FILE="container"  # or "experiment"
