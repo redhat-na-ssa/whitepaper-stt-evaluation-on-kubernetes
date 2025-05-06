@@ -87,7 +87,7 @@ sudo reboot
 
 ```sh
 sudo dnf upgrade -y
-sudo dnf install -y skopeo podman buildah gcc
+sudo dnf install -y skopeo podman buildah gcc git screen sysstat
 
 # NVIDIA container toolkit
 curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
