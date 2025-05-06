@@ -81,6 +81,30 @@ sudo dkms install nvidia/570.133.20
 sudo reboot
 ```
 
+```bash
+# ERROR fixing the drivers
+$ sudo dkms status
+sudo dkms install nvidia/570.133.20
+sudo reboot
+
+Error! Could not find module source directory.
+Directory: /usr/src/nvidia-570.133.20 does not exist.
+
+# NVIDIA listing
+$ ls /usr/src/
+debug  kernels  nvidia-575.51.03
+
+# To successfully install 570.133.20, you must first populate the missing /usr/src/nvidia-570.133.20/ directory.
+curl -O https://us.download.nvidia.com/tesla/570.133.20/NVIDIA-Linux-x86_64-570.133.20.run
+
+# make executable
+chmod +x NVIDIA-Linux-x86_64-570.133.20.run
+
+# run the executable
+sudo ./NVIDIA-Linux-x86_64-570.133.20.run --dkms  
+
+```
+
 ---
 
 ## Set Up `podman`

@@ -48,11 +48,12 @@ cd whitepaper-stt-evaluation-on-kubernetes
 ## Review Whisper Requirements
 
 See [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#setup) for prerequisites:  
-- Python  
-- `ffmpeg`  
-- `openai-whisper`  
+1. Python
+1. `ffmpeg`
+1. `openai-whisper`
+1. etc.
 
-## ⏱ Understanding `time`
+## Understanding `time`
 
 | Output   | Meaning                                                                 |
 |----------|-------------------------------------------------------------------------|
@@ -62,7 +63,7 @@ See [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#setup)
 
 [Reference](https://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1)
 
-## 🐳 Docker Image Setup
+## Docker Image Setup
 
 ### Option A: Pull Prebuilt Images from Quay.io
 
@@ -121,7 +122,7 @@ duration=$((end_time - start_time))
 echo "Total build time: $(($duration / 60)) min $(($duration % 60)) sec"
 ```
 
-📌 Models are embedded in `/data/.cache/whisper/` inside each image.
+Models are embedded in `/data/.cache/whisper/` inside each image.
 
 ### Capture Image Sizes
 
@@ -327,6 +328,16 @@ Discussion:
 | **sys:** `~3.8s`                                                                                                         | **sys:** `~0.5s` (first run includes extra I/O for saving outputs and model setup).                                 |
 | **Conclusion:** Cold start includes model + thread setup and output I/O overhead; beam search adds significant CPU load. | **Conclusion:** Warm start avoids setup cost (faster wall time), but beam search keeps CPU usage high in both runs. |
 
+### Observations:
+
+On CPU with against 43 characters of clear speech:
+
+- Warm start gives marginal gains on CPU - Skip optimizations for warm-start unless batching many tasks.
+- Hyperparameters add 30–50% overhead - Use only if accuracy gain is worth the extra latency/CPU load.
+- Lots of CPU parallelism seen - Tune thread usage if you batch jobs or run on shared hardware.
+- Baseline performance is consistent - Your current baseline (no args or basic) looks efficient and stable.
+
+
 ## 🧠 Accuracy Metrics with JiWER
 
 WER (Word Error Rate): How many words were wrong in the transcription.
@@ -334,7 +345,6 @@ MER (Match Error Rate): How many changes were needed to fix the transcription.
 WIL (Word Information Lost): How much word meaning was missed.
 WIP (Word Information Preserved): How much word meaning was kept.
 CER (Character Error Rate): How many letters were wrong.
-
 
 ```bash
 python3 -c '
