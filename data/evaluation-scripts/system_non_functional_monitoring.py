@@ -19,8 +19,16 @@ import subprocess
 from datetime import datetime
 
 # ======================= Ensure Metrics Directory is Writable ==================
-os.makedirs("data/metrics", exist_ok=True)
-csv_file_path = "data/metrics/system_non_functional_metrics.csv"
+#os.makedirs("data/metrics", exist_ok=True)
+#csv_file_path = "data/metrics/system_non_functional_metrics.csv"
+
+instance = os.getenv("INSTANCE", "unknown_instance")
+flavor = os.getenv("FLAVOR", "unknown_flavor")
+
+csv_file_path = f"data/metrics/{instance}/{flavor}"
+os.makedirs(csv_file_path, exist_ok=True)
+
+output_file = os.path.join(csv_file_path, "system_non_functional_metrics.csv")
 
 # ============================= Define CSV Headers ==============================
 # Define CSV headers to organize metrics
@@ -208,3 +216,4 @@ def capture_metrics(container_name):
 # ================================ Entrypoint ===================================
 if __name__ == "__main__":
     monitor_containers()
+

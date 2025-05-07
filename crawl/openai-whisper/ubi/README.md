@@ -222,5 +222,5 @@ We are moving up a rung on the ladder on security, supportability and efficiency
 
 ## ⏮ Navigation
 
-| ← [Back: Ubuntu Setup](../../ubuntu/README.md) | [Next: UBI9 Minimal Whisper Inference →](../ubi/minimal/README.md) |
+| ← [Back: Ubuntu Setup](../../ubuntu/README.md) | [Next: UBI9 Minimal Whisper Inference →](../../../walk/README.md) |
 |-----------------------------------------------|--------------------------------------------------------------------|

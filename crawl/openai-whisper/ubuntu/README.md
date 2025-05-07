@@ -371,14 +371,48 @@ print(f"CER: {cer(ref, hyp):.2%}")
 exit
 ```
 
-## ⚙️ Optional GPU Run
+## Running the same experiments on GPUS
+
+Simply add the `--security` and `--device` flags to place your container on GPUs.
 
 ```bash
-podman run --rm -it   \
+# Example running the cold hyperparameter experiment on GPU
+podman run --rm -it \
   --security-opt=label=disable \
   --device nvidia.com/gpu=all \
   -v $(pwd)/data/:/outside/:z \
-  whisper:tiny.en-ubuntu /bin/bash
+  whisper:tiny.en-ubuntu /bin/bash -c "
+    time whisper /outside/input-samples/harvard.wav \
+      --model tiny.en \
+      --model_dir /tmp/ \
+      --output_dir metrics/ \
+      --output_format txt \
+      --language en \
+      --task transcribe \
+      --fp16 False \
+      --beam_size 10 \
+      --temperature 0 \
+      --patience 2 \
+      --suppress_tokens -1 \
+      --compression_ratio_threshold 2.0 \
+      --logprob_threshold -0.5 \
+      --no_speech_threshold 0.4
+  "
+```
+
+```sh
+# Example output
+100%|█████████████████████████████████████| 72.1M/72.1M [00:02<00:00, 29.2MiB/s]
+[00:00.000 --> 00:04.000]  The stale smell of old beer lingers.
+[00:04.000 --> 00:07.000]  It takes heat to bring out the odor.
+[00:07.000 --> 00:10.000]  A cold dip restores health and zest.
+[00:10.000 --> 00:13.000]  A salt pickle tastes fine with ham.
+[00:13.000 --> 00:15.000]  Tacos al pastor are my favorite.
+[00:15.000 --> 00:18.000]  A zestful food is the hot cross bun.
+
+real    0m15.241s
+user    0m10.981s
+sys     0m2.170s
 ```
 
 ## 🧵 Run Batch Experiments (Parallel CPU/GPU)
@@ -426,9 +460,9 @@ ps -T -p $(pgrep -d"," -f whisper) -o pid,tid,pcpu,pmem,comm | sort -k3 -nr | he
 '
 ```
 
-### After about ~3 hours 24 minutes
+### 48 Experiments for 2 models on 3 audio files ETC ~3 hours 24 minutes
 
-48 experiments
+Some decisions the data assists with:
 
 #### Speed
 

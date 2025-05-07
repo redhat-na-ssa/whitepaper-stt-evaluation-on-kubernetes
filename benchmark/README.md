@@ -40,7 +40,7 @@ screen -S download-images bash -c '
 ### Terminal 1: Start System Monitoring
 
 ```sh
-cd whitepaper-stt-evaluation-on-kubernetes
+cd whitepaper-stt-evaluation-on-kubernetes &&
 
 export INSTANCE=g4dn-12xlarge
 export FLAVOR=ubuntu
