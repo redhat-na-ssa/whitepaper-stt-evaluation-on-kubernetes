@@ -1,13 +1,13 @@
 
 # Whisper on UBI9-Minimal
 
-## 📌 Overview
+## Overview
 
 This guide walks you through benchmarking Whisper models using UBI9-minimal containers. It focuses on security, size, and performance trade-offs compared to Ubuntu-based containers.
 
 ---
 
-## 🎯 Learning Objectives
+## Learning Objectives
 
 - Understand what UBI (Universal Base Image) is and why it matters in production.
 - Compare Ubuntu vs. UBI9-minimal for AI workloads (security, support, compliance).
@@ -20,7 +20,7 @@ This guide walks you through benchmarking Whisper models using UBI9-minimal cont
 
 ---
 
-## ℹ️ What is [UBI9-Minimal](https://catalog.redhat.com/software/base-images/ubi9-minimal)?
+## What is [UBI9-Minimal](https://catalog.redhat.com/software/base-images/ubi9-minimal)?
 
 | Feature                         | Description                                                                                     |
 |----------------------------------|-------------------------------------------------------------------------------------------------|
@@ -35,7 +35,7 @@ This guide walks you through benchmarking Whisper models using UBI9-minimal cont
 
 ---
 
-## ❓ Questions to Explore
+## Questions to Explore
 
 | **Question Before the Exercise**                         | **Expected Answer / Learning After Completion**                                               |
 |----------------------------------------------------------|------------------------------------------------------------------------------------------------|
@@ -60,7 +60,7 @@ This guide walks you through benchmarking Whisper models using UBI9-minimal cont
 
 ---
 
-## ✅ Prerequisites
+## Prerequisites
 
 Ensure you've completed the following:
 
@@ -71,7 +71,7 @@ Ensure you've completed the following:
 
 ---
 
-## 🐳 Review the UBI Dockerfile
+## Review the UBI Dockerfile
 
 Note: `ffmpeg` is built from source. Be aware of how security scanners handle custom binaries.
 
@@ -81,7 +81,7 @@ cat crawl/openai-whisper/ubi/minimal/Dockerfile
 
 ---
 
-## 🏗️ Option A – Pull Prebuilt Images
+## Option A – Pull Prebuilt Images
 
 ```bash
 # Login to Quay.io
@@ -94,7 +94,7 @@ podman rmi
 ```
 
 ```bash
-export FLAVOR=ubuntu # or ubi9-minimal
+export FLAVOR=ubi9-minimal # or ubuntu
 
 screen -S pull-whisper bash -c '
 time {
@@ -118,7 +118,7 @@ time {
 
 ---
 
-## 🛠️ Option B – Build Locally with Embedded Models
+## Option B – Build Locally with Embedded Models
 
 ```sh
 # Set your flavor
@@ -143,7 +143,7 @@ Models will be stored at `/data/.cache/whisper/` inside each image.
 
 ---
 
-## 📏 Capture Image Sizes
+## Capture Image Sizes
 
 ```sh
 # Set your variables

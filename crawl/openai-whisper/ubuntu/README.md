@@ -426,6 +426,52 @@ ps -T -p $(pgrep -d"," -f whisper) -o pid,tid,pcpu,pmem,comm | sort -k3 -nr | he
 '
 ```
 
+### After about ~3 hours 24 minutes
+
+48 experiments
+
+#### Speed
+
+| Dataset                    | Model   | Fastest Container                                                  | Time (sec) |
+| -------------------------- | ------- | ------------------------------------------------------------------ | ---------- |
+| Harvard (short)            | tiny.en | whisper-tiny\_en-ubuntu\_harvard\_gpu\_hyperparam\_warm\_b9955387  | 15.87      |
+| Harvard (short)            | large   | whisper-large-ubuntu\_harvard\_gpu\_basic\_warm\_2a508c2e          | 15.83      |
+| JFK inaugural (930 sec)    | tiny.en | whisper-tiny\_en-ubuntu\_jfk-inaugural\_gpu\_basic\_cold\_f79d59ea | 57.81      |
+| JFK inaugural (930 sec)    | large   | whisper-large-ubuntu\_jfk-inaugural\_gpu\_basic\_cold\_f654ed17    | 57.78      |
+| JFK Rice speech (1107 sec) | tiny.en | whisper-tiny\_en-ubuntu\_jfk-rice\_gpu\_basic\_cold\_cff23931      | 84.08      |
+| JFK Rice speech (1107 sec) | large   | whisper-large-ubuntu\_jfk-rice\_gpu\_basic\_cold\_ed7d900c         | 84.08      |
+
+#### Accuracy
+
+Harvard dataset (43 tokens)
+All containers (tiny + large, CPU + GPU)
+
+- WER = 0.0000
+- MER = 0.0000
+- WIL = 0.0000
+- CER = 0.0000
+
+This dataset was perfectly transcribed by all containers → no further ranking needed.
+
+#### JFK inaugural address (1430+ tokens)
+
+| Rank | Container Name                                                                                  | WER        | MER    | WIL    | CER    |
+| ---- | ----------------------------------------------------------------------------------------------- | ---------- | ------ | ------ | ------ |
+| 1 | whisper-tiny\_en-ubuntu\_jfk-inaugural\_gpu\_\* OR whisper-large-ubuntu\_jfk-inaugural\_gpu\_\* | **0.2201** | 0.2072 | 0.3012 | 0.0831 |
+| 2 | whisper-tiny\_en-ubuntu\_jfk-inaugural\_cpu\_hyperparam\_warm                                   | 0.2585     | 0.2457 | 0.3619 | 0.0936 |
+| 3 | whisper-tiny\_en-ubuntu\_jfk-inaugural\_cpu\_hyperparam\_cold                                   | 0.2585     | 0.2457 | 0.3619 | 0.0860 |
+| 4    | whisper-large-ubuntu\_jfk-inaugural\_cpu\_hyperparam\_warm                                      | 0.2630     | 0.2489 | 0.3648 | 0.0954 |
+| 5    | whisper-large-ubuntu\_jfk-inaugural\_cpu\_hyperparam\_cold                                      | 0.2630     | 0.2489 | 0.3648 | 0.0924 |
+
+#### JFK Rice University speech (2200+ tokens)
+
+| Rank | Container Name                                                   | WER           | MER           | WIL           | CER           |
+| ---- | ---------------------------------------------------------------- | ------------- | ------------- | ------------- | ------------- |
+| 1 | whisper-large-ubuntu\_jfk-rice\_cpu\_basic\_cold (and warm)      | **0.1737**    | 0.1724        | 0.2643        | 0.0452        |
+| 2 | whisper-large-ubuntu\_jfk-rice\_gpu\_hyperparam\_cold (and warm) | 0.1935        | 0.1871        | 0.2861        | 0.0566        |
+| 3 | whisper-tiny\_en-ubuntu\_jfk-rice\_cpu\_basic\_cold (and warm)   | 0.1853–0.1751 | 0.1828–0.1720 | 0.2873–0.2694 | 0.0345–0.0389 |
+
+
 ## ⏮ Navigation
 
 | ← [Provision VM w/ GPU](../../RHEL_GPU.md) | [UBI9 Minimal with Whisper →](../ubi/README.md) |
