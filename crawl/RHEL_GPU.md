@@ -16,7 +16,64 @@ In your browser:
 
 ---
 
+## Export access key temporarily
+
+
+
+## (Optional) Set Up `aws` CLI
+
+TODO Export env. variables to temporary ___ env.
+
+**Skip this section if using AWS CloudShell.**
+
+> 💡 Prerequisite: Clone the GitHub repository.
+
+From the repo root (`whitepaper-stt-evaluation-on-kubernetes`):
+
+1. Run `aws configure` and enter your credentials.
+
+2. Use the **AWS Access Key ID** and **Secret Access Key** from your environment email.
+
+3. *(Optional)* Change `INSTANCE_TYPE=g6.xlarge` if desired.
+
+4. Run the provisioning script:
+
+   ```sh
+   ./crawl/provision_rhel_aws.sh
+   ```
+
+5. Wait for completion; it will print the `ssh` login command.
+
+Example:
+
+```sh
+AWS Access Key ID [****************G6M5]:
+AWS Secret Access Key [****************vzRg]:
+Default region name [us-east-2]:
+Default output format [text]:
+```
+
+---
+
+## 🔑 (Optional) Set Up SSH Key
+
+> *Note: `provision_rhel_aws.sh` auto-generates an ed25519 key if not found.*
+
+To use your own key:
+
+```sh
+# Example: add your pub key
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIXLGAxOZLWpV1WWRu4GnFWEHVmLiSeXsMoChi4rXvDl cory@kowdora" > /tmp/id.pub
+
+# Import into AWS
+aws ec2 import-key-pair --key-name "${AWS_KEY_NAME:-my-key}" --public-key-material fileb:///tmp/id.pub
+```
+
+---
+
 ## Provision EC2 RHEL GPU Instance
+
+TODO: Use the RHUI
 
 ```sh
 # Default: g6.12xlarge (L4 GPU)
@@ -77,33 +134,12 @@ sudo reboot
 
 ```sh
 sudo dkms status
-sudo dkms install nvidia/570.133.20
+sudo dkms install nvidia/575.51.03
+sudo dkms install $(sudo dkms status | awk -F: '/nvidia/{print $1}' | head)
 sudo reboot
 ```
 
-```bash
-# ERROR fixing the drivers
-$ sudo dkms status
-sudo dkms install nvidia/570.133.20
-sudo reboot
-
-Error! Could not find module source directory.
-Directory: /usr/src/nvidia-570.133.20 does not exist.
-
-# NVIDIA listing
-$ ls /usr/src/
-debug  kernels  nvidia-575.51.03
-
-# To successfully install 570.133.20, you must first populate the missing /usr/src/nvidia-570.133.20/ directory.
-curl -O https://us.download.nvidia.com/tesla/570.133.20/NVIDIA-Linux-x86_64-570.133.20.run
-
-# make executable
-chmod +x NVIDIA-Linux-x86_64-570.133.20.run
-
-# run the executable
-sudo ./NVIDIA-Linux-x86_64-570.133.20.run --dkms  
-
-```
+TODO systemd oneshot unit that runs a CDI every reboot so podman works `sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml`
 
 ---
 
