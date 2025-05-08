@@ -22,15 +22,20 @@ podman login quay.io
 ```
 
 ```bash
-export FLAVOR=ubuntu # or ubi9-minimal
+export FLAVOR=ubi9-minimal # or ubuntu
 
-screen -S download-images bash -c '
+screen -S pull-whisper bash -c '
+time {
   set -e
+  start_time=$(date +%s)
   for tag in tiny.en-'$FLAVOR' base.en-'$FLAVOR' small.en-'$FLAVOR' medium.en-'$FLAVOR' large-'$FLAVOR' turbo-'$FLAVOR'; do
     echo "Pulling quay.io/redhat_na_ssa/speech-to-text/whisper:$tag"
-    podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag || echo "Failed to pull $tag"
+    podman pull quay.io/redhat_na_ssa/speech-to-text/whisper:$tag || echo "❌ Failed to pull $tag"
   done
-'
+  end_time=$(date +%s)
+  duration=$((end_time - start_time))
+  echo "Total download time: $duration seconds"
+}'
 ```
 
 ---
@@ -43,7 +48,7 @@ screen -S download-images bash -c '
 cd whitepaper-stt-evaluation-on-kubernetes &&
 
 export INSTANCE=g4dn-12xlarge
-export FLAVOR=ubuntu
+export FLAVOR=ubi9-minimal
 
 nohup python3 data/evaluation-scripts/system_non_functional_monitoring.py > data/metrics/$INSTANCE/$FLAVOR/monitoring.log 2>&1 &
 ```
@@ -66,7 +71,7 @@ Run the appropriate benchmark based on your instance type:
 
 ```sh
 export INSTANCE=g4dn-12xlarge
-export FLAVOR=ubuntu
+export FLAVOR=ubi9-minimal
 export THREADS=3
 export JOBS=12
 
@@ -115,7 +120,7 @@ Monitor CSV updates:
 
 ```sh
 export INSTANCE=g4dn-12xlarge
-export FLAVOR=ubuntu
+export FLAVOR=ubi9-minimal
 
 # watch the experiment logs
 tail -f data/metrics/$INSTANCE/$FLAVOR/aiml_functional_metrics.csv
