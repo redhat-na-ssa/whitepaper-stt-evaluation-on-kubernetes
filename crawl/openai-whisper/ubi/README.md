@@ -84,11 +84,6 @@ cat crawl/openai-whisper/ubi/minimal/Dockerfile
 ## Option A – Pull Prebuilt Images
 
 ```bash
-# Login to Quay.io
-podman login quay.io
-```
-
-```bash
 # clear up disk space from the ubuntu images
 podman rmi 
 ```

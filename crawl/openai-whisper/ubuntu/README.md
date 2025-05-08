@@ -67,11 +67,6 @@ See [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#setup)
 
 ### Option A: Pull Prebuilt Images from Quay.io
 
-```bash
-# Login to Quay.io
-podman login quay.io
-```
-
 Screen hints for next command:
 
 - To detach, press: `Ctrl + A, then D`
