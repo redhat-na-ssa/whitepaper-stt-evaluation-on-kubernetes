@@ -18,8 +18,6 @@ In your browser:
 
 ## Export access key temporarily
 
-
-
 ## (Optional) Set Up `aws` CLI
 
 TODO Export env. variables to temporary ___ env.
@@ -133,9 +131,8 @@ sudo reboot
 **(Optional) Manually upgrade driver:**
 
 ```sh
-sudo dkms status
-sudo dkms install nvidia/575.51.03
-sudo dkms install $(sudo dkms status | awk -F: '/nvidia/{print $1}' | head)
+sudo dkms status && \
+sudo dkms install $(sudo dkms status | awk -F: '/nvidia/{print $1}' | head) && \
 sudo reboot
 ```
 
