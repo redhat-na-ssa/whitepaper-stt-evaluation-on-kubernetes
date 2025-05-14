@@ -10,16 +10,20 @@ This guide walks you through crawling OpenAI Whisper models in containerized ima
 - Hyperparameter tuning impact  
 - System metrics collection  
 - Accuracy measurement  
-- Automation via batch testing
+- Automation via batch testing all the above
 
-## Objectives
+---
 
-- Run Whisper STT inside containers with different configurations  
-- Compare transcription performance and latency across models and hardware  
-- Evaluate accuracy using metrics like WER, MER, and CER  
-- Capture CPU/GPU utilization and system resource impact  
-- Scale benchmarking with automated batch scripts  
-- Prepare for production by testing real-world workloads
+## Learning Objectives
+
+- Run Whisper STT inside containers with different configurations.
+- Compare transcription performance and latency across models and hardware.
+- Evaluate accuracy using metrics like WER, MER, and CER.
+- Capture CPU/GPU utilization and system resource impact.
+- Run batch jobs for large-scale benchmarking across multiple configurations.
+- Build intuition for scaling from single-container tests to production deployments.
+
+---
 
 ## Questions to Explore
 
@@ -45,9 +49,20 @@ This guide walks you through crawling OpenAI Whisper models in containerized ima
 | What was the most accurate on complex audio files? | |
 | What are useful metrics?                           | |
 
-## Quick Start
+---
 
-### Step 1: Clone the Project
+## Procedure
+
+Prerequisites:
+
+1. SSH into your VM
+2. Cloned this repo on the VM
+3. Navigated to the repo root
+4. Completed the [VM w/GPU provisioning](crawl/RHEL_GPU.md)
+
+---
+
+### Clone the Project
 
 ```bash
 git clone https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes.git && \
@@ -62,6 +77,8 @@ See [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#setup)
 1. `openai-whisper`
 1. etc.
 
+---
+
 ## Understanding `time`
 
 | Output   | Meaning                                                                 |
@@ -72,12 +89,23 @@ See [Whisper GitHub](https://github.com/openai/whisper?tab=readme-ov-file#setup)
 
 [Reference](https://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1)
 
-## Docker Image Setup
+---
+
+## Review the Dockerfile
 
 From this section we can understand:
 
+1. The Dockerfile alignment with the Whisper GitHub documents.
 1. How big are the decompressed images with embedded models?
 1. What is the security posture (CVE report) of these model images (packages vs. model)?
+
+Note: `ffmpeg` is just installed.
+
+```sh
+cat crawl/openai-whisper/ubuntu/Dockerfile
+```
+
+---
 
 ### Option A: Pull Prebuilt Images from Quay.io
 
@@ -110,6 +138,8 @@ time {
 #sys     7m45.052s
 ```
 
+---
+
 ### Option B: Build Locally with Embedded Models
 
 ```bash
@@ -133,6 +163,8 @@ echo "Total build time: $(($duration / 60)) min $(($duration % 60)) sec"
 
 Models are embedded in `/data/.cache/whisper/` inside each image.
 
+---
+
 ### Capture Image Sizes
 
 ```bash
@@ -148,18 +180,22 @@ podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep 'speech-to-te
 
 ```csv
 # expected output in data/metrics/$INSTANCE/$FLAVOR
-#repository,tag,size
-#quay.io/redhat_na_ssa/speech-to-text/whisper,turbo-ubuntu,8.25 GB
-#quay.io/redhat_na_ssa/speech-to-text/whisper,large-ubuntu,9.72 GB
-#quay.io/redhat_na_ssa/speech-to-text/whisper,medium.en-ubuntu,8.16 GB
-#quay.io/redhat_na_ssa/speech-to-text/whisper,small.en-ubuntu,7.12 GB
-#quay.io/redhat_na_ssa/speech-to-text/whisper,base.en-ubuntu,6.78 GB
-#quay.io/redhat_na_ssa/speech-to-text/whisper,tiny.en-ubuntu,6.71 GB
+repository,tag,size
+quay.io/redhat_na_ssa/speech-to-text/whisper,turbo-ubuntu,8.25 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,large-ubuntu,9.72 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,medium.en-ubuntu,8.16 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,small.en-ubuntu,7.12 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,base.en-ubuntu,6.78 GB
+quay.io/redhat_na_ssa/speech-to-text/whisper,tiny.en-ubuntu,6.71 GB
 ```
+
+---
 
 ## Start Experimenting
 
 From this section we can discuss what is the role of ground truth and overall model evaluation (simple vs. complex data)?
+
+---
 
 ### Review Dataset
 
@@ -171,7 +207,9 @@ echo "--- Word Count ---"
 wc -w data/ground-truth/harvard.txt
 ```
 
-### Test 1: Cold vs Warm (CPU)
+---
+
+### Cold vs Warm (CPU)
 
 From this section:
 
@@ -217,7 +255,9 @@ Discussion:
 - sys: Total CPU time spent on system (kernel) tasks like file I/O. Also summed across cores.
   - Some additional time spent in system calls (model/file handling).
 
-Details on Cold vs. Warm starts.
+---
+
+#### Details on Cold vs. Warm starts.
 
 | **First Run (Cold Start)** | **Second Run (Warm Start)**  |
 |-|-|
@@ -230,7 +270,9 @@ Details on Cold vs. Warm starts.
 
 You can see this even more dramatically if you use larger models (like medium.en, large, turbo) — First run cold start might take 30–90 seconds. Second run will often cut that by half or more!
 
-### Test 2: Add Basic Inference Flags
+---
+
+### Add Basic Inference Flags
 
 From this section:
 
@@ -278,7 +320,9 @@ The real, user, sys times stay in the same ballpark as earlier, because:
 - You don’t write any output files (no --output_dir), so disk I/O is lighter.
 - The minimal difference between ~27 user seconds is just normal noise (threading, CPU scheduling).
 
-### Test 3: Add Hyperparameters
+---
+
+### Add Hyperparameters
 
 From this second:
 
@@ -355,6 +399,8 @@ Discussion:
 | **sys:** `~3.8s`                                                                                                         | **sys:** `~0.5s` (first run includes extra I/O for saving outputs and model setup).                                 |
 | **Conclusion:** Cold start includes model + thread setup and output I/O overhead; beam search adds significant CPU load. | **Conclusion:** Warm start avoids setup cost (faster wall time), but beam search keeps CPU usage high in both runs. |
 
+---
+
 ### Observations
 
 On CPU with against 43 characters of clear speech:
@@ -363,6 +409,8 @@ On CPU with against 43 characters of clear speech:
 - Hyperparameters add 30–50% overhead - Use only if accuracy gain is worth the extra latency/CPU load.
 - Lots of CPU parallelism seen - Tune thread usage if you batch jobs or run on shared hardware.
 - Baseline performance is consistent - Your current baseline (no args or basic) looks efficient and stable.
+
+---
 
 ## Accuracy Metrics with JiWER
 
@@ -398,6 +446,8 @@ print(f"CER: {cer(ref, hyp):.2%}")
 ```bash
 exit
 ```
+
+---
 
 ## (Optional) Running the same experiments on GPUS
 
@@ -443,7 +493,12 @@ user    0m10.981s
 sys     0m2.170s
 ```
 
-## Run Batch Experiments (Parallel CPU/GPU)
+---
+
+## Run Batch Experiments (Parallel CPU/GPU) & Capture Metrics
+
+This script writes metrics to data/metrics/$INSTANCE/$FLAVOR including:
+date,timestamp,container_name,token_count,**tokens_per_second**,audio_duration,**real_time_factor**,container_runtime_sec,wer,mer,wil,wip,cer,threads,start_type
 
 From this section:
 
@@ -458,9 +513,9 @@ Parallelization:
 - CPU jobs: Each container is assigned multiple CPU threads using environment flags for OpenMP and similar libraries.
 - GPU jobs: The script binds each GPU container to a specific GPU using --device nvidia.com/gpu=X, enabling parallel GPU execution.
 
-The output writes the data to data/metrics/aiml_functional_metrics.csv for easier review
+---
 
-### Terminal 1: Run Experiments & Gather Metrics
+#### Terminal 1: Run Experiments & Gather Metrics
 
 This script writes metrics to data/metrics/$INSTANCE/$FLAVOR including:
 date,timestamp,container_name,token_count,**tokens_per_second**,audio_duration,**real_time_factor**,container_runtime_sec,wer,mer,wil,wip,cer,threads,start_type
@@ -475,7 +530,9 @@ screen -S jobs bash -c "time ./data/evaluation-scripts/whisper-functional-batch-
   --model='tiny.en,large'"
 ```
 
-### Terminal 2: Monitor Output
+---
+
+#### Terminal 2: Monitor Output
 
 ```bash
 export INSTANCE=g4dn-12xlarge  # (or g5-12xlarge, g6.12xlarge, etc)
@@ -483,6 +540,8 @@ export FLAVOR=ubuntu  # (or ubi9-minimal)
 
 tail -f data/metrics/$INSTANCE/$FLAVOR/aiml_functional_metrics.csv
 ```
+
+Or you can watch the GPU and CPU processes
 
 ```bash
 watch -n 2 -t '
