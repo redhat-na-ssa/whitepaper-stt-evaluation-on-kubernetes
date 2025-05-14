@@ -3,20 +3,46 @@
 
 ## Overview
 
-This guide walks you through benchmarking Whisper models using UBI9-minimal containers. It focuses on security, size, and performance trade-offs compared to Ubuntu-based containers.
+This guide continues from the Ubuntu experimentation for benchmarking Whisper models on UBI9-minimal containers. It focuses on security, size, and performance trade-offs compared to Ubuntu-based containers.
+
+- Automation via batch testing (Speed, Quality, Accuracy, and best combination)
 
 ---
 
 ## Learning Objectives
 
+- Run Whisper STT inside containers with different configurations
 - Understand what UBI (Universal Base Image) is and why it matters in production.
 - Compare Ubuntu vs. UBI9-minimal for AI workloads (security, support, compliance).
-- Build or pull container images embedding Whisper models.
-- Compare model startup time, inference speed, and accuracy across environments.
-- Measure system metrics: CPU, GPU, memory usage, power draw, GPU temperatures, VRAM usage.
 - Explore implications of building tools like ffmpeg from source vs. using OS packages.
-- Run batch jobs for large-scale benchmarking across multiple configurations.
 - Build intuition for scaling from single-container tests to production deployments.
+
+---
+
+## Questions to Explore
+
+| **Questions**| **Answers**|
+|---------------------------------------------------|-|
+| What is the difference between Ubuntu and UBI and is it worth switching? | |
+| How big are the decompressed images with embedded models? | |
+| What is the security posture (CVE report) of these model images (packages vs. model)? | |
+| What is the role of ground truth and overall model evaluation (simple vs. complex data)? | |
+| Performance gains from cold vs. warm start performance.  | |
+| What can the model autodetect (FP, Language, Task)? | |
+| What is the performance gains of basic inference flags?   | |
+| The impact of advanced decoding arguments on speed and quality. | |
+| Do advanced arguments / hyperparameters improve accuracy? | |
+| How to measure accuracy for Audio models (Experiment vs. Production)?  | |
+| Container placement on CPU and GPU.                | |
+| The importance of scheduling batch jobs, parallel processing and saturation. | |
+| Making data driven decisions from experiments.     | |
+| What combinations of model-size, processor, argument flags, and start type performed the best on different audio samples.       | |
+| Should you target CPU, GPU or Both?                | |
+| Should you always have models warm?                | |
+| What was the fastest transcription?                | |
+| What was the slowest transcription?                | |
+| What was the most accurate on complex audio files? | |
+| What are useful metrics?                           | |
 
 ---
 
@@ -35,34 +61,9 @@ This guide walks you through benchmarking Whisper models using UBI9-minimal cont
 
 ---
 
-## Questions to Explore
+## Procedure
 
-| **Question Before the Exercise**                         | **Expected Answer / Learning After Completion**                                               |
-|----------------------------------------------------------|------------------------------------------------------------------------------------------------|
-| Differences between Ubuntu and UBI9-minimal?             | Security, package availability, image size, startup behavior.                                  |
-| Decompressed size?                                       | UBI9-minimal is smaller than Ubuntu in most configurations.                                    |
-| Speed?                                                   | Performance is comparable; minor differences in cold starts.                                   |
-| Accuracy?                                                | Same model = same accuracy, regardless of base image.                                          |
-| Security?                                                | UBI9-minimal offers signed RPMs, minimal surface, supports Red Hat scanning tools.             |
-| Power?                                                   | No significant differences unless system load varies due to threading behavior.                |
-| Temperature?                                             | Similar under equivalent workloads.                                                            |
-| Model size impact (e.g., tiny → turbo)?                  | Larger = better accuracy, but slower inference and bigger images.                              |
-| GPU vs. CPU speed difference?                            | GPU is 10–15× faster, especially on large models and warm starts.                              |
-| Cold vs. warm start?                                     | Cold starts 3–5× slower due to model loading, thread pools, tokenizer init.                    |
-| Do hyperparameters help?                                 | Slight WER/WIL improvements; beam search adds latency.                                         |
-| Do base images affect performance?                       | Not dramatically; affects size, build time, cold starts.                                       |
-| Fastest transcription?                                   | _To be filled from your experiment_                                                            |
-| Slowest transcription?                                   | _To be filled from your experiment_                                                            |
-| Best metrics for comparison?                             | tokens/sec, RTF, container_runtime_sec, WER, MER, WIL, WIP, CER.                               |
-| Deployment throughput goal?                              | Aim for >30 tokens/sec on GPU warm starts.                                                     |
-| Parallel vs. sequential jobs?                            | Parallel preferred, but avoid overcommitting resources.                                        |
-| Container reusability?                                   | Yes — warm start reuse reduces cost, ideal for benchmarking loops.                             |
-
----
-
-## Prerequisites
-
-Ensure you've completed the following:
+Prerequisites:
 
 1. SSH into your VM
 2. Cloned this repo on the VM
@@ -71,17 +72,29 @@ Ensure you've completed the following:
 
 ---
 
-## Review the UBI Dockerfile
+## Review the Dockerfile
+
+From this section we can understand:
+
+1. The Dockerfile alignment with the Whisper GitHub documents.
+1. How big are the decompressed images with embedded models?
+1. What is the security posture (CVE report) of these model images (packages vs. model)?
 
 Note: `ffmpeg` is built from source. Be aware of how security scanners handle custom binaries.
 
 ```sh
-cat crawl/openai-whisper/ubi/minimal/Dockerfile
+cat crawl/openai-whisper/ubi/Dockerfile
 ```
 
 ---
 
-## Option A – Pull Prebuilt Images
+## Option A: Pull Prebuilt Images from Quay.io
+
+Screen hints for next command:
+
+- To detach, press: `Ctrl + A, then D`
+- To list sessions: `screen -ls`
+- To reattach: `screen -r pull-whisper`
 
 ```bash
 # clear up disk space from the ubuntu images
@@ -113,7 +126,7 @@ time {
 
 ---
 
-## Option B – Build Locally with Embedded Models
+## Option B: Build Locally with Embedded Models
 
 ```sh
 # Set your flavor
@@ -153,12 +166,6 @@ podman images --format '{{.Repository}},{{.Tag}},{{.Size}}' | grep 'speech-to-te
 
 ```csv
 # expected output in data/metrics/$INSTANCE/$FLAVOR
-#repository,tag,size
-```
-
-**Sample Output:**
-
-```csv
 repository,tag,size
 quay.io/redhat_na_ssa/speech-to-text/whisper,turbo-ubi9-minimal,9.74 GB
 quay.io/redhat_na_ssa/speech-to-text/whisper,large-ubi9-minimal,12.7 GB
@@ -170,7 +177,7 @@ quay.io/redhat_na_ssa/speech-to-text/whisper,tiny.en-ubi9-minimal,6.65 GB
 
 ---
 
-### Terminal 1: Run Experiments & Gather Metrics
+### Run Batch Experiments (Parallel CPU/GPU) & Capture Metrics
 
 This script writes metrics to data/metrics/$INSTANCE/$FLAVOR including:
 date,timestamp,container_name,token_count,**tokens_per_second**,audio_duration,**real_time_factor**,container_runtime_sec,wer,mer,wil,wip,cer,threads,start_type
@@ -186,7 +193,26 @@ screen -S jobs bash -c "time ./data/evaluation-scripts/whisper-functional-batch-
   --model='tiny.en,large'"
 ```
 
-### Terminal 2: Monitor Output
+---
+
+#### Terminal 1: Run Experiments & Gather Metrics
+
+This script writes metrics to data/metrics/$INSTANCE/$FLAVOR including:
+date,timestamp,container_name,token_count,**tokens_per_second**,audio_duration,**real_time_factor**,container_runtime_sec,wer,mer,wil,wip,cer,threads,start_type
+
+```bash
+export INSTANCE=g4dn-12xlarge  # (or g5-12xlarge, g6.12xlarge, etc)
+export FLAVOR=ubuntu  # (or ubi)
+
+screen -S jobs bash -c "time ./data/evaluation-scripts/whisper-functional-batch-metrics.sh \
+  --flavor=$FLAVOR \
+  --instance=$INSTANCE \
+  --model='tiny.en,large'"
+```
+
+---
+
+#### Terminal 2: Monitor Output
 
 ```bash
 export INSTANCE=g4dn-12xlarge  # (or g5-12xlarge, g6.12xlarge, etc)
@@ -194,6 +220,8 @@ export FLAVOR=ubuntu  # (or ubi9-minimal)
 
 tail -f data/metrics/$INSTANCE/$FLAVOR/aiml_functional_metrics.csv
 ```
+
+Or you can watch the GPU and CPU processes
 
 ```bash
 watch -n 2 -t '
@@ -206,12 +234,13 @@ ps -T -p $(pgrep -d"," -f whisper) -o pid,tid,pcpu,pmem,comm | sort -k3 -nr | he
 
 ---
 
-## What are the gains
+## Observations
 
-We are moving up a rung on the ladder on security, supportability and efficiency:
+We are moving up a rung on the ladder on security, supportability and efficiency by switching to UBI from Ubuntu:
 
-- Whisper runtime is running embedded in the container image. UBI is supported although Whisper is not.
-- We have moved from a less secure image with N CVEs to a more secure image with N CVEs.
+- Whisper runtime is running embedded in the container image. 
+  - UBI is supported although Whisper is not.
+- We have moved from a less secure image with *N* CVEs to a more secure image with *N* CVEs.
 - We have moved from an unsupported base image.
 - We have moved from an image that takes up more storage than less storage.
 
