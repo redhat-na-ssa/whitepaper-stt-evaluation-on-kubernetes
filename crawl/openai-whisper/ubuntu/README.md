@@ -3,7 +3,7 @@
 
 ## Overview
 
-This guide walks you through crawling OpenAI Whisper models in containerized images (Ubuntu-based) and experimenting with:
+This guide crawls you through OpenAI Whisper models in containerized images (Ubuntu-based) and experimenting with:
 
 - Cold vs. warm start comparisons  
 - CPU vs. GPU performance  

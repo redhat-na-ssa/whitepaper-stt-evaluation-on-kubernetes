@@ -109,7 +109,6 @@ Important notes:
 - with vLLM V0 - To enable multiple multi-modal items per text prompt in vLLM V0, you have to set `limit_mm_per_prompt` (offline inference) or `--limit-mm-per-prompt` (online serving).
 - This is no longer required if you are using vLLM V1.
 
-
 ### What is "Supported"
 
 [Support Policy](https://docs.vllm.ai/en/latest/models/supported_models.html#model-support-policy) - It’s best effort, not officially supported.
@@ -122,6 +121,8 @@ Important notes:
 1. Bug Fixes: Report issues or submit fixes via PRs (notify original authors when possible).
 1. Stay Updated: Watch vllm/model_executor/models for changes.
 1. Priorities: Popular models get more attention; others rely on community upkeep.
+
+---
 
 ## Generation
 
@@ -239,21 +240,53 @@ See [vLLM GitHub](https://docs.vllm.ai/en/latest/getting_started/quickstart.html
 mkdir -p ~/.cache/huggingface
 
 # Build the Dockerfile with the same version
-podman build -t vllm-whisper-basic -f ubuntu/Dockerfile.basic ubuntu/
+podman build -t vllm-whisper-runtime -f crawl/vllm/ubuntu/Dockerfile.runtime crawl/vllm/ubuntu/
 
-# Test it
+# Test it - should PASS
 podman run --rm -it \
   --security-opt=label=disable \
   --device nvidia.com/gpu=all \
   -p 8000:8000 \
   -v ~/.cache/huggingface:/root/.cache/huggingface:Z \
-  vllm-whisper-basic \
+  vllm-whisper-runtime \
   --model openai/whisper-tiny.en \
   --task transcription \
   --dtype=half
 
+# The above command works
+# This invokes vllm-openai’s OpenAI-compatible API server, which:
+#   1. Uses the CLI entrypoint, e.g. python3 -m vllm.entrypoints.openai.api_server.
+#   2. Loads Whisper via the --task transcription flag, which is officially supported by vLLM's OpenAIRouter.
+#   3. Internally routes to: @router.post("/v1/audio/transcriptions") ...
+#      which explicitly handles the Whisper audio pipeline with custom preprocessing and backend logic.
+#   Result: Whisper is loaded and executed through a supported fast path, and it avoids the internal profiling that triggers FlashAttention crashes.
+
+# export HUGGING_FACE_HUB_TOKEN=your_hf_token  # replace with actual token
+
+# The below command fails
+# This runs the vLLM script audio_language.py, which:
+#   1. Uses the offline vLLM Python API via LLM(...) constructor.
+#   2. Triggers a warm-up profiling pass (profile_run) to benchmark memory usage.
+#   3. If FlashAttention is enabled (even via defaults), it tries to run a forward pass before input is prepared, causing key=None → TypeError.
+#   Result: vLLM still sometimes uses FlashAttention in profile mode due to unresolved internal logic. This is a known issue when using Whisper or any encoder-decoder mode
+
+# Expect to Fail
+# --model-type expects: granite_speech, minicpmo, phi4_mm, qwen2_audio, qwen2_5_omni, ultravox, whisper
+podman run --rm -it \
+  --security-opt=label=disable \
+  --device nvidia.com/gpu=all \
+  -v ~/.cache/huggingface:/root/.cache/huggingface \
+  -v $(pwd):/workspace \
+  --env HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN \
+  --env VLLM_ATTENTION_BACKEND=torch \
+  --ipc=host \
+  -w /workspace \
+  --entrypoint /bin/bash \
+  vllm-whisper-runtime \
+  -c 'echo $VLLM_ATTENTION_BACKEND; python3 data/input-samples/audio_language.py --model whisper'
+
 # Terminal 2
-# Transcribe
+# Transcribe - Should PAss
 curl http://localhost:8000/v1/audio/transcriptions \
   -X POST \
   -H "Content-Type: multipart/form-data" \

@@ -1,0 +1,7 @@
+FROM vllm/vllm-openai:v0.8.5.post1
+
+# Install audio extras to enable Whisper and other audio-related features
+RUN uv pip install --system --no-cache-dir --upgrade "vllm[audio]==0.8.5.post1"
+
+# Start with an interactive shell (you can override this with podman/docker run)
+CMD ["bash"]
