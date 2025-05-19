@@ -151,7 +151,7 @@ Result: Whisper is loaded and executed through a supported fast path, and it avo
 mkdir -p ~/.cache/huggingface
 
 # Build the Dockerfile with the same version
-podman build -t vllm-whisper-runtime -f walk/vllm/ubuntu/Dockerfile.runtime walk/vllm/ubuntu/
+podman build -t vllm-whisper-runtime -f crawl/vllm/ubuntu/Dockerfile.runtime crawl/vllm/ubuntu/
 
 # Run it - PASS
 podman run --rm -it \
