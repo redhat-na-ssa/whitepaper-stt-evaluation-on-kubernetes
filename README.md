@@ -11,7 +11,7 @@ Two fold:
 
 ## Summary of Experimentation to Operations
 
-- **[Crawl README](./crawl/README.md)** — Experiment locally using Ubuntu and UBI9-minimal containers on a single server.
+- **START HERE -> [Crawl README](./crawl/README.md)** — Experiment locally using Ubuntu and UBI9-minimal containers on a single server.
 - **[Walk README](./walk/README.md)** — Scale from a single server to a Kubernetes cluster.
 - **[Run README](./run/README.md)** — Shift from embedded inference to decoupled model serving.
 - **Sprint** — Integrate Model Registries and optimize for production-scale serving.
@@ -22,10 +22,10 @@ Along the journey, we introduce automation and answer common performance, securi
 
 Execute [benchmarking](./benchmark/README.md) to capture metrics from:
 
-- **Models**: Whisper, Faster-Whisper
+- **Models**: OpenAI Whisper
 - **Containers**: Ubuntu, UBI9-minimal
 - **Platforms**: Linux, Kubernetes
-- **Model Servers**: vLLM, Speeches, TensorRT
+- **Model Servers**: OpenAI Whisper, vLLM
 - **CPUs**: Intel Cascade Lake, AWS Graviton3, AMD EPYC, Intel Sapphire Rapids
 - **GPUs**: T4, L4, A10, H100
 - **Instance Types**: g4dn.12xlarge, g6.12xlarge, g5.12xlarge, p5.48xlarge

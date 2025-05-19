@@ -4,9 +4,9 @@
 
 This guide crawls you through vLLM for two common model deployment scenarios:
 
-1. embedded inference microservices
-1. decoupled model servers.
-
+1. Embedded inference microservices
+1. Loading the models at runtime.
+1. Decoupled model servers.
 
 ---
 
@@ -41,12 +41,12 @@ This guide crawls you through vLLM for two common model deployment scenarios:
 
 Prerequisites:
 
-Minimal Prereqs [provisioned with this procedure](https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes/blob/main/crawl/RHEL_GPU.md):
+Minimal Prereqs [provisioned with this procedure](https://github.com/redhat-na-ssa/whitepaper-stt-evaluation-on-kubernetes/blob/main/walk/RHEL_GPU.md):
 
 1. SSH into your VM
 1. Cloned this repo on the VM
 1. Navigated to the repo root
-1. Completed the [VM w/GPU provisioning](crawl/RHEL_GPU.md)
+1. Completed the [VM w/GPU provisioning](walk/RHEL_GPU.md)
 1. HugginFace access token + CLI python3 -m pip install huggingface-hub
 
 ---
@@ -70,6 +70,208 @@ skopeo inspect docker://docker.io/vllm/vllm-openai | jq '.Labels'
 #   "org.opencontainers.image.version": "22.04"
 # }
 ```
+---
+
+## Support vLLM Modalities
+
+Modalities are supported **depending on the model** [source](https://docs.vllm.ai/en/latest/models/supported_models.html#list-of-multimodal-language-models):
+
+1. [Text](https://docs.vllm.ai/en/latest/models/supported_models.html#id7) - Any text generation model can be converted into an embedding model by passing --task embed.
+1. Image
+1. Video
+1. [Audio](https://docs.vllm.ai/en/latest/models/supported_models.html#transcription) - Speech2Text models trained specifically for Automatic Speech Recognition.
+
+Important notes:
+
+- with vLLM V0 - To enable multiple multi-modal items per text prompt in vLLM V0, you have to set `limit_mm_per_prompt` (offline inference) or `--limit-mm-per-prompt` (online serving).
+- This is no longer required if you are using vLLM V1.
+
+### What does "Supported" mean
+
+[Support Policy](https://docs.vllm.ai/en/latest/models/supported_models.html#model-support-policy) - It’s best effort, not officially supported.
+
+> ⚠️ Model integration and maintenance are best-effort and community-driven. There is no formal support guarantee, especially for less commonly used models. Contributions are welcome and appreciated, but functionality may vary.
+
+1. Add Models: Community PRs welcome — especially from model creators.
+1. Review Criteria: Focus on output quality, not exact match with other frameworks.
+1. Accuracy: Some differences expected due to performance optimizations.
+1. Bug Fixes: Report issues or submit fixes via PRs (notify original authors when possible).
+1. Stay Updated: Watch vllm/model_executor/models for changes.
+1. Priorities: Popular models get more attention; others rely on community upkeep.
+
+## Audio
+
+| Model Name              | Hugging Face Repo                           | Task         | Notes                                 |
+|-------------------------|---------------------------------------------|--------------|---------------------------------------|
+| OpenAI Whisper          | `openai/whisper-small`                      | Transcription| Supports multiple model sizes         |
+| IBM Granite Speech      | `ibm-granite/granite-speech-3.3-8b`         | Transcription| Beam search recommended               |
+| Qwen2 Audio             | `Qwen/Qwen2-Audio-7B-Instruct`              | Transcription| Audio input only                      |
+| Qwen2.5 Omni            | `Qwen/Qwen2.5-Omni`                         | Transcription| Multi-modal (text, audio, image, etc.)|
+| MiniCPM                 | `openbmb/MiniCPM`                           | Transcription| Lightweight and fast                  |
+| Ultravox                | `ultravox/ultravox`                         | Transcription| Optimized for performance             |
+
+Explanation of common Audio tasks:
+
+1. Transcription → Convert spoken audio to text in the same language
+1. Translation → Convert non-English speech to English text
+1. Language Detection → Auto-detect spoken language (used implicitly)
+1. Timestamps → Include word or phrase-level time codes
+1. (Future) Diarization → Separate and label different speakers
+
+## Review vLLM Requirements
+
+See [vLLM GitHub](https://docs.vllm.ai/en/latest/getting_started/quickstart.html) for prerequisites:  
+1. Python
+1. model specific package requirements
+1. etc.
+
+## Review vLLM Audio Examples
+
+[Source](https://docs.vllm.ai/en/latest/getting_started/examples/audio_language.html)
+
+This runs your own script audio_language.py, which:
+
+- Uses the offline vLLM Python API via LLM(...) constructor.
+- Triggers a warm-up profiling pass (profile_run) to benchmark memory usage.
+- If FlashAttention is enabled (even via defaults), it tries to run a forward pass before input is prepared, causing key=None → TypeError.
+
+For the following steps, we will invoke vllm-openai’s OpenAI-compatible API server, which:
+
+- Uses the CLI entrypoint, e.g. python3 -m vllm.entrypoints.openai.api_server.
+- Loads Whisper via the --task transcription flag, which is officially supported by vLLM's OpenAIRouter.
+- Internally routes to: `@router.post("/v1/audio/transcriptions") ...` which explicitly handles the Whisper audio pipeline with custom preprocessing and backend logic.
+
+Result: Whisper is loaded and executed through a supported fast path, and it avoids the internal profiling that triggers FlashAttention crashes.
+
+### Loading the model at runtime in a container with vLLM on GPU
+
+```bash
+# Terminal 1
+# Create the directory before running the container
+mkdir -p ~/.cache/huggingface
+
+# Build the Dockerfile with the same version
+podman build -t vllm-whisper-runtime -f walk/vllm/ubuntu/Dockerfile.runtime walk/vllm/ubuntu/
+
+# Run it - PASS
+podman run --rm -it \
+  --security-opt=label=disable \
+  --device nvidia.com/gpu=all \
+  -p 8000:8000 \
+  -v ~/.cache/huggingface:/root/.cache/huggingface:Z \
+  vllm-whisper-runtime \
+  --model openai/whisper-tiny.en \
+  --task transcription \
+  --dtype=half
+
+# The above command works
+# This invokes vllm-openai’s OpenAI-compatible API server, which:
+#   1. Uses the CLI entrypoint, e.g. python3 -m vllm.entrypoints.openai.api_server.
+#   2. Loads Whisper via the --task transcription flag, which is officially supported by vLLM's OpenAIRouter.
+#   3. Internally routes to: @router.post("/v1/audio/transcriptions") ...
+#      which explicitly handles the Whisper audio pipeline with custom preprocessing and backend logic.
+#   Result: Whisper is loaded and executed through a supported fast path, and it avoids the internal profiling that triggers FlashAttention crashes.
+
+# export HUGGING_FACE_HUB_TOKEN=your_hf_token  # replace with actual token
+
+# The below command fails
+# This runs the vLLM script audio_language.py, which:
+#   1. Uses the offline vLLM Python API via LLM(...) constructor.
+#   2. Triggers a warm-up profiling pass (profile_run) to benchmark memory usage.
+#   3. If FlashAttention is enabled (even via defaults), it tries to run a forward pass before input is prepared, causing key=None → TypeError.
+#   Result: vLLM still sometimes uses FlashAttention in profile mode due to unresolved internal logic. This is a known issue when using Whisper or any encoder-decoder mode
+
+# Run it - FAILS
+# --model-type expects: granite_speech, minicpmo, phi4_mm, qwen2_audio, qwen2_5_omni, ultravox, whisper
+podman run --rm -it \
+  --security-opt=label=disable \
+  --device nvidia.com/gpu=all \
+  -v ~/.cache/huggingface:/root/.cache/huggingface \
+  -v $(pwd):/workspace \
+  --env HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN \
+  --env VLLM_ATTENTION_BACKEND=torch \
+  --ipc=host \
+  -w /workspace \
+  --entrypoint /bin/bash \
+  vllm-whisper-runtime \
+  -c 'echo $VLLM_ATTENTION_BACKEND; python3 data/input-samples/audio_language.py --model whisper'
+
+# Terminal 2
+# Transcribe - PASS
+curl http://localhost:8000/v1/audio/transcriptions \
+  -X POST \
+  -H "Content-Type: multipart/form-data" \
+  -F file=@data/input-samples/harvard.wav \
+  -F model=openai/whisper-tiny.en
+
+# expected output
+# {"text":" The stale smell of old beer lingers. It takes heat to bring out the odor. A cold dip restores health and zest. A salt pickle tastes fine with ham. Tacos al pastor are my favorite. A zestful food is the hot cross bun."}
+```
+
+### Embed the model in a container with vLLM GPU disconnected testing
+
+Review vLLM Audio Offline Examples - [Source](https://docs.vllm.ai/en/latest/getting_started/examples/audio_language.html)
+
+Since we're loading a local model from /models/whisper-tiny.en, you must manually set its served name like so:
+
+1. `--model` /models/whisper-tiny.en \
+1. `--served-model-name` openai/whisper-tiny.en \
+1. `--task` transcription
+
+```bash
+# Terminal 1
+# Install the huggingface cli
+pip install -y huggingface_hub tree
+
+# Download tiny-whisper.en locally
+huggingface-cli download openai/whisper-tiny.en --local-dir walk/vllm/ubuntu/whisper-tiny.en --local-dir-use-symlinks False --repo-type model
+
+# Ensure the whisper-tiny.en directory is next to your Dockerfile
+tree ubuntu
+
+# Build it
+podman build -t vllm-whisper-embedded -f walk/vllm/ubuntu/Dockerfile.embedded walk/vllm/ubuntu/
+
+# Run it
+podman run --rm -it \
+  --security-opt=label=disable \
+  --device nvidia.com/gpu=all \
+  -p 8000:8000 \
+  -v ~/.cache/huggingface:/root/.cache/huggingface:Z \
+  vllm-whisper-embedded \
+  --model /models/whisper-tiny.en \
+  --served-model-name openai/whisper-tiny.en \
+  --task transcription \
+  --dtype=half
+
+# Terminal 2
+# Test it
+curl http://localhost:8000/v1/audio/transcriptions \
+  -X POST -H "Content-Type: multipart/form-data" \
+  -F file=@sample/harvard.wav \
+  -F model=openai/whisper-tiny.en
+
+# Terminal 2 output
+# {"text":" The stale smell of old beer lingers. It takes heat to bring out the odor. A cold dip restores health and zest. A salt pickle tastes fine with ham. Tacos al pastor are my favorite. A zestful food is the hot cross bun."}
+
+# Terminal 1 output
+# ...
+# INFO:     127.0.0.1:43702 - "POST /v1/audio/transcriptions HTTP/1.1" 200 OK
+# INFO 05-12 20:01:19 [metrics.py:486] Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 5.4 tokens/s, Running: 0 reqs, Swapped: 0 reqs, Pending: 0 reqs, GPU KV cache usage: 0.0%, CPU KV cache usage: 0.0%.
+# ...
+```
+
+---
+
+## Generation
+
+Explanation of Tasks:
+
+1. Chat → Conversational agents, dialogue systems
+1. Instruction → Follows user prompts, task-specific
+1. Summarization → Text summarization, document compression
+1. Reasoning → Multi-step logic, Q&A, problem-solving
+1. Multilingual → Supports multiple languages
 
 ---
 
@@ -92,47 +294,6 @@ The shortlist meets these criteria:
 | LLaMA-3-8B                         | 8B                     | Chat, general-purpose generation        | Fits with reduced cache or low concurrency         |
 | Mistral-7B-Instruct                | 7B                     | Instruction-following, chat             | Runs on T4 with half precision + tuning            |
 | Mixtral-8x7B (2 experts active)    | 12B active (2x7B)      | Mixture-of-experts: chat, reasoning     | Activates only 2 experts; memory footprint \~7B    |
-
----
-
-## Support vLLM Modalities
-
-Modalities are supported **depending on the model** [source](https://docs.vllm.ai/en/latest/models/supported_models.html#list-of-multimodal-language-models):
-
-1. [Text](https://docs.vllm.ai/en/latest/models/supported_models.html#id7) - Any text generation model can be converted into an embedding model by passing --task embed.
-1. Image
-1. Video
-1. [Audio](https://docs.vllm.ai/en/latest/models/supported_models.html#transcription) - Speech2Text models trained specifically for Automatic Speech Recognition.
-
-Important notes:
-
-- with vLLM V0 - To enable multiple multi-modal items per text prompt in vLLM V0, you have to set `limit_mm_per_prompt` (offline inference) or `--limit-mm-per-prompt` (online serving).
-- This is no longer required if you are using vLLM V1.
-
-### What is "Supported"
-
-[Support Policy](https://docs.vllm.ai/en/latest/models/supported_models.html#model-support-policy) - It’s best effort, not officially supported.
-
-> ⚠️ Model integration and maintenance are best-effort and community-driven. There is no formal support guarantee, especially for less commonly used models. Contributions are welcome and appreciated, but functionality may vary.
-
-1. Add Models: Community PRs welcome — especially from model creators.
-1. Review Criteria: Focus on output quality, not exact match with other frameworks.
-1. Accuracy: Some differences expected due to performance optimizations.
-1. Bug Fixes: Report issues or submit fixes via PRs (notify original authors when possible).
-1. Stay Updated: Watch vllm/model_executor/models for changes.
-1. Priorities: Popular models get more attention; others rely on community upkeep.
-
----
-
-## Generation
-
-Explanation of Tasks:
-
-1. Chat → Conversational agents, dialogue systems
-1. Instruction → Follows user prompts, task-specific
-1. Summarization → Text summarization, document compression
-1. Reasoning → Multi-step logic, Q&A, problem-solving
-1. Multilingual → Supports multiple languages
 
 ---
 
@@ -209,141 +370,3 @@ Yes — as of v0.8.5.post1, vLLM's CPU support is incomplete and unstable, espec
 - V1 Engine doesn’t yet support CPU
 - V0 Engine is legacy and mostly tuned for GPU logic
 - Many configurations (like memory size, block manager, etc.) are not correctly initialized on CPU fallback
-
-## Audio
-
-Explanation of Tasks:
-
-1. Transcription → Convert spoken audio to text in the same language
-1. Translation → Convert non-English speech to English text
-1. Language Detection → Auto-detect spoken language (used implicitly)
-1. Timestamps → Include word or phrase-level time codes
-1. (Future) Diarization → Separate and label different speakers
-
-## Review vLLM Requirements
-
-See [vLLM GitHub](https://docs.vllm.ai/en/latest/getting_started/quickstart.html) for prerequisites:  
-1. Python
-1. `ffmpeg`
-1. `openai-whisper`
-1. etc.
-
-## Review vLLM Audio Examples
-
-[Source](https://docs.vllm.ai/en/latest/getting_started/examples/audio_language.html)
-
-### Embed the model in a container with vLLM GPU loading the model at runtime testing
-
-```bash
-# Terminal 1
-# Create the directory before running the container
-mkdir -p ~/.cache/huggingface
-
-# Build the Dockerfile with the same version
-podman build -t vllm-whisper-runtime -f crawl/vllm/ubuntu/Dockerfile.runtime crawl/vllm/ubuntu/
-
-# Test it - should PASS
-podman run --rm -it \
-  --security-opt=label=disable \
-  --device nvidia.com/gpu=all \
-  -p 8000:8000 \
-  -v ~/.cache/huggingface:/root/.cache/huggingface:Z \
-  vllm-whisper-runtime \
-  --model openai/whisper-tiny.en \
-  --task transcription \
-  --dtype=half
-
-# The above command works
-# This invokes vllm-openai’s OpenAI-compatible API server, which:
-#   1. Uses the CLI entrypoint, e.g. python3 -m vllm.entrypoints.openai.api_server.
-#   2. Loads Whisper via the --task transcription flag, which is officially supported by vLLM's OpenAIRouter.
-#   3. Internally routes to: @router.post("/v1/audio/transcriptions") ...
-#      which explicitly handles the Whisper audio pipeline with custom preprocessing and backend logic.
-#   Result: Whisper is loaded and executed through a supported fast path, and it avoids the internal profiling that triggers FlashAttention crashes.
-
-# export HUGGING_FACE_HUB_TOKEN=your_hf_token  # replace with actual token
-
-# The below command fails
-# This runs the vLLM script audio_language.py, which:
-#   1. Uses the offline vLLM Python API via LLM(...) constructor.
-#   2. Triggers a warm-up profiling pass (profile_run) to benchmark memory usage.
-#   3. If FlashAttention is enabled (even via defaults), it tries to run a forward pass before input is prepared, causing key=None → TypeError.
-#   Result: vLLM still sometimes uses FlashAttention in profile mode due to unresolved internal logic. This is a known issue when using Whisper or any encoder-decoder mode
-
-# Expect to Fail
-# --model-type expects: granite_speech, minicpmo, phi4_mm, qwen2_audio, qwen2_5_omni, ultravox, whisper
-podman run --rm -it \
-  --security-opt=label=disable \
-  --device nvidia.com/gpu=all \
-  -v ~/.cache/huggingface:/root/.cache/huggingface \
-  -v $(pwd):/workspace \
-  --env HUGGING_FACE_HUB_TOKEN=$HUGGING_FACE_HUB_TOKEN \
-  --env VLLM_ATTENTION_BACKEND=torch \
-  --ipc=host \
-  -w /workspace \
-  --entrypoint /bin/bash \
-  vllm-whisper-runtime \
-  -c 'echo $VLLM_ATTENTION_BACKEND; python3 data/input-samples/audio_language.py --model whisper'
-
-# Terminal 2
-# Transcribe - Should PAss
-curl http://localhost:8000/v1/audio/transcriptions \
-  -X POST \
-  -H "Content-Type: multipart/form-data" \
-  -F file=@sample/harvard.wav \
-  -F model=openai/whisper-tiny.en
-
-# expected output
-# {"text":" The stale smell of old beer lingers. It takes heat to bring out the odor. A cold dip restores health and zest. A salt pickle tastes fine with ham. Tacos al pastor are my favorite. A zestful food is the hot cross bun."}
-```
-
-### Embed the model in a container with vLLM GPU disconnecetd testing
-
-Review vLLM Audio Offline Examples - [Source](https://docs.vllm.ai/en/latest/getting_started/examples/audio_language.html)
-
-Since we're loading a local model from /models/whisper-tiny.en, you must manually set its served name like so:
-
-1. `--model` /models/whisper-tiny.en \
-1. `--served-model-name` openai/whisper-tiny.en \
-1. `--task` transcription
-
-```bash
-# Terminal 1
-# Install the huggingface cli
-pip install -y huggingface_hub tree
-
-# Download tiny-whisper.en locally
-huggingface-cli download openai/whisper-tiny.en --local-dir ubuntu/audio/whisper-tiny.en --local-dir-use-symlinks False --repo-type model
-
-# Ensure the whisper-tiny.en directory is next to your Dockerfile
-tree ubuntu
-
-# Build it
-podman build -t vllm-whisper-offline -f ubuntu/audio/Dockerfile.offline ubuntu/audio/
-
-# Run it
-podman run --rm -it \
-  --security-opt=label=disable \
-  --device nvidia.com/gpu=all \
-  -p 8000:8000 \
-  vllm-whisper-offline \
-  --model /models/whisper-tiny.en \
-  --served-model-name openai/whisper-tiny.en \
-  --task transcription
-
-# Terminal 2
-# Test it
-curl http://localhost:8000/v1/audio/transcriptions \
-  -X POST -H "Content-Type: multipart/form-data" \
-  -F file=@sample/harvard.wav \
-  -F model=openai/whisper-tiny.en
-
-# Terminal 2 output
-# {"text":" The stale smell of old beer lingers. It takes heat to bring out the odor. A cold dip restores health and zest. A salt pickle tastes fine with ham. Tacos al pastor are my favorite. A zestful food is the hot cross bun."}
-
-# Terminal 1 output
-# ...
-# INFO:     127.0.0.1:43702 - "POST /v1/audio/transcriptions HTTP/1.1" 200 OK
-# INFO 05-12 20:01:19 [metrics.py:486] Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 5.4 tokens/s, Running: 0 reqs, Swapped: 0 reqs, Pending: 0 reqs, GPU KV cache usage: 0.0%, CPU KV cache usage: 0.0%.
-# ...
-```

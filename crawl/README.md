@@ -4,16 +4,13 @@
 
 ## Crawl Procedure
 
-1. **Provision a RHEL VM with GPU support**  
+1. **Provision a RHEL VM with GPU support** - [Provision RHEL with GPU](RHEL_GPU.md)
 
-    - [Provision RHEL with GPU](RHEL_GPU.md)
+2. **Test OpenAI Whisper** - [Ubuntu](/crawl/openai-whisper/ubuntu/README.md)
 
-2. **Test OpenAI Whisper**
+3. **Test OpenAI Whisper** - [UBI9-minimal](/crawl/openai-whisper/ubi/README.md)
 
-    - [Ubuntu](/crawl/openai-whisper/ubuntu/README.md)
-    - [UBI9-minimal](/crawl/openai-whisper/ubi/README.md)
+4. **Walk onto OpenAI Whisper onto OpenShift** - [Walk](../walk/README.md)
 
-3. **Test Faster-Whisper** – *coming soon*
-
-    - Ubuntu – *not yet implemented*
-    - UBI9-minimal – *not yet implemented*
+| ← [Back: Main Readme](../README.md) | [Next: Provision RHEL VM w/GPU →](../../../walk/README.md) |
+|-----------------------------------------------|--------------------------------------------------------------------|
