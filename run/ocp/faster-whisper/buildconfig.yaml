@@ -1,0 +1,19 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: faster-whisper
+  labels:
+    name: faster-whisper
+spec:
+  triggers:
+    - type: ConfigChange
+  source:
+    type: Git
+    git:
+      uri: 'https://github.com/speaches-ai/speaches.git'
+  strategy:
+    type: Docker
+  output:
+    to:
+      kind: ImageStreamTag
+      name: 'faster-whisper:latest'
